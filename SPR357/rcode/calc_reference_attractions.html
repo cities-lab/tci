@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.7: http://docutils.sourceforge.net/" />
+<title>calc_reference_attractions.R</title>
+<meta name="author" content="Brian Gregor" />
+<meta name="date" content="9/26/05" />
+<meta name="copyright" content="Oregon Department of Transportation" />
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="calc-reference-attractions-r">
+<h1 class="title">calc_reference_attractions.R</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Brian Gregor</td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>9/26/05</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference" href="mailto:brian.j.gregor&#64;odot.state.or.us">brian.j.gregor&#64;odot.state.or.us</a></td></tr>
+<tr><th class="docinfo-name">Copyright:</th>
+<td>Oregon Department of Transportation</td></tr>
+<tr class="field"><th class="docinfo-name">license:</th><td class="field-body">GPL2</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="description">
+<h1><a name="description">Description</a></h1>
+<p>This script identifies a reference zone for the travel cost index and related measures and computes the reference market place attractions.</p>
+<p>The reference zone is identified as the TAZ that has the most attractions within it's market area. The log sums of the JEMnR access utilities are used to identify market areas. These measure the composite cost of travel between zones and are calculated in JEMnR for each trip purpose and income group. The reference zone is identified as the zone that has greatest market attractions, subject to limits of transit availability and presence of households. Attraction scores are calculated by dividing the market attractions for each zone by the maximum market attractions for all zones. This is done for each trip purpose and income group. The results are summed for each zone to get a total score. Since there are three income groups and four trip purposes, the maximum score is 12. Reference market baskets are calculated for each combination of income and trip purpose. Market baskets are calculated for each TAZ by calculating the percentage of trip attractions to each TAZ and placing this vector of values in order of descending log sums. Then a cumulative sum of the percentages is calculated and the zones whoses values add to 50% are identified. This is the market area for the TAZ. The market basket for the TAZ is calculated by summing the size terms from the destination choice model for TAZs in the market area. The reference market basket is calculated as the mean of the market baskets for all zones.</p>
+</div>
+<div class="section" id="define-a-function-that-calculates-zonal-market-access-scores-and-market-baskets">
+<h1><a name="define-a-function-that-calculates-zonal-market-access-scores-and-market-baskets">Define a function that calculates zonal market access scores and market baskets</a></h1>
+<p>This function is applied to each TAZ by trip purpose and income group the steps are:
+*   Calculate the percent of trips going to each zone
+*   Order the percent of trips by the order of the log sums
+*   Calculate the cumulative sums of the percents
+*   Identify the zones that sum to 50%
+*   Sum the size terms for those zones to get values for calculating the market basket
+*   Identify zones that have a log sum of one or greater
+*   Sum the size terms in those zones to get values for calculation reference zone scores
+:Parameter: Trips.Zi - A vector of trips from a production zone to attraction zones
+:Parameter: SizeVar.Zi - A vector of size variables
+:Parameter: LogSum.Zi - A vector of logsums from a production zone to attraction zones
+:Parameter: PctBreak - A percentage of trips to be the criteria for determining a market area
+:Return: TripAttractions - The total of size variables to be used for calculating market basket
+:Return: ScoreAttractions - The total of size variables to be used for calculating scores</p>
+<pre class="literal-block">
+calcMarketAccess &lt;- function(Trips.Zi, SizeVar.Zi, LogSum.Zi, PctBreak=50){
+     TripPct.Zi &lt;- 100 * Trips.Zi / sum(Trips.Zi)
+     LogsumOrder &lt;- rev(order(LogSum.Zi))
+     TripPctCumSum &lt;- cumsum(TripPct.Zi[LogsumOrder])
+     MarketZones &lt;- names(TripPctCumSum)[TripPctCumSum &lt;= PctBreak]
+     TripAttractions &lt;- sum(SizeVar.Zi[MarketZones])
+     ScoreAttractions &lt;- sum(SizeVar.Zi[LogSum.Zi &gt; 1])
+     c(TripAttractions, ScoreAttractions)
+     }
+</pre>
+</div>
+<div class="section" id="calculate-market-attractions-and-logsums-for-each-trip-purpose-income-group-and-zone">
+<h1><a name="calculate-market-attractions-and-logsums-for-each-trip-purpose-income-group-and-zone">Calculate market attractions and logsums for each trip purpose, income group and zone</a></h1>
+<p>Iterate through each trip purpose and income group and call calcMarketAccess for each TAZ. Create arrays of values by zone, income group and trip purpose. TripAttractions.ZiIcPr is an array containing the values of total size terms that is used to calculate reference market baskets. ScoreAttractions.ZiIcPr is an array containing the values of total size terms used to identify the reference zone. The abbreviations after the period in the names of these arrays indicates their dimensionality. Zi is a vector of the names of TAZs that are internal to the model. Ic is a vector of the names of income groups. Pr is a vector of the names of trip purposes.</p>
+<pre class="literal-block">
+# Create arrays to store trip attractions and score attractions
+TripAttractions.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+                       dimnames=list(Zi,Ic,Pr))
+ScoreAttractions.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+                       dimnames=list(Zi,Ic,Pr))
+
+
+# Begin iteration by trip purpose
+for(pr in Pr){
+
+     # Load trip distribution matrices for each income group
+     for(ic in Ic){
+          DistFileName &lt;- paste(&quot;tripdist/&quot;, pr, ic, &quot;Dist.Rdata&quot;, sep=&quot;&quot;)
+          load(DistFileName)
+          rm(DistFileName)
+          }
+
+     # Load size variable matrices for each income group
+     for(ic in Ic){
+          SizeVarFileName &lt;- paste(&quot;sizevars/SizeVar&quot;, pr, ic, &quot;.RData&quot;, sep=&quot;&quot;)
+          load(SizeVarFileName)
+          rm(SizeVarFileName)
+          }
+
+     # Load log sums
+     # Unlike trip distribution data, the logsums for all income groups
+     # are contained in one list.
+     LogsumFileName &lt;- paste(&quot;access/&quot;, &quot;logSum&quot;, pr, &quot;.Rdata&quot;, sep=&quot;&quot;)
+     load(LogsumFileName)
+     rm(LogsumFileName)
+
+     # Calculate Accessibility of Market Areas by Income Group and Zone
+
+     # Create a matrices to store the market area logsums, times and costs for a purpose
+     TripAttractions.ZiIc &lt;- matrix(0, length(Zi), length(Ic), dimnames=list(Zi, Ic))
+     ScoreAttractions.ZiIc &lt;- matrix(0, length(Zi), length(Ic), dimnames=list(Zi, Ic))
+
+     for(ic in Ic){
+
+          # Get trip matrix trim off external TAZs
+          TripsObjName &lt;- paste(pr, ic, &quot;Dist&quot;, sep=&quot;&quot;)
+          Trips.ZoZo &lt;- get(TripsObjName) ; rm(TripsObjName)
+          dimnames(Trips.ZoZo) &lt;- list(Zo, Zo) # Zo is vector of names of all zones
+          Trips.ZiZi &lt;- Trips.ZoZo[Zi,Zi] ; rm(Trips.ZoZo)
+
+          # Get size data matrix and trim off external TAZs
+          SizeVarObjName &lt;- paste(&quot;sizeVar&quot;, pr, ic, sep=&quot;&quot;)
+          SizeVar.ZoZo &lt;- get(SizeVarObjName); rm(SizeVarObjName)
+          dimnames(SizeVar.ZoZo) &lt;- list(Zo, Zo)
+          SizeVar.ZiZi &lt;- SizeVar.ZoZo[Zi,Zi] ; rm(SizeVar.ZoZo)
+
+          # Get log sum data matrix and trim off external TAZs
+          LogSumObjName &lt;- paste(&quot;logSum&quot;, pr, sep=&quot;&quot;)
+          LogSum.ZoZo &lt;- get(LogSumObjName)[[ic]] ; rm(LogSumObjName)
+          dimnames(LogSum.ZoZo) &lt;- list(Zo, Zo)
+          LogSum.ZiZi &lt;- LogSum.ZoZo[Zi,Zi] ; rm(LogSum.ZoZo)
+
+          # For each TAZ, calculate trip attractions and score attractions
+          MarketValues &lt;- matrix(0, length(Zi), 2, dimnames=list(Zi, c(&quot;Attractions&quot;, &quot;Logsum&quot;)))
+          for(zi in Zi){
+               MarketValues[zi,] &lt;- calcMarketAccess(Trips.ZiZi[zi,], SizeVar.ZiZi[zi,],
+                              LogSum.ZiZi[zi,])
+               }
+
+          # Assign values to TripAttractions.ZiIc and ScoreAttractions.ZiIc
+          TripAttractions.ZiIc[,ic] &lt;- MarketValues[,1]
+          ScoreAttractions.ZiIc[,ic] &lt;- MarketValues[,2]
+          rm(MarketValues)
+          }
+
+     # Assign values for a purpose to TripAttractions.ZiIcPr and ScoreAttractions.ZiIcPr
+     TripAttractions.ZiIcPr[,,pr] &lt;- TripAttractions.ZiIc ; rm(TripAttractions.ZiIc)
+     ScoreAttractions.ZiIcPr[,,pr] &lt;- ScoreAttractions.ZiIc ; rm(ScoreAttractions.ZiIc)
+
+     # End iteration by trip purpose
+     }
+</pre>
+</div>
+<div class="section" id="find-the-reference-zone">
+<h1><a name="find-the-reference-zone">Find the Reference Zone</a></h1>
+<p>The reference zone is the zone which has transit available, has at least 10 households low, middle and high income households, and has the greatest number of attractions in the market area.</p>
+<pre class="literal-block">
+# Calculate a total score for each TAZ
+MaxAttractions &lt;- apply(ScoreAttractions.ZiIcPr, c(2,3), function(x) max(x))
+NormScoreAttractions.ZiIcPr &lt;- sweep(ScoreAttractions.ZiIcPr, c(2,3),
+       MaxAttractions, &quot;/&quot;)
+AttractionScore.Zi &lt;- apply(NormScoreAttractions.ZiIcPr, 1, sum)
+
+# Select zones that have at least 10 households and has transit service
+# Load household data
+load(&quot;pregen/whiazAry.RData&quot;)
+Hh.ZoIc &lt;- t(apply(whiazAry, c(3,5), sum))
+rownames(Hh.ZoIc) &lt;- Zo
+Hh.ZiIc &lt;- Hh.ZoIc[Zi,]
+rm(whiazAry, Hh.ZoIc)
+Hh.ZiIc &lt;- t(apply(Hh.ZiIc, 1, function(x) c(x[1] + x[2], x[3], x[4])))
+colnames(Hh.ZiIc) &lt;- Ic
+HasEnoughHh &lt;- apply(Hh.ZiIc &gt;= 10, 1, all)
+# Identify available internal zones where transit is available
+tAvail &lt;-  read.csv(&quot;inputs/tAvail.csv&quot;)
+tAvail &lt;- tAvail[order(tAvail$taz),]
+tAvail &lt;- as.logical(tAvail$tAvail)
+TransitAvailable &lt;- tAvail
+names(TransitAvailable) &lt;- Zo
+TransitAvailable &lt;- TransitAvailable[Zi]
+# Select the zones that have enough households and transit is available
+AttractionScoreQualified.Zi &lt;- AttractionScore.Zi[HasEnoughHh &amp; TransitAvailable]
+
+# Identify the zone with the maximum score from the qualified zones
+ReferenceZone &lt;- names(AttractionScoreQualified.Zi)[
+          which(AttractionScoreQualified.Zi == max(AttractionScoreQualified.Zi))]
+</pre>
+</div>
+<div class="section" id="find-the-reference-market-baskets">
+<h1><a name="find-the-reference-market-baskets">Find the Reference market baskets</a></h1>
+<p>The reference market baskets are the mean of the market baskets calculated for each zone.</p>
+<pre class="literal-block">
+ReferenceAttractions &lt;- apply(TripAttractions.ZiIcPr, c(2,3), mean)
+</pre>
+</div>
+<div class="section" id="save-the-results">
+<h1><a name="save-the-results">Save the results</a></h1>
+<pre class="literal-block">
+save(TripAttractions.ZiIcPr, file=&quot;tci/TripAttractions.ZiIcPr.RData&quot;)
+save(AttractionScore, file=&quot;tci/AttractionScore.RData&quot;)
+save(AttractionScoreQualified.Zi, file=&quot;tci/AttractionScoreQualified.Zi.RData&quot;)
+save(ReferenceZone, file=&quot;tci/ReferenceZone.RData&quot;)
+save(ReferenceAttractions, file=&quot;tci/ReferenceAttractions.RData&quot;)
+</pre>
+</div>
+</div>
+</body>
+</html>

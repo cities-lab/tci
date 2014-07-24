@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.7: http://docutils.sourceforge.net/" />
+<title>calculate_mobility_measures.R</title>
+<meta name="author" content="Brian Gregor" />
+<meta name="date" content="09/26/05" />
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="calculate-mobility-measures-r">
+<h1 class="title">calculate_mobility_measures.R</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Brian Gregor</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference" href="mailto:brian.j.gregor&#64;odot.state.or.us">brian.j.gregor&#64;odot.state.or.us</a></td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>09/26/05</td></tr>
+<tr class="field"><th class="docinfo-name">Revisions:</th><td class="field-body"></td>
+</tr>
+<tr class="field"><th class="docinfo-name">License:</th><td class="field-body">GPL2</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="read-in-data-and-define-variables">
+<h1><a name="read-in-data-and-define-variables">Read in data and define variables</a></h1>
+<div class="section" id="read-in-network-data">
+<h2><a name="read-in-network-data">Read in network data</a></h2>
+<pre class="literal-block">
+Links.Lk__ &lt;- read.table(&quot;eug_netdata_rev_names.txt&quot;, header=TRUE)
+rownames(Links.Lk__) &lt;- paste(Links.Lk__$Inode, Links.Lk__$Jnode, sep=&quot;-&quot;)
+Capacities.Lk__ &lt;- read.table(&quot;EUG_CAPS.TXT&quot;, header=TRUE)
+rownames(Capacities.Lk__) &lt;- paste(Capacities.Lk__$inode, Capacities.Lk__$jnode, sep=&quot;-&quot;)
+</pre>
+</div>
+<div class="section" id="join-the-capacities-data-to-the-link-data-and-calculate-volume-to-capacity-ratios">
+<h2><a name="join-the-capacities-data-to-the-link-data-and-calculate-volume-to-capacity-ratios">Join the capacities data to the link data and calculate volume to capacity ratios</a></h2>
+<pre class="literal-block">
+Links.Lk__$Cap &lt;- Capacities.Lk__[rownames(Links.Lk__),&quot;link_cap_per_day&quot;]
+Links.Lk__$VcA &lt;- Links.Lk__$AdtA / Links.Lk__$Cap
+Links.Lk__$VcB &lt;- Links.Lk__$AdtB / Links.Lk__$Cap
+</pre>
+</div>
+<div class="section" id="define-link-types">
+<h2><a name="define-link-types">Define link types</a></h2>
+<pre class="literal-block">
+# Link types classify all functional classes of interest
+Lt &lt;- c(1, 2, 3, 4, 5, 6, 7, 8)
+names(Lt) &lt;- c(&quot;Freeway&quot;, &quot;Principal Arterial&quot;, &quot;Major Arterial&quot;, &quot;Minor Arterial&quot;,
+               &quot;Major Collector&quot;, &quot;Neighborhood Collector&quot;, &quot;Local&quot;,
+               &quot;Freeway Ramp&quot;)
+</pre>
+</div>
+<div class="section" id="only-keep-data-of-these-link-types">
+<h2><a name="only-keep-data-of-these-link-types">Only keep data of these link types</a></h2>
+<pre class="literal-block">
+Links.Lk__ &lt;- Links.Lk__[Links.Lk__$Type %in% Lt,]
+</pre>
+</div>
+<div class="section" id="add-incidentdelayratio-to-the-dataframe">
+<h2><a name="add-incidentdelayratio-to-the-dataframe">Add IncidentDelayRatio to the dataframe</a></h2>
+<pre class="literal-block">
+Links.Lk__$InciDlyRatio &lt;- rep(NA, nrow(Links.Lk__))
+Links.Lk__$InciDlyRatio[Links.Lk__$Type %in% c(1,8)] &lt;- 2.4
+Links.Lk__$InciDlyRatio[Links.Lk__$Type %in% 2:7 ] &lt;- 1.1
+</pre>
+</div>
+<div class="section" id="define-several-standard-parameters">
+<h2><a name="define-several-standard-parameters">Define several standard parameters</a></h2>
+<pre class="literal-block">
+# Vehicle occupancy
+VehOcc &lt;- 1.25
+
+# Working days
+WorkDays &lt;- 250
+
+# Population
+Population &lt;- 235000
+</pre>
+</div>
+</div>
+<div class="section" id="define-functions-to-calculate-measures">
+<h1><a name="define-functions-to-calculate-measures">Define functions to calculate measures</a></h1>
+<div class="section" id="define-a-function-to-calculate-recurring-vehicle-hours-of-delay-vhd-by-link">
+<h2><a name="define-a-function-to-calculate-recurring-vehicle-hours-of-delay-vhd-by-link">Define a function to calculate recurring vehicle hours of delay (VHD) by link</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Delay.Lk - vector of link delay</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - vector of traffic volume by network link</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">RecurVhd.Lk - vector of vehicle-hours of recurring delay per link</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcRecurVhd &lt;- function(Delay.Lk, Vol.Lk){
+     RecurVhd.Lk &lt;- Delay.Lk * Vol.Lk / 60
+     RecurVhd.Lk
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-recurring-and-incident-vehicle-hours-of-delay-vhd-by-link">
+<h2><a name="define-a-function-to-calculate-recurring-and-incident-vehicle-hours-of-delay-vhd-by-link">Define a function to calculate recurring and incident vehicle hours of delay (VHD) by link</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Delay.Lk - vector of link delay</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - vector of ADT by network link</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">InciDlyRatio.Lk - vector of ratios of incident delay to recurring delay</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">TotVhd.Lk - vector of total minutes of recurring and incident delay per link</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcTotVhd &lt;- function(Delay.Lk, Vol.Lk, InciDlyRatio.Lk){
+     TotVhd.Lk &lt;- Delay.Lk * (1 + InciDlyRatio.Lk) * Vol.Lk / 60
+     TotVhd.Lk
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-link-vehicle-miles-traveled-vmt">
+<h2><a name="define-a-function-to-calculate-link-vehicle-miles-traveled-vmt">Define a function to calculate link vehicle miles traveled (VMT)</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Length.Lk - link length in miles</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - link volume in vehicles</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">Vmt.Lk - link vehicle miles traveled</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcVmt &lt;- function(Length.Lk, Vol.Lk){
+     Vmt.Lk &lt;- Length.Lk * Vol.Lk
+     Vmt.Lk
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-annual-person-delay">
+<h2><a name="define-a-function-to-calculate-annual-person-delay">Define a function to calculate annual person delay</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">TotVhd.Lk - vector of total vehicle hours of delay</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">VehOcc - average vehicle occupancy</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">WorkDays - number of work days per year</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">TotPhd.Lk - number of annual person hours of delay per year</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcTotPhd &lt;- function(TotVhd.Lk, VehOcc, WorkDays){
+     TotPhd.Lk &lt;- TotVhd.Lk * VehOcc * WorkDays
+     TotPhd.Lk
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-average-speed-by-link-type">
+<h2><a name="define-a-function-to-calculate-average-speed-by-link-type">Define a function to calculate average speed by link type</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Length.Lk - link length in miles</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - link traffic volume</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Time.Lk - link travel time in minutes</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Type.Lk - link type</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">AveSpeed.Lt - average speed by link type</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcAveTypeSpeed &lt;- function(Length.Lk, Vol.Lk, Time.Lk, Type.Lk){
+     Vmt.Lk &lt;- calcVmt(Length.Lk, Vol.Lk)
+     Speed.Lk &lt;- 60 * Length.Lk / Time.Lk
+     VmtWtSpeed.Lk &lt;- Speed.Lk * Vmt.Lk
+     SumVmtWtSpeed.Lt &lt;- tapply(VmtWtSpeed.Lk, Type.Lk, sum)
+     SumVmt.Lt &lt;- tapply(Vmt.Lk, Type.Lk, sum)
+     AveSpeed.Lt &lt;- SumVmtWtSpeed.Lt / SumVmt.Lt
+     AveSpeed.Lt
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-travel-rate-index-by-link-type-freeflow-comparison">
+<h2><a name="define-a-function-to-calculate-travel-rate-index-by-link-type-freeflow-comparison">Define a function to calculate travel rate index by link type (freeflow comparison)</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Length.Lk - link length in miles</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - link traffic volume</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Time.Lk - link travel time in minutes</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Ffs.Lk - link free flow speed</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Type.Lk - link type</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">AveTri.Lt - average travel rate index by link type</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcAveTypeTri1 &lt;- function(Length.Lk, Vol.Lk, Delay.Lk, Ffs.Lk, Type.Lk){
+     Vmt.Lk &lt;- calcVmt(Length.Lk, Vol.Lk)
+     FfsTime.Lk &lt;- 60 * Length.Lk / Ffs.Lk
+     RecurCongTime.Lk &lt;- FfsTime.Lk + Delay.Lk
+     Tri.Lk &lt;- RecurCongTime.Lk / FfsTime.Lk
+     VmtWtTri.Lk &lt;- Tri.Lk * Vmt.Lk
+     SumVmtWtTri.Lt &lt;- tapply(VmtWtTri.Lk, Type.Lk, sum)
+     SumVmt.Lt &lt;- tapply(Vmt.Lk, Type.Lk, sum)
+     AveTri.Lt &lt;- SumVmtWtTri.Lt / SumVmt.Lt
+     AveTri.Lt
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-travel-rate-index-by-link-type-los-d-e-comparison">
+<h2><a name="define-a-function-to-calculate-travel-rate-index-by-link-type-los-d-e-comparison">Define a function to calculate travel rate index by link type (LOS D/E comparison)</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Length.Lk - link length in miles</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - link traffic volume</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Time.Lk - link travel time in minutes</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Ffs.Lk - link free flow speed</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Type.Lk - link type</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">AveTri.Lt - average travel rate index by link type</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcAveTypeTri2 &lt;- function(Length.Lk, Vol.Lk, Delay.Lk,
+                    DelayDe.Lk, Ffs.Lk, Type.Lk){
+     Vmt.Lk &lt;- calcVmt(Length.Lk, Vol.Lk)
+     FfsTime.Lk &lt;- 60 * Length.Lk / Ffs.Lk
+     RecurCongTime.Lk &lt;- FfsTime.Lk + Delay.Lk
+     DeTime.Lk &lt;- RecurCongTime.Lk - DelayDe.Lk
+     Tri.Lk &lt;- RecurCongTime.Lk / DeTime.Lk
+     VmtWtTri.Lk &lt;- Tri.Lk * Vmt.Lk
+     SumVmtWtTri.Lt &lt;- tapply(VmtWtTri.Lk, Type.Lk, sum)
+     SumVmt.Lt &lt;- tapply(Vmt.Lk, Type.Lk, sum)
+     AveTri.Lt &lt;- SumVmtWtTri.Lt / SumVmt.Lt
+     AveTri.Lt
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-travel-time-index-by-link-type-freeflow-comparison">
+<h2><a name="define-a-function-to-calculate-travel-time-index-by-link-type-freeflow-comparison">Define a function to calculate travel time index by link type (freeflow comparison)</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Length.Lk - link length in miles</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - link traffic volume</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Time.Lk - link travel time in minutes</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Ffs.Lk - link free flow speed</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Type.Lk - link type</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">AveTri.Lt - average travel rate index by link type</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcAveTypeTti1 &lt;- function(Length.Lk, Vol.Lk, Delay.Lk, Ffs.Lk,
+                         InciDlyRatio.Lk, Type.Lk){
+     Vmt.Lk &lt;- calcVmt(Length.Lk, Vol.Lk)
+     TotDelay.Lk &lt;- Delay.Lk * (1 + InciDlyRatio.Lk)
+     FfsTime.Lk &lt;- 60 * Length.Lk / Ffs.Lk
+     TotCongTime.Lk &lt;- FfsTime.Lk + TotDelay.Lk
+     Tti.Lk &lt;- TotCongTime.Lk / FfsTime.Lk
+     VmtWtTti.Lk &lt;- Tti.Lk * Vmt.Lk
+     SumVmtWtTti.Lt &lt;- tapply(VmtWtTti.Lk, Type.Lk, sum)
+     SumVmt.Lt &lt;- tapply(Vmt.Lk, Type.Lk, sum)
+     AveTti.Lt &lt;- SumVmtWtTti.Lt / SumVmt.Lt
+     AveTti.Lt
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-travel-time-index-by-link-type-los-d-e-comparison">
+<h2><a name="define-a-function-to-calculate-travel-time-index-by-link-type-los-d-e-comparison">Define a function to calculate travel time index by link type (LOS D/E comparison)</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Length.Lk - link length in miles</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Vol.Lk - link traffic volume</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Time.Lk - link travel time in minutes</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Ffs.Lk - link free flow speed</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">Type.Lk - link type</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">AveTri.Lt - average travel rate index by link type</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcAveTypeTti2 &lt;- function(Length.Lk, Vol.Lk, Delay.Lk, DelayDe.Lk, Ffs.Lk,
+                    InciDlyRatio.Lk,  Type.Lk){
+Vmt.Lk &lt;- calcVmt(Length.Lk, Vol.Lk)
+TotDelay.Lk &lt;- Delay.Lk * (1 + InciDlyRatio.Lk)
+FfsTime.Lk &lt;- 60 * Length.Lk / Ffs.Lk
+RecurCongTime.Lk &lt;- FfsTime.Lk + Delay.Lk
+TotCongTime.Lk &lt;- FfsTime.Lk + TotDelay.Lk
+DeTime.Lk &lt;- RecurCongTime.Lk - DelayDe.Lk
+Tti.Lk &lt;- TotCongTime.Lk / DeTime.Lk
+VmtWtTti.Lk &lt;- Tti.Lk * Vmt.Lk
+SumVmtWtTti.Lt &lt;- tapply(VmtWtTti.Lk, Type.Lk, sum)
+SumVmt.Lt &lt;- tapply(Vmt.Lk, Type.Lk, sum)
+AveTti.Lt &lt;- SumVmtWtTti.Lt / SumVmt.Lt
+AveTti.Lt
+}
+</pre>
+</div>
+</div>
+<div class="section" id="conduct-tests-of-measures">
+<h1><a name="conduct-tests-of-measures">Conduct tests of measures</a></h1>
+<pre class="literal-block">
+attach(Links.Lk__)
+</pre>
+<div class="section" id="calculate-average-annual-delay-per-person-for-two-reference-speeds-and-two-network-scenarios">
+<h2><a name="calculate-average-annual-delay-per-person-for-two-reference-speeds-and-two-network-scenarios">Calculate average annual delay per person for two reference speeds and two network scenarios</a></h2>
+<div class="section" id="scenario-a-with-ferry-street-bridge-link">
+<h3><a name="scenario-a-with-ferry-street-bridge-link">Scenario A - with Ferry Street Bridge Link</a></h3>
+<pre class="literal-block">
+# Freeflow reference speed all Links
+# Calculate daily vehicle hours of delay
+ARecurVhdFreeflow.Lk &lt;- calcRecurVhd(DlyFfsA, AdtA)
+ATotVhdFreeflow.Lk &lt;- calcTotVhd(DlyFfsA, AdtA, InciDlyRatio)
+# Calculate annual person hours of delay
+ARecurAnnPhdFreeflow.Lk &lt;- calcTotPhd(ARecurVhdFreeflow.Lk, VehOcc, WorkDays)
+ATotAnnPhdFreeflow.Lk &lt;- calcTotPhd(ATotVhdFreeflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+AAnnRecurDlyCapFreeflow &lt;- sum(ARecurAnnPhdFreeflow.Lk) / Population
+AAnnTotDlyCapFreeflow &lt;- sum(ATotAnnPhdFreeflow.Lk) / Population
+
+# Freeflow reference speed freeway and principal arterial links
+# Calculate daily vehicle hours of delay
+ARecurVhdFreeflow.Lk &lt;- calcRecurVhd(DlyFfsA[Type %in% c(1,2)], AdtA[Type %in% c(1,2)])
+ATotVhdFreeflow.Lk &lt;- calcTotVhd(DlyFfsA[Type %in% c(1,2)],
+                         AdtA[Type %in% c(1,2)], InciDlyRatio[Type %in% c(1,2)])
+# Calculate annual person hours of delay
+ARecurAnnPhdFreeflow.Lk &lt;- calcTotPhd(ARecurVhdFreeflow.Lk, VehOcc, WorkDays)
+ATotAnnPhdFreeflow.Lk &lt;- calcTotPhd(ATotVhdFreeflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+AAnnRecurDlyCapFreeflow2 &lt;- sum(ARecurAnnPhdFreeflow.Lk) / Population
+AAnnTotDlyCapFreeflow2 &lt;- sum(ATotAnnPhdFreeflow.Lk) / Population
+
+# Moderate flow reference speed for all links
+# Calculate daily vehicle hours of delay
+ARecurVhdModflow.Lk &lt;- calcRecurVhd(DlyDeA, AdtA)
+ATotVhdModflow.Lk &lt;- calcTotVhd(DlyDeA, AdtA, InciDlyRatio)
+# Calculate annual person hours of delay
+ARecurAnnPhdModflow.Lk &lt;- calcTotPhd(ARecurVhdModflow.Lk, VehOcc, WorkDays)
+ATotAnnPhdModflow.Lk &lt;- calcTotPhd(ATotVhdModflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+AAnnRecurDlyCapModflow &lt;- sum(ARecurAnnPhdModflow.Lk) / Population
+AAnnTotDlyCapModflow &lt;- sum(ATotAnnPhdModflow.Lk) / Population
+
+# Moderate flow reference speed for freeway and principal arterial links
+# Calculate daily vehicle hours of delay
+ARecurVhdModflow.Lk &lt;- calcRecurVhd(DlyDeA[Type %in% c(1,2)], AdtA[Type %in% c(1,2)])
+ATotVhdModflow.Lk &lt;- calcTotVhd(DlyDeA[Type %in% c(1,2)],
+                    AdtA[Type %in% c(1,2)], InciDlyRatio[Type %in% c(1,2)])
+# Calculate annual person hours of delay
+ARecurAnnPhdModflow.Lk &lt;- calcTotPhd(ARecurVhdModflow.Lk, VehOcc, WorkDays)
+ATotAnnPhdModflow.Lk &lt;- calcTotPhd(ATotVhdModflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+AAnnRecurDlyCapModflow2 &lt;- sum(ARecurAnnPhdModflow.Lk) / Population
+AAnnTotDlyCapModflow2 &lt;- sum(ATotAnnPhdModflow.Lk) / Population
+</pre>
+</div>
+<div class="section" id="scenario-b-without-ferry-street-bridge-link">
+<h3><a name="scenario-b-without-ferry-street-bridge-link">Scenario B - without Ferry Street Bridge Link</a></h3>
+<pre class="literal-block">
+# Freeflow reference speed all Links
+# Calculate daily vehicle hours of delay
+BRecurVhdFreeflow.Lk &lt;- calcRecurVhd(DlyFfsB, AdtB)
+BTotVhdFreeflow.Lk &lt;- calcTotVhd(DlyFfsB, AdtB, InciDlyRatio)
+# Calculate annual person hours of delay
+BRecurAnnPhdFreeflow.Lk &lt;- calcTotPhd(BRecurVhdFreeflow.Lk, VehOcc, WorkDays)
+BTotAnnPhdFreeflow.Lk &lt;- calcTotPhd(BTotVhdFreeflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+BAnnRecurDlyCapFreeflow &lt;- sum(BRecurAnnPhdFreeflow.Lk) / Population
+BAnnTotDlyCapFreeflow &lt;- sum(BTotAnnPhdFreeflow.Lk) / Population
+
+# Freeflow reference speed freeway and principal arterial links
+# Calculate daily vehicle hours of delay
+BRecurVhdFreeflow.Lk &lt;- calcRecurVhd(DlyFfsB[Type %in% c(1,2)], AdtB[Type %in% c(1,2)])
+BTotVhdFreeflow.Lk &lt;- calcTotVhd(DlyFfsB[Type %in% c(1,2)],
+                         AdtB[Type %in% c(1,2)], InciDlyRatio[Type %in% c(1,2)])
+# Calculate annual person hours of delay
+BRecurAnnPhdFreeflow.Lk &lt;- calcTotPhd(BRecurVhdFreeflow.Lk, VehOcc, WorkDays)
+BTotAnnPhdFreeflow.Lk &lt;- calcTotPhd(BTotVhdFreeflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+BAnnRecurDlyCapFreeflow2 &lt;- sum(BRecurAnnPhdFreeflow.Lk) / Population
+BAnnTotDlyCapFreeflow2 &lt;- sum(BTotAnnPhdFreeflow.Lk) / Population
+
+# Moderate flow reference speed for all links
+# Calculate daily vehicle hours of delay
+BRecurVhdModflow.Lk &lt;- calcRecurVhd(DlyDeB, AdtB)
+BTotVhdModflow.Lk &lt;- calcTotVhd(DlyDeB, AdtB, InciDlyRatio)
+# Calculate annual person hours of delay
+BRecurAnnPhdModflow.Lk &lt;- calcTotPhd(BRecurVhdModflow.Lk, VehOcc, WorkDays)
+BTotAnnPhdModflow.Lk &lt;- calcTotPhd(BTotVhdModflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+BAnnRecurDlyCapModflow &lt;- sum(BRecurAnnPhdModflow.Lk) / Population
+BAnnTotDlyCapModflow &lt;- sum(BTotAnnPhdModflow.Lk) / Population
+
+# Moderate flow reference speed for freeway and principal arterial links
+# Calculate daily vehicle hours of delay
+BRecurVhdModflow.Lk &lt;- calcRecurVhd(DlyDeB[Type %in% c(1,2)], AdtB[Type %in% c(1,2)])
+BTotVhdModflow.Lk &lt;- calcTotVhd(DlyDeB[Type %in% c(1,2)],
+                    AdtB[Type %in% c(1,2)], InciDlyRatio[Type %in% c(1,2)])
+# Calculate annual person hours of delay
+BRecurAnnPhdModflow.Lk &lt;- calcTotPhd(BRecurVhdModflow.Lk, VehOcc, WorkDays)
+BTotAnnPhdModflow.Lk &lt;- calcTotPhd(BTotVhdModflow.Lk, VehOcc, WorkDays)
+# Calculate annual hours of delay per capita
+BAnnRecurDlyCapModflow2 &lt;- sum(BRecurAnnPhdModflow.Lk) / Population
+BAnnTotDlyCapModflow2 &lt;- sum(BTotAnnPhdModflow.Lk) / Population
+</pre>
+</div>
+</div>
+</div>
+<div class="section" id="calculate-travel-time-index">
+<h1><a name="calculate-travel-time-index">Calculate Travel Time Index</a></h1>
+<pre class="literal-block">
+UmsType &lt;- 1 * (Type %in% c(1,2))
+
+# calculate TTI for Scenario A freeflow speed, all classes
+calcAveTypeTti1(Length, AdtA, DlyFfsA, Ffs, InciDlyRatio, rep(1, length(Length)))
+# calculate TTI for Scenario A freeflow speed, freeway and principal arterial
+calcAveTypeTti1(Length, AdtA, DlyFfsA, Ffs, InciDlyRatio, UmsType)
+# calculate TTI for Scenario A modflow speed, all classes
+calcAveTypeTti2(Length, AdtA, DlyFfsA, DlyDeA, Ffs, InciDlyRatio,  rep(1, length(Length)))
+# calculate TTI for Scenario A modflow speed, freeway and principal arterial
+calcAveTypeTti2(Length, AdtA, DlyFfsA, DlyDeA, Ffs, InciDlyRatio,  UmsType)
+
+# calculate TTI for Scenario B freeflow speed, all classes
+calcAveTypeTti1(Length, AdtB, DlyFfsB, Ffs, InciDlyRatio, rep(1, length(Length)))
+# calculate TTI for Scenario B freeflow speed, freeway and principal arterial
+calcAveTypeTti1(Length, AdtB, DlyFfsB, Ffs, InciDlyRatio, UmsType)
+# calculate TTI for Scenario B modflow speed, all classes
+calcAveTypeTti2(Length, AdtB, DlyFfsB, DlyDeB, Ffs, InciDlyRatio,  rep(1, length(Length)))
+# calculate TTI for Scenario B modflow speed, freeway and principal arterial
+calcAveTypeTti2(Length, AdtB, DlyFfsB, DlyDeB, Ffs, InciDlyRatio,  UmsType)
+</pre>
+</div>
+</div>
+</body>
+</html>

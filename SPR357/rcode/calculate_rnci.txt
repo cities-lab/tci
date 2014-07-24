@@ -1,0 +1,270 @@
+================
+calculate_rnci.R
+================
+
+:Author: Brian Gregor
+:Contact: brian.j.gregor@odot.state.or.us
+:Date: 09/26/05
+:Revisions:
+:License: GPL2
+
+
+Read in data and define variables
+=================================
+
+Read in network data
+--------------------
+
+::
+
+    Links <- read.table("eug_netdata_rev_names.txt", header=TRUE)
+    rownames(Links) <- paste(Links$Inode, Links$Jnode, sep="-")
+    Capacities <- read.table("EUG_CAPS.TXT", header=TRUE)
+    rownames(Capacities) <- paste(Capacities$inode, Capacities$jnode, sep="-")
+
+Join the capacities data to the link data and calculate volume to capacity ratios
+---------------------------------------------------------------------------------
+
+::
+
+    Links$Cap <- Capacities[match(rownames(Links), rownames(Capacities)),"link_cap_per_day"]
+    Links$VcA <- Links$AdtA / Links$Cap
+    Links$VcB <- Links$AdtB / Links$Cap
+
+Define link types
+-----------------
+
+::
+
+    Lt <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
+    names(Lt) <- c("Freeway", "Principal Arterial", "Major Arterial", "Minor Arterial",
+                   "Major Collector", "Neighborhood Collector", "Local",
+                   "Freeway Ramp", "Connector")
+
+
+Define functions to calculate and plot
+======================================
+
+Define a function to calculate the RNCI
+---------------------------------------
+
+:parameter: LinkAdt - a vector of link traffic volumes
+:parameter: LinkLanes - a vector of the number of lanes for each link
+:return: Rnci - a value of the road network concentration index
+
+::
+
+    calcRnci <- function(LinkAdt, LinkLanes){
+         LaneVol <- sort(LinkAdt / LinkLanes)
+         PctLaneVol <- cumsum(LaneVol)/sum(LaneVol)
+         PctEqVol <- cumsum(rep(1,length(LaneVol)))/(sum(rep(1,length(LaneVol))))
+         Rnci <- (sum(PctEqVol)-sum(PctLaneVol))/sum(PctEqVol)
+         Rnci
+         }
+
+Define a function to plot a Lorenz curve
+----------------------------------------
+
+:parameter: LinkAdt - a vector of link traffic volumes
+:parameter: LinkLanes - a vector of the number of lanes for each link
+:return: none
+
+::
+
+    plotRnci <- function(LinkAdt, LinkLanes, ...){
+         LaneVol <- sort(LinkAdt / LinkLanes)
+         Xvals <- 100 * (1:length(LaneVol)/length(LaneVol))
+         Yvals <- 100 * cumsum(LaneVol)/sum(LaneVol)
+         Rnci <- round(calcRnci(LinkAdt, LinkLanes), 2)
+         plot(Xvals, Yvals, type="l", lwd=2,
+              xlab="Percent of Links", ylab="Percent of Lane Volume", ...)
+         lines(Xvals, Xvals, lty=2, lwd=2)
+         text(0, 80, labels=paste("RNCI =", Rnci), pos=4, cex=1.25)
+         legend(0, 100, legend=c("Pct of Total Lane Volume", "Line of Equality"),
+              lty=c(1,2), lwd=2, bty="n")
+         }
+
+
+Produce pdf plots of several RNCI comparisons
+=============================================
+
+Plot RNCI for each functional class comparing scenarios A and B
+---------------------------------------------------------------
+
+::
+
+    pdf("FerryStCompare.pdf", width=10, height=7)
+    OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+    for(lt in Lt[c(1:6,8)]){
+         LinkAdtALt <- Links$AdtA[Links$Type == lt]
+         LinkAdtBLt <- Links$AdtB[Links$Type == lt]
+         Lanes <- Links$Lanes[Links$Type == lt]
+         plotRnci(LinkAdtALt, Lanes, main="With Ferry St. Bridge")
+         plotRnci(LinkAdtBLt, Lanes, main="Without Ferry St. Bridge")
+         mtext(paste(names(Lt)[Lt == lt], "Road Network Concentration Index"),
+              line=1, outer=TRUE, cex=2)
+         }
+    par(OldPar)
+    dev.off()
+
+
+Plot RNCI for each functional class comparing area types
+--------------------------------------------------------
+
+::
+
+    pdf("AreaTypeCompare.pdf", width=10, height=7)
+    OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+    for(lt in Lt[2:6]){
+         LinkAdtALt <- Links$AdtA[Links$Type == lt & Links$AreaType == 1]
+         LinkAdtBLt <- Links$AdtA[Links$Type == lt & Links$AreaType == 2]
+         LanesALt <- Links$Lanes[Links$Type == lt & Links$AreaType == 1]
+         LanesBLt <- Links$Lanes[Links$Type == lt & Links$AreaType == 2]
+         plotRnci(LinkAdtALt, LanesALt, main="Low Connectivity")
+         plotRnci(LinkAdtBLt, LanesBLt, main="High Connectivity")
+         mtext(paste(names(Lt)[Lt == lt], "Road Network Concentration Index"),
+              line=1, outer=TRUE, cex=2)
+         }
+    par(OldPar)
+    dev.off()
+
+Calculate and plot aggregate values for arterials and collectors by area types
+------------------------------------------------------------------------------
+
+::
+
+    pdf("ArtCollAreaTypeCompare.pdf", width=10, height=7)
+    OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+    IsArterial <- Links$Type %in% c(2,3,4)
+    IsCollector <- Links$Type %in% c(5,6)
+    LinkAdtA <- Links$AdtA[IsArterial & Links$AreaType == 1]
+    LanesA <- Links$Lanes[IsArterial & Links$AreaType == 1]
+    LinkAdtB <- Links$AdtB[IsArterial & Links$AreaType == 2]
+    LanesB <- Links$Lanes[IsArterial & Links$AreaType == 2]
+    plotRnci(LinkAdtA, LanesA, main="Low Connectivity")
+    plotRnci(LinkAdtB, LanesB, main="High Connectivity")
+    mtext("Average Arterial Road Network Concentration Index",
+         line=1, outer=TRUE, cex=2)
+
+    LinkAdtA <- Links$AdtA[IsCollector & Links$AreaType == 1]
+    LanesA <- Links$Lanes[IsCollector & Links$AreaType == 1]
+    LinkAdtB <- Links$AdtB[IsCollector & Links$AreaType == 2]
+    LanesB <- Links$Lanes[IsCollector & Links$AreaType == 2]
+    plotRnci(LinkAdtA, LanesA, main="Low Connectivity")
+    plotRnci(LinkAdtB, LanesB, main="High Connectivity")
+    mtext("Average Collector Road Network Concentration Index",
+         line=1, outer=TRUE, cex=2)
+    par(OldPar)
+    dev.off()
+
+Calculate a composite RNCI based on capacities
+----------------------------------------------
+
+::
+
+    pdf("CompositeAreaTypeCompare.pdf", width=10, height=7)
+    OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+    IsMajor <- Links$Type %in% c(2, 3, 4, 5, 6)
+    plotRnci(Links$AdtA[IsMajor & Links$AreaType == 1], Links$Cap[IsMajor & Links$AreaType == 1],
+              main="Low Connectivity")
+    plotRnci(Links$AdtB[IsMajor & Links$AreaType == 2], Links$Cap[IsMajor & Links$AreaType == 2],
+              main="High Connectivity")
+    mtext("Capacity Weighted Average Arterial and Collector\nRoad Network Concentration Index",
+         line=0, outer=TRUE, cex=2)
+    par(OldPar)
+    dev.off()
+
+
+Make Metafiles for Report
+==========================
+
+Plot RNCI for each functional class comparing scenarios A and B
+---------------------------------------------------------------
+
+::
+
+    for(lt in Lt[c(1:6,8)]){
+         FileName <- paste("FerryStComp", lt, ".emf", sep="")
+         win.metafile(FileName, width=10, height=7)
+         OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+         plotRnci(Links$AdtA[Links$Type == lt], Links$Lanes[Links$Type == lt],
+              main="With Ferry St. Bridge")
+         plotRnci(Links$AdtB[Links$Type == lt], Links$Lanes[Links$Type == lt],
+              main="Without Ferry St. Bridge")
+         mtext(paste(names(Lt)[Lt == lt], "Road Network Concentration Index"),
+              line=1, outer=TRUE, cex=1.5)
+         par(OldPar)
+         dev.off()
+         }
+
+Plot RNCI for each functional class comparing area types
+--------------------------------------------------------
+
+::
+
+    for(lt in Lt[2:6]){
+         FileName <- paste("AreaTypeComp", lt, ".emf", sep="")
+         win.metafile(FileName, width=10, height=7)
+         OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+         LinkAdtALt <- Links$AdtA[Links$Type == lt & Links$AreaType == 1]
+         LinkAdtBLt <- Links$AdtA[Links$Type == lt & Links$AreaType == 2]
+         LanesALt <- Links$Lanes[Links$Type == lt & Links$AreaType == 1]
+         LanesBLt <- Links$Lanes[Links$Type == lt & Links$AreaType == 2]
+         plotRnci(LinkAdtALt, LanesALt, main="Low Connectivity")
+         plotRnci(LinkAdtBLt, LanesBLt, main="High Connectivity")
+         mtext(paste(names(Lt)[Lt == lt], "Road Network Concentration Index"),
+              line=1, outer=TRUE, cex=1.5)
+         par(OldPar)
+         dev.off()
+         }
+
+Calculate and plot aggregate values for arterials and collectors by area types
+------------------------------------------------------------------------------
+
+::
+
+    win.metafile("ArterialAreaTypeComp.emf", width=10, height=7)
+    OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+    IsArterial <- Links$Type %in% c(2,3,4)
+    IsCollector <- Links$Type %in% c(5,6)
+    LinkAdtA <- Links$AdtA[IsArterial & Links$AreaType == 1]
+    LanesA <- Links$Lanes[IsArterial & Links$AreaType == 1]
+    LinkAdtB <- Links$AdtB[IsArterial & Links$AreaType == 2]
+    LanesB <- Links$Lanes[IsArterial & Links$AreaType == 2]
+    plotRnci(LinkAdtA, LanesA, main="Low Connectivity")
+    plotRnci(LinkAdtB, LanesB, main="High Connectivity")
+    mtext("Average Arterial Road Network Concentration Index",
+         line=1, outer=TRUE, cex=1.5)
+    par(OldPar)
+    dev.off()
+
+    win.metafile("CollectorAreaTypeComp.emf", width=10, height=7)
+    OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+    LinkAdtA <- Links$AdtA[IsCollector & Links$AreaType == 1]
+    LanesA <- Links$Lanes[IsCollector & Links$AreaType == 1]
+    LinkAdtB <- Links$AdtB[IsCollector & Links$AreaType == 2]
+    LanesB <- Links$Lanes[IsCollector & Links$AreaType == 2]
+    plotRnci(LinkAdtA, LanesA, main="Low Connectivity")
+    plotRnci(LinkAdtB, LanesB, main="High Connectivity")
+    mtext("Average Collector Road Network Concentration Index",
+         line=1, outer=TRUE, cex=1.5)
+    par(OldPar)
+    dev.off()
+
+Calculate a composite RNCI based on capacities
+----------------------------------------------
+
+::
+
+    win.metafile("CompositeAreaTypeComp.emf", width=10, height=7)
+    OldPar <- par(mfrow=c(1,2), oma=c(1,1,4,1))
+    IsMajor <- Links$Type %in% c(2, 3, 4, 5, 6)
+    plotRnci(Links$AdtA[IsMajor & Links$AreaType == 1], Links$Cap[IsMajor & Links$AreaType == 1],
+         main="Low Connectivity")
+    plotRnci(Links$AdtB[IsMajor & Links$AreaType == 2], Links$Cap[IsMajor & Links$AreaType == 2],
+         main="High Connectivity")
+    mtext("Capacity Weighted Average Arterial and Collector\nRoad Network Concentration Index",
+         line=0, outer=TRUE, cex=1.5)
+    par(OldPar)
+    dev.off()
+

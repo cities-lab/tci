@@ -1,0 +1,34 @@
+mm
+batchout=?
+s=%1%
+2.41
+1
+n
+type+len+lan+ul1+@od24+@odpp+ul2+timau
+ 
+not type=8
+and not type=99
+and not type=200
+ 
+3
+Emme2_Output.txt
+6
+3.14
+3
+mf20
+ 
+n
+n 
+n
+PeakHourTT.txt
+5
+3.14
+3
+mf04
+ 
+n
+n 
+n
+PeakHourVol.txt
+5
+9

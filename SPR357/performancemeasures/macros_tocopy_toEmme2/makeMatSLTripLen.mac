@@ -1,0 +1,27 @@
+3
+3.12
+1
+mf93
+slpkln
+Select Link Peak Period Trip Length
+0
+~/
+1
+mf95
+slwtln
+Select Link Volume Weighted Trip Length
+0
+~/
+1
+ms83
+slpktp
+Select Link Total Peak Period Trips
+0
+~/
+1
+ms85
+avslln
+Average Select Link Trip Length
+0
+9
+9
