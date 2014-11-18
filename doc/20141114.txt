@@ -1,0 +1,12 @@
+From: Kihong Kim
+To: Liming Wang
+Date: 11/14/2014
+
+I have attached trip destination choice model estimation results for each of four trip purposes (i.e., hb-work, hb-shopping, hb-recreation, and hb-other). The R code has been attached, in which I have modified the previous version using the expand.grid function. I have several questions for the meeting next week.
+* for the home-based work purpose, I didn't include tpurp=4 (all other activities at work) and tpurp=11 (work/business related).
+* for the home-based other purpose, I excluded tpurp=5 (attending class), but not tpurp=6 (all other activities at school).
+* Metro's destination choice models have a set of logsum variables of multimodal accessibility functions by income. Do we need them?
+* Metro's destination choice models also have a set of indicator variables that indicate a trip of crossing a specific region (e.g., from Oregon to Washington). Do we need them?
+* among the TAZ-to-TAZ impedance variables, I only include trip distance. Do we need to include more skim types, such as drive-alone travel time during AM 2 hours?
+* I included several interaction terms of trip and traveler characteristics with trip distance that vary with choice alternatives. Am I doing correctly?
+* I need your suggestions to finalize the models.
