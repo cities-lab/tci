@@ -1,5 +1,5 @@
 setwd("/Users/Potenza/Documents/02_Projects/TCI/Workspace/") # on my macbook
-setwd("/home/workspace/TCI/SPR357/DestinationChoice/") # on sapporo
+setwd("../data/") # on sapporo
 
 library(RPostgreSQL)
 library(mlogit)
