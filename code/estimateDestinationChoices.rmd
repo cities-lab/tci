@@ -1,0 +1,251 @@
+---
+title: "Destination Choice Model Estimation"
+author: "Kihong Kim and Liming Wang, Ph.D."
+date: "11/22/2014"
+output: html_document
+---
+
+### Overview
+We develop multinomial logit (MNL) models to estimate travelers' destionation choices at the TAZ level.
+
+* A MNL model is specified for each trip purpose. We consider four home-based trip purposes as follows
+    + hbw: home-based work trips
+    + hbs: home-based shopping trips
+    + hbr: home-based recreation trips
+    + hbo: home-based non-school other trips
+* Especially for the home-based work trip purpose, we further segment the model by household income.
+    + low income households: < $25K 
+    + medium income households: >= 25K and < 50K
+    + high income households: >= 50K
+* Since the number of possible destination TAZ alternatives for a trip is very large, we draw a subset of alternatives from the universal choice set for each trip. As a simplest way, we first select a subset of non-chosen alternatives randomly from the universial choice set, and then add the chosen alternative to the subset. In this study, we define the universal choice set as all TAZs that the suvery respondents actually visited, not as the whole 2167 TAZs. Among them we generate a choice set with ten alternatives for each trip.
+
+### Load data from the PostgreSQL database
+Three different data sources are considered.
+
+* 2011 Oregon Travel Activity Survey
+    + activity: origin and destination TAZ for each trip and trip attributes
+    + person and household: socioeconomic characteristics
+* TAZ-level employment and household data, provided by Portland Metro
+    + number of employments in TAZ by two-digit NAICS code: RetEmp,SvcEmp,FinEmp,GvtEmp,TotEmp,NonEmp,NonRetSvcFin,NonRetSvcGvt
+    + number of households in TAZ: HHold
+* TAZ-to-TAZ logsum variables of multimodal accessibility funstions, provided by Portland Metro
+    + one for each combination of 4 trip purposes and 3 income groups
+```{r,message=FALSE}
+setwd("/home/workspace/TCI")
+library(RPostgreSQL)
+conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+# 2011 OTAS
+activity <- dbReadTable(conn, c("ohas_v2", "activity2")) # the activity file from the 2011 OTAS
+person <- dbReadTable(conn, c("ohas_v2", "person")) # the person file from the 2011 OTAS
+household <- dbReadTable(conn, c("ohas_v2", "household")) # the household file from the 2011 OTAS
+# zonal data
+zonalEmpData <- dbReadTable(conn, c("metro", "zonalEmpData"))
+# skim data
+tdist <- dbReadTable(conn, c("metro", "mf61"))
+# logsum data
+# hbw
+hbw_logsum_avg <- dbReadTable(conn, c("metro", "hbw_logsum_avg"))
+hbw_logsum_low <- dbReadTable(conn, c("metro", "hbw_logsum_low"))
+hbw_logsum_med <- dbReadTable(conn, c("metro", "hbw_logsum_med"))
+hbw_logsum_high <-dbReadTable(conn, c("metro", "hbw_logsum_high"))
+# hbs
+hbs_logsum_avg <- dbReadTable(conn, c("metro", "hbs_logsum_avg"))
+hbs_logsum_low <- dbReadTable(conn, c("metro", "hbs_logsum_low"))
+hbs_logsum_med <- dbReadTable(conn, c("metro", "hbs_logsum_med"))
+hbs_logsum_high <- dbReadTable(conn, c("metro", "hbs_logsum_high"))
+# hbr
+hbr_logsum_avg <- dbReadTable(conn, c("metro", "hbr_logsum_avg"))
+hbr_logsum_low <- dbReadTable(conn, c("metro", "hbr_logsum_low"))
+hbr_logsum_med <- dbReadTable(conn, c("metro", "hbr_logsum_med"))
+hbr_logsum_high <- dbReadTable(conn, c("metro", "hbr_logsum_high"))
+# hbo
+hbo_logsum_avg <- dbReadTable(conn, c("metro", "hbo_logsum_avg"))
+hbo_logsum_low <- dbReadTable(conn, c("metro", "hbo_logsum_low"))
+hbo_logsum_med <- dbReadTable(conn, c("metro", "hbo_logsum_med"))
+hbo_logsum_high <- dbReadTable(conn, c("metro", "hbo_logsum_high"))
+```
+
+### Create linked trips
+As the Year 2011 OTAS is a place-based survey, the activity file involves place-based trips.For example, a transit travel is coded with 3 trips, including transit access, in transit, and transit egress. In our study, we use linked trips rather than place-based trips. Thus, in this example the transit travel is re-coded to 1 trip, not 3 trips.
+```{r}
+activity <- with(activity, activity[order(sampn,perno,plano),])
+activity$actNo <- with(activity, ave(plano, sampn,perno, FUN=seq))
+activity$maxAct <- with(activity, ave(actNo, sampn,perno, FUN=length))
+# remove the Change-Of-Mode trips (tpurp==7) in the middle of the day
+linked <- subset(activity, !(tpurp==7 & actNo!=1 & actNo!=maxAct))
+linked$tripNo <- with(linked, ave(plano, sampn,perno, FUN=seq))
+linked$maxTrip <- with(linked, ave(plano, sampn,perno, FUN=length))
+linked$perid <- with(linked, sampn*10 + perno)
+linked$tripid <- with(linked, perid*100 + tripNo)
+```
+
+### Add an origin TAZ for each trip
+```{r}
+linked$otaz <- c(NA, linked$dtaz[-length(linked$dtaz)])
+linked$otaz[linked$tripNo==1] <- NA
+```
+
+### Segment the data by trip purpose
+```{r}
+# last tpurp
+linked$last_tpurp <- c(NA, linked$tpurp[-length(linked$tpurp)])
+linked$last_tpurp[linked$tripNo==1] <- NA
+attach(linked)
+# hbw
+linked$hbw <- 0
+linked$hbw[ ((last_tpurp==1|last_tpurp==2)&tpurp==3) | (last_tpurp==3&(tpurp==1|tpurp==2)) ] <- 1
+# hbs
+linked$hbs <- 0
+linked$hbs[ ((last_tpurp==1|last_tpurp==2)&tpurp%in%c(13,14)) | (last_tpurp%in%c(13,14)&(tpurp==1|tpurp==2)) ] <- 1
+# hbr
+linked$hbr <- 0
+linked$hbr[ ((last_tpurp==1|last_tpurp==2)&tpurp%in%c(20,21)) | (last_tpurp%in%c(20,21)&(tpurp==1|tpurp==2)) ] <- 1
+# hbo
+linked$hbo <- 0
+linked$hbo[ ((last_tpurp==1|last_tpurp==2)&(tpurp%in%c(4,6,7,8,9,10,11,12,15,16,17,18,19,22,96,97))) |
+              ((last_tpurp%in%c(4,6,7,8,9,10,11,12,15,16,17,18,19,22,96,97))&(tpurp==1|tpurp==2)) ] <- 1
+detach(linked)
+# remove any trips with missing values for otaz and dtaz before segmentation; many activities are observed outside the entire TAZ boundary
+hbw <- subset(linked, hbw==1&!is.na(dtaz)&!is.na(otaz))
+hbs <- subset(linked, hbs==1&!is.na(dtaz)&!is.na(otaz))
+hbr <- subset(linked, hbr==1&!is.na(dtaz)&!is.na(otaz))
+hbo <- subset(linked, hbo==1&!is.na(dtaz)&!is.na(otaz))
+```
+
+### Generate a choice set with 10 alternatives for each trip
+```{r}
+# define the universal choice set and the number of alternatives
+universalCS <- unique(linked$dtaz)
+universalCS <- universalCS[!is.na(universalCS)] # remove NA
+numAlts <- 10
+# function to generate a choice set for each trip
+getCS <- function(dtaz) {
+  allNonchosenAlts <- universalCS[universalCS!=dtaz]
+  selectNonchosenAlts <- sample(allNonchosenAlts, (numAlts-1))
+  CS <- c(dtaz, selectNonchosenAlts)
+  CS <- sample(CS) # to randomly order alternatives
+  return(CS)
+}
+# function to create a "long" format for estimation
+getLong <- function(x) {
+  set.seed(1)
+  long <- expand.grid(alt=seq(1,numAlts,1), tripid=x$tripid)
+  CS <- mapply(getCS, dtaz=x$dtaz)
+  CS <- as.vector(CS)
+  long <- cbind(long,CS)
+  long <- merge(long, x[c("tripid","dtaz")], by="tripid")
+  long$chosen <- with(long, ifelse(CS==dtaz,TRUE,FALSE))
+  print(sum(long$chosen))
+  return(long)
+}
+# apply the function
+hbw.long <- getLong(hbw)
+hbs.long <- getLong(hbs)
+hbr.long <- getLong(hbr)
+hbo.long <- getLong(hbo)
+```
+
+### Add independent variables
+Two sets of independent variables are considered. Note that in destionation choice models, individual-specific variables must be specified as an interaction term with a variable (e.g., skim data) that vary with choice alternatives. In this study, however, we do not use such interaction terms. Instead, we rely on alternative-specific variables, especially on the zonal attributes and the logsum variables.
+
+* alternative-specific variables
+    + zonal characteristics
+    + origin-to-destination travel impedance variables
+    + origin-to-destination logsum variables
+* individual-specific variables
+    + trip attributes
+    + traveler characteristics
+```{r}
+# function to add differenty types of independent variables
+addIVs <- function(x,y) {
+  # trip attributes
+  x <- merge(x, y, by="tripid")
+  x$drivealone <- with(x, ifelse(mode==3,1,0))
+  # traveler characteristics
+  x <- merge(x, person, by=c("sampn","perno"))
+  x <- merge(x, household, by="sampn")
+  x$female <- with(x, ifelse(gend==2,1,0))
+  x$hsize1 <- with(x, ifelse(hhsiz==1,1,0))
+  x$hsize2 <- with(x, ifelse(hhsiz==2,1,0))
+  x$hsize3 <- with(x, ifelse(hhsiz==3,1,0))
+  x$hsize4 <- with(x, ifelse(hhsiz>=4,1,0))
+  x$hincLow <- with(x, ifelse(income%in%c(1,2),1,0))
+  x$hincMed <- with(x, ifelse(income%in%c(3,4),1,0))
+  x$hincHigh <- with(x, ifelse(income%in%c(5,6,7,8),1,0))
+  # zonal attributes
+  x <- merge(x, zonalEmpData, by.x="CS", by.y="TAZ", all.x=TRUE)
+  # TAZ-to-TAZ travel impedance variables
+  x$tdist <- tdist$dist[match(interaction(x$otaz,x$CS),interaction(tdist$otaz,tdist$dtaz))]
+  # TAZ-to-TAZ logsum variables
+  x$hbw_logsum_avg <- hbw_logsum_avg$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbw_logsum_avg$FROM,hbw_logsum_avg$TO))]
+  x$hbw_logsum_low <- hbw_logsum_low$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbw_logsum_low$FROM,hbw_logsum_low$TO))]
+  x$hbw_logsum_med <- hbw_logsum_med$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbw_logsum_med$FROM,hbw_logsum_med$TO))]
+  x$hbw_logsum_high <- hbw_logsum_high$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbw_logsum_high$FROM,hbw_logsum_high$TO))]
+  x$hbs_logsum_avg <- hbs_logsum_avg$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbs_logsum_avg$FROM,hbs_logsum_avg$TO))]
+  x$hbs_logsum_low <- hbs_logsum_low$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbs_logsum_low$FROM,hbs_logsum_low$TO))]
+  x$hbs_logsum_med <- hbs_logsum_med$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbs_logsum_med$FROM,hbs_logsum_med$TO))]
+  x$hbs_logsum_high <- hbs_logsum_high$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbs_logsum_high$FROM,hbs_logsum_high$TO))]
+  x$hbr_logsum_avg <- hbr_logsum_avg$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbr_logsum_avg$FROM,hbr_logsum_avg$TO))]
+  x$hbr_logsum_low <- hbr_logsum_low$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbr_logsum_low$FROM,hbr_logsum_low$TO))]
+  x$hbr_logsum_med <- hbr_logsum_med$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbr_logsum_med$FROM,hbr_logsum_med$TO))]
+  x$hbr_logsum_high <- hbr_logsum_high$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbr_logsum_high$FROM,hbr_logsum_high$TO))]
+  x$hbo_logsum_avg <- hbo_logsum_avg$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbo_logsum_avg$FROM,hbo_logsum_avg$TO))]
+  x$hbo_logsum_low <- hbo_logsum_low$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbo_logsum_low$FROM,hbo_logsum_low$TO))]
+  x$hbo_logsum_med <- hbo_logsum_med$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbo_logsum_med$FROM,hbo_logsum_med$TO))]
+  x$hbo_logsum_high <- hbo_logsum_high$LOGSUM[match(interaction(x$otaz,x$CS),interaction(hbo_logsum_high$FROM,hbo_logsum_high$TO))]
+  #
+  x <- with(x, x[order(tripid,alt),])
+  # remove individual trips with a missing D-TAZ for zonal data
+  del <- x[which(is.na(x$RetEmp)),"tripid"]
+  x <- subset(x, !(x$tripid %in% del))
+  return(x)
+}
+#
+hbw.long.IVs <- addIVs(hbw.long, hbw)
+hbs.long.IVs <- addIVs(hbs.long, hbs)
+hbr.long.IVs <- addIVs(hbr.long, hbr)
+hbo.long.IVs <- addIVs(hbo.long, hbo)
+```
+
+### Create as the mlogit data format
+```{r}
+library(mlogit)
+hbw.low.md <- mlogit.data(hbw.long.IVs[which(hbw.long.IVs$hincLow==1),], shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbw.med.md <- mlogit.data(hbw.long.IVs[which(hbw.long.IVs$hincMed==1),], shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbw.high.md <- mlogit.data(hbw.long.IVs[which(hbw.long.IVs$hincHigh==1),], shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbw.md <- mlogit.data(hbw.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbs.md <- mlogit.data(hbs.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbr.md <- mlogit.data(hbr.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbo.md <- mlogit.data(hbo.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+```
+
+### Estimate destination choice models
+```{r}
+# hbw.low
+hbw.low.dc <- mlogit(chosen ~ hbw_logsum_low + I(hbw_logsum_low^2) + I(hbw_logsum_low^3)
+  						+ TotEmp|0|0, hbw.low.md)
+summary(hbw.low.dc)
+# hbw.med
+hbw.med.dc <- mlogit(chosen ~ hbw_logsum_med + I(hbw_logsum_med^2) + I(hbw_logsum_med^3)
+							+ RetEmp + NonRet|0|0, hbw.med.md)
+summary(hbw.med.dc)
+# hbw.high
+hbw.high.md$NonRetSvcFin <- with(hbw.high.md, TotEmp - RetEmp - SvcEmp - FinEmp)
+hbw.high.dc <- mlogit(chosen ~ hbw_logsum_high + I(hbw_logsum_high^2) + I(hbw_logsum_high^3)
+							+ RetEmp + SvcEmp + FinEmp + NonRetSvcFin|0|0, hbw.high.md)
+summary(hbw.high.dc)
+# hbs
+hbs.dc <- mlogit(chosen ~ hbs_logsum_avg + I(hbs_logsum_avg^2) + I(hbs_logsum_avg^3)
+						+ RetEmp + NonRet + HHold|0|0, hbs.md)
+summary(hbs.dc)
+# hbr
+hbr.dc <- mlogit(chosen ~ hbr_logsum_avg + I(hbr_logsum_avg^2) + I(hbr_logsum_avg^3)
+						+ TotEmp + HHold + ParkAcres|0|0, hbr.md)
+summary(hbr.dc)
+# hbo
+hbo.dc <- mlogit(chosen ~ hbo_logsum_avg + I(hbo_logsum_avg^2) + I(hbo_logsum_avg^3)
+						+ RetEmp + SvcEmp + GvtEmp + NonRetSvcGvt + HHold|0|0, hbo.md)
+summary(hbo.dc)
+
+```
+

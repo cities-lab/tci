@@ -1,0 +1,24 @@
+From: Kihong Kim
+To: Liming Wang
+Date: 11/23/2014
+
+This week, I have worked on destination choice model estimation. Especially the logsum variables were added. Following Metro's destination choice model development, 6 models were developed, one for the following segmentation:
+* low-income home-based work trip purpose
+* medium-income home-based work trip purpose
+* high-income home-based work trip purpose
+* home-based shopping trip purpose
+* home-based recreation trip purpose
+* home-based non-school other trip purpose
+
+Here is my summary.
+I have uploade the R Markdown script in /home/workspace/TCI/code (estimateDestinationChoices.rmd).
+The rmd script is not complete because I was not able to install the RPostgreSQL package when I use the RStudio Server. Actually, the installation does not work even on my macbook since I updated OSX to Yosemite and installed the most recent R and RStudio.
+However, I wrote a model description as much detail as possible. I will keep revising the description.
+Instead, I have uploaded only the model estimation results in /home/workspace/TCI/doc (estimateDestinationChoices_11222014.docs).
+The model specifications are exactly the same as Merto's models, except dummy variables that indicate crossing a specific area.
+I have also uploaded a R script for loading logsum variables onto the PostgreSQL database in /home/workspace/TCI/code (loadLogsum.r).
+I will work on these things next week.
+create a predict function
+make the rmd file to work on the RStudio server
+combine the model results into one table
+
