@@ -1,0 +1,13 @@
+purpose, utility                                                                                
+hbwlowInc,log( totalEmp )
+hbwmidInc,log( 1 * retEmp + 1.6005 * remainingEmp )
+hbwhighInc,log( 5.6013 * finEmp + 1 * retEmp + 2.8605 * svcEmp + 2.4312 * remainingEmp )
+hbslowInc,log( 1 * retEmp + 0.008396 * remainingEmp + 0.022126 * hhs )
+hbsmidInc,log( 1 * retEmp + 0.008396 * remainingEmp + 0.022126 * hhs )
+hbshighInc,log( 1 * retEmp + 0.008396 * remainingEmp + 0.022126 * hhs )
+hbrlowInc,log( 1 * totalEmp + 1.2780 * hhs + 4.6833 * parkAcres )
+hbrmidInc,log( 1 * totalEmp + 1.2780 * hhs + 4.6833 * parkAcres )
+hbrhighInc,log( 1 * totalEmp + 1.2780 * hhs + 4.6833 * parkAcres )
+hbolowInc,log( 0.6109 * gvtEmp + 1 * retEmp + 0.6419 * svcEmp + 0.06802 * remainingEmp + 0.2393 * hhs )
+hbomidInc,log( 0.6109 * gvtEmp + 1 * retEmp + 0.6419 * svcEmp + 0.06802 * remainingEmp + 0.2393 * hhs )
+hbohighInc,log( 0.6109 * gvtEmp + 1 * retEmp + 0.6419 * svcEmp + 0.06802 * remainingEmp + 0.2393 * hhs )

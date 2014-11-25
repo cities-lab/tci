@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.7: http://docutils.sourceforge.net/" />
+<title>calculate_rnci.R</title>
+<meta name="author" content="Brian Gregor" />
+<meta name="date" content="09/26/05" />
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="calculate-rnci-r">
+<h1 class="title">calculate_rnci.R</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Brian Gregor</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference" href="mailto:brian.j.gregor&#64;odot.state.or.us">brian.j.gregor&#64;odot.state.or.us</a></td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>09/26/05</td></tr>
+<tr class="field"><th class="docinfo-name">Revisions:</th><td class="field-body"></td>
+</tr>
+<tr class="field"><th class="docinfo-name">License:</th><td class="field-body">GPL2</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="read-in-data-and-define-variables">
+<h1><a name="read-in-data-and-define-variables">Read in data and define variables</a></h1>
+<div class="section" id="read-in-network-data">
+<h2><a name="read-in-network-data">Read in network data</a></h2>
+<pre class="literal-block">
+Links &lt;- read.table(&quot;eug_netdata_rev_names.txt&quot;, header=TRUE)
+rownames(Links) &lt;- paste(Links$Inode, Links$Jnode, sep=&quot;-&quot;)
+Capacities &lt;- read.table(&quot;EUG_CAPS.TXT&quot;, header=TRUE)
+rownames(Capacities) &lt;- paste(Capacities$inode, Capacities$jnode, sep=&quot;-&quot;)
+</pre>
+</div>
+<div class="section" id="join-the-capacities-data-to-the-link-data-and-calculate-volume-to-capacity-ratios">
+<h2><a name="join-the-capacities-data-to-the-link-data-and-calculate-volume-to-capacity-ratios">Join the capacities data to the link data and calculate volume to capacity ratios</a></h2>
+<pre class="literal-block">
+Links$Cap &lt;- Capacities[match(rownames(Links), rownames(Capacities)),&quot;link_cap_per_day&quot;]
+Links$VcA &lt;- Links$AdtA / Links$Cap
+Links$VcB &lt;- Links$AdtB / Links$Cap
+</pre>
+</div>
+<div class="section" id="define-link-types">
+<h2><a name="define-link-types">Define link types</a></h2>
+<pre class="literal-block">
+Lt &lt;- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
+names(Lt) &lt;- c(&quot;Freeway&quot;, &quot;Principal Arterial&quot;, &quot;Major Arterial&quot;, &quot;Minor Arterial&quot;,
+               &quot;Major Collector&quot;, &quot;Neighborhood Collector&quot;, &quot;Local&quot;,
+               &quot;Freeway Ramp&quot;, &quot;Connector&quot;)
+</pre>
+</div>
+</div>
+<div class="section" id="define-functions-to-calculate-and-plot">
+<h1><a name="define-functions-to-calculate-and-plot">Define functions to calculate and plot</a></h1>
+<div class="section" id="define-a-function-to-calculate-the-rnci">
+<h2><a name="define-a-function-to-calculate-the-rnci">Define a function to calculate the RNCI</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">LinkAdt - a vector of link traffic volumes</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">LinkLanes - a vector of the number of lanes for each link</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">Rnci - a value of the road network concentration index</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+calcRnci &lt;- function(LinkAdt, LinkLanes){
+     LaneVol &lt;- sort(LinkAdt / LinkLanes)
+     PctLaneVol &lt;- cumsum(LaneVol)/sum(LaneVol)
+     PctEqVol &lt;- cumsum(rep(1,length(LaneVol)))/(sum(rep(1,length(LaneVol))))
+     Rnci &lt;- (sum(PctEqVol)-sum(PctLaneVol))/sum(PctEqVol)
+     Rnci
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-plot-a-lorenz-curve">
+<h2><a name="define-a-function-to-plot-a-lorenz-curve">Define a function to plot a Lorenz curve</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">LinkAdt - a vector of link traffic volumes</td>
+</tr>
+<tr class="field"><th class="field-name">parameter:</th><td class="field-body">LinkLanes - a vector of the number of lanes for each link</td>
+</tr>
+<tr class="field"><th class="field-name">return:</th><td class="field-body">none</td>
+</tr>
+</tbody>
+</table>
+<pre class="literal-block">
+plotRnci &lt;- function(LinkAdt, LinkLanes, ...){
+     LaneVol &lt;- sort(LinkAdt / LinkLanes)
+     Xvals &lt;- 100 * (1:length(LaneVol)/length(LaneVol))
+     Yvals &lt;- 100 * cumsum(LaneVol)/sum(LaneVol)
+     Rnci &lt;- round(calcRnci(LinkAdt, LinkLanes), 2)
+     plot(Xvals, Yvals, type=&quot;l&quot;, lwd=2,
+          xlab=&quot;Percent of Links&quot;, ylab=&quot;Percent of Lane Volume&quot;, ...)
+     lines(Xvals, Xvals, lty=2, lwd=2)
+     text(0, 80, labels=paste(&quot;RNCI =&quot;, Rnci), pos=4, cex=1.25)
+     legend(0, 100, legend=c(&quot;Pct of Total Lane Volume&quot;, &quot;Line of Equality&quot;),
+          lty=c(1,2), lwd=2, bty=&quot;n&quot;)
+     }
+</pre>
+</div>
+</div>
+<div class="section" id="produce-pdf-plots-of-several-rnci-comparisons">
+<h1><a name="produce-pdf-plots-of-several-rnci-comparisons">Produce pdf plots of several RNCI comparisons</a></h1>
+<div class="section" id="plot-rnci-for-each-functional-class-comparing-scenarios-a-and-b">
+<h2><a name="plot-rnci-for-each-functional-class-comparing-scenarios-a-and-b">Plot RNCI for each functional class comparing scenarios A and B</a></h2>
+<pre class="literal-block">
+pdf(&quot;FerryStCompare.pdf&quot;, width=10, height=7)
+OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+for(lt in Lt[c(1:6,8)]){
+     LinkAdtALt &lt;- Links$AdtA[Links$Type == lt]
+     LinkAdtBLt &lt;- Links$AdtB[Links$Type == lt]
+     Lanes &lt;- Links$Lanes[Links$Type == lt]
+     plotRnci(LinkAdtALt, Lanes, main=&quot;With Ferry St. Bridge&quot;)
+     plotRnci(LinkAdtBLt, Lanes, main=&quot;Without Ferry St. Bridge&quot;)
+     mtext(paste(names(Lt)[Lt == lt], &quot;Road Network Concentration Index&quot;),
+          line=1, outer=TRUE, cex=2)
+     }
+par(OldPar)
+dev.off()
+</pre>
+</div>
+<div class="section" id="plot-rnci-for-each-functional-class-comparing-area-types">
+<h2><a name="plot-rnci-for-each-functional-class-comparing-area-types">Plot RNCI for each functional class comparing area types</a></h2>
+<pre class="literal-block">
+pdf(&quot;AreaTypeCompare.pdf&quot;, width=10, height=7)
+OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+for(lt in Lt[2:6]){
+     LinkAdtALt &lt;- Links$AdtA[Links$Type == lt &amp; Links$AreaType == 1]
+     LinkAdtBLt &lt;- Links$AdtA[Links$Type == lt &amp; Links$AreaType == 2]
+     LanesALt &lt;- Links$Lanes[Links$Type == lt &amp; Links$AreaType == 1]
+     LanesBLt &lt;- Links$Lanes[Links$Type == lt &amp; Links$AreaType == 2]
+     plotRnci(LinkAdtALt, LanesALt, main=&quot;Low Connectivity&quot;)
+     plotRnci(LinkAdtBLt, LanesBLt, main=&quot;High Connectivity&quot;)
+     mtext(paste(names(Lt)[Lt == lt], &quot;Road Network Concentration Index&quot;),
+          line=1, outer=TRUE, cex=2)
+     }
+par(OldPar)
+dev.off()
+</pre>
+</div>
+<div class="section" id="calculate-and-plot-aggregate-values-for-arterials-and-collectors-by-area-types">
+<h2><a name="calculate-and-plot-aggregate-values-for-arterials-and-collectors-by-area-types">Calculate and plot aggregate values for arterials and collectors by area types</a></h2>
+<pre class="literal-block">
+pdf(&quot;ArtCollAreaTypeCompare.pdf&quot;, width=10, height=7)
+OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+IsArterial &lt;- Links$Type %in% c(2,3,4)
+IsCollector &lt;- Links$Type %in% c(5,6)
+LinkAdtA &lt;- Links$AdtA[IsArterial &amp; Links$AreaType == 1]
+LanesA &lt;- Links$Lanes[IsArterial &amp; Links$AreaType == 1]
+LinkAdtB &lt;- Links$AdtB[IsArterial &amp; Links$AreaType == 2]
+LanesB &lt;- Links$Lanes[IsArterial &amp; Links$AreaType == 2]
+plotRnci(LinkAdtA, LanesA, main=&quot;Low Connectivity&quot;)
+plotRnci(LinkAdtB, LanesB, main=&quot;High Connectivity&quot;)
+mtext(&quot;Average Arterial Road Network Concentration Index&quot;,
+     line=1, outer=TRUE, cex=2)
+
+LinkAdtA &lt;- Links$AdtA[IsCollector &amp; Links$AreaType == 1]
+LanesA &lt;- Links$Lanes[IsCollector &amp; Links$AreaType == 1]
+LinkAdtB &lt;- Links$AdtB[IsCollector &amp; Links$AreaType == 2]
+LanesB &lt;- Links$Lanes[IsCollector &amp; Links$AreaType == 2]
+plotRnci(LinkAdtA, LanesA, main=&quot;Low Connectivity&quot;)
+plotRnci(LinkAdtB, LanesB, main=&quot;High Connectivity&quot;)
+mtext(&quot;Average Collector Road Network Concentration Index&quot;,
+     line=1, outer=TRUE, cex=2)
+par(OldPar)
+dev.off()
+</pre>
+</div>
+<div class="section" id="calculate-a-composite-rnci-based-on-capacities">
+<h2><a name="calculate-a-composite-rnci-based-on-capacities">Calculate a composite RNCI based on capacities</a></h2>
+<pre class="literal-block">
+pdf(&quot;CompositeAreaTypeCompare.pdf&quot;, width=10, height=7)
+OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+IsMajor &lt;- Links$Type %in% c(2, 3, 4, 5, 6)
+plotRnci(Links$AdtA[IsMajor &amp; Links$AreaType == 1], Links$Cap[IsMajor &amp; Links$AreaType == 1],
+          main=&quot;Low Connectivity&quot;)
+plotRnci(Links$AdtB[IsMajor &amp; Links$AreaType == 2], Links$Cap[IsMajor &amp; Links$AreaType == 2],
+          main=&quot;High Connectivity&quot;)
+mtext(&quot;Capacity Weighted Average Arterial and Collector\nRoad Network Concentration Index&quot;,
+     line=0, outer=TRUE, cex=2)
+par(OldPar)
+dev.off()
+</pre>
+</div>
+</div>
+<div class="section" id="make-metafiles-for-report">
+<h1><a name="make-metafiles-for-report">Make Metafiles for Report</a></h1>
+<div class="section" id="id1">
+<h2><a name="id1">Plot RNCI for each functional class comparing scenarios A and B</a></h2>
+<pre class="literal-block">
+for(lt in Lt[c(1:6,8)]){
+     FileName &lt;- paste(&quot;FerryStComp&quot;, lt, &quot;.emf&quot;, sep=&quot;&quot;)
+     win.metafile(FileName, width=10, height=7)
+     OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+     plotRnci(Links$AdtA[Links$Type == lt], Links$Lanes[Links$Type == lt],
+          main=&quot;With Ferry St. Bridge&quot;)
+     plotRnci(Links$AdtB[Links$Type == lt], Links$Lanes[Links$Type == lt],
+          main=&quot;Without Ferry St. Bridge&quot;)
+     mtext(paste(names(Lt)[Lt == lt], &quot;Road Network Concentration Index&quot;),
+          line=1, outer=TRUE, cex=1.5)
+     par(OldPar)
+     dev.off()
+     }
+</pre>
+</div>
+<div class="section" id="id2">
+<h2><a name="id2">Plot RNCI for each functional class comparing area types</a></h2>
+<pre class="literal-block">
+for(lt in Lt[2:6]){
+     FileName &lt;- paste(&quot;AreaTypeComp&quot;, lt, &quot;.emf&quot;, sep=&quot;&quot;)
+     win.metafile(FileName, width=10, height=7)
+     OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+     LinkAdtALt &lt;- Links$AdtA[Links$Type == lt &amp; Links$AreaType == 1]
+     LinkAdtBLt &lt;- Links$AdtA[Links$Type == lt &amp; Links$AreaType == 2]
+     LanesALt &lt;- Links$Lanes[Links$Type == lt &amp; Links$AreaType == 1]
+     LanesBLt &lt;- Links$Lanes[Links$Type == lt &amp; Links$AreaType == 2]
+     plotRnci(LinkAdtALt, LanesALt, main=&quot;Low Connectivity&quot;)
+     plotRnci(LinkAdtBLt, LanesBLt, main=&quot;High Connectivity&quot;)
+     mtext(paste(names(Lt)[Lt == lt], &quot;Road Network Concentration Index&quot;),
+          line=1, outer=TRUE, cex=1.5)
+     par(OldPar)
+     dev.off()
+     }
+</pre>
+</div>
+<div class="section" id="id3">
+<h2><a name="id3">Calculate and plot aggregate values for arterials and collectors by area types</a></h2>
+<pre class="literal-block">
+win.metafile(&quot;ArterialAreaTypeComp.emf&quot;, width=10, height=7)
+OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+IsArterial &lt;- Links$Type %in% c(2,3,4)
+IsCollector &lt;- Links$Type %in% c(5,6)
+LinkAdtA &lt;- Links$AdtA[IsArterial &amp; Links$AreaType == 1]
+LanesA &lt;- Links$Lanes[IsArterial &amp; Links$AreaType == 1]
+LinkAdtB &lt;- Links$AdtB[IsArterial &amp; Links$AreaType == 2]
+LanesB &lt;- Links$Lanes[IsArterial &amp; Links$AreaType == 2]
+plotRnci(LinkAdtA, LanesA, main=&quot;Low Connectivity&quot;)
+plotRnci(LinkAdtB, LanesB, main=&quot;High Connectivity&quot;)
+mtext(&quot;Average Arterial Road Network Concentration Index&quot;,
+     line=1, outer=TRUE, cex=1.5)
+par(OldPar)
+dev.off()
+
+win.metafile(&quot;CollectorAreaTypeComp.emf&quot;, width=10, height=7)
+OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+LinkAdtA &lt;- Links$AdtA[IsCollector &amp; Links$AreaType == 1]
+LanesA &lt;- Links$Lanes[IsCollector &amp; Links$AreaType == 1]
+LinkAdtB &lt;- Links$AdtB[IsCollector &amp; Links$AreaType == 2]
+LanesB &lt;- Links$Lanes[IsCollector &amp; Links$AreaType == 2]
+plotRnci(LinkAdtA, LanesA, main=&quot;Low Connectivity&quot;)
+plotRnci(LinkAdtB, LanesB, main=&quot;High Connectivity&quot;)
+mtext(&quot;Average Collector Road Network Concentration Index&quot;,
+     line=1, outer=TRUE, cex=1.5)
+par(OldPar)
+dev.off()
+</pre>
+</div>
+<div class="section" id="id4">
+<h2><a name="id4">Calculate a composite RNCI based on capacities</a></h2>
+<pre class="literal-block">
+win.metafile(&quot;CompositeAreaTypeComp.emf&quot;, width=10, height=7)
+OldPar &lt;- par(mfrow=c(1,2), oma=c(1,1,4,1))
+IsMajor &lt;- Links$Type %in% c(2, 3, 4, 5, 6)
+plotRnci(Links$AdtA[IsMajor &amp; Links$AreaType == 1], Links$Cap[IsMajor &amp; Links$AreaType == 1],
+     main=&quot;Low Connectivity&quot;)
+plotRnci(Links$AdtB[IsMajor &amp; Links$AreaType == 2], Links$Cap[IsMajor &amp; Links$AreaType == 2],
+     main=&quot;High Connectivity&quot;)
+mtext(&quot;Capacity Weighted Average Arterial and Collector\nRoad Network Concentration Index&quot;,
+     line=0, outer=TRUE, cex=1.5)
+par(OldPar)
+dev.off()
+</pre>
+</div>
+</div>
+</div>
+</body>
+</html>

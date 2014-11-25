@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.7: http://docutils.sourceforge.net/" />
+<title>tci_setup.R</title>
+<meta name="author" content="Brian Gregor" />
+<meta name="date" content="9/26/05" />
+<meta name="copyright" content="Oregon Department of Transportation" />
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="tci-setup-r">
+<h1 class="title">tci_setup.R</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Brian Gregor</td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>9/26/05</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference" href="mailto:brian.j.gregor&#64;odot.state.or.us">brian.j.gregor&#64;odot.state.or.us</a></td></tr>
+<tr><th class="docinfo-name">Copyright:</th>
+<td>Oregon Department of Transportation</td></tr>
+<tr class="field"><th class="docinfo-name">license:</th><td class="field-body">GPL2</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="description">
+<h1><a name="description">Description</a></h1>
+<p>This script prepares the workspace and file directories for calculating the Travel Cost Index and related measures. The script needs to be executed at the top level of a JEMnR model structure.</p>
+</div>
+<div class="section" id="load-generic-jemnr-functions">
+<h1><a name="load-generic-jemnr-functions">Load generic JEMnR functions</a></h1>
+<pre class="literal-block">
+codeLoc &lt;- &quot;rcode&quot;
+source(paste(codeLoc, &quot;/jemnrFunctions.R&quot;, sep=&quot;&quot;))
+attach(fun) #Attach function list fun to workspace
+</pre>
+</div>
+<div class="section" id="make-tci-directory-if-doesn-t-exist">
+<h1><a name="make-tci-directory-if-doesn-t-exist">Make tci directory if doesn't exist</a></h1>
+<pre class="literal-block">
+if(!file.exists(&quot;tci&quot;)) dir.create(&quot;tci&quot;)
+if(!file.exists(&quot;tci/graphics&quot;)) dir.create(&quot;tci/graphics&quot;)
+</pre>
+</div>
+<div class="section" id="load-variable-definitions">
+<h1><a name="load-variable-definitions">Load Variable Definitions</a></h1>
+<pre class="literal-block">
+# Define income group abbreviation
+Ic &lt;- c(&quot;lowInc&quot;, &quot;midInc&quot;, &quot;highInc&quot;)
+
+# Define zone abbreviation and limit to internal zones
+load(&quot;inputs/RData/districts.RData&quot;)
+externalZones &lt;- districts$zone[districts$zone&lt;100]
+zoneNames &lt;- districts$zone
+Zo &lt;- as.character(zoneNames)
+IsInternal &lt;- !(Zo %in% as.character(externalZones))
+Zi &lt;- Zo[IsInternal]; rm(IsInternal)
+
+# Define trip purpose abbreviation
+# The purposes for this study (now) are limited to the home-based trips
+# They exclude nonhome-based trips, school trips and college trips
+Pr &lt;- c(&quot;hbw&quot;, &quot;hbs&quot;, &quot;hbr&quot;, &quot;hbo&quot;)
+
+# Define the travel modes
+Md &lt;- c(&quot;driveAlone&quot;, &quot;drivePass&quot;, &quot;pass&quot;, &quot;busWalk&quot;, &quot;parkAndRideBus&quot;, &quot;bike&quot;, &quot;walk&quot;)
+
+# Define time and cost coefficients to convert logsums into time and cost equivalents
+IvTimeCoeff.Pr &lt;- c(hbw=-0.03528, hhs=-0.02275, hhr=-0.02275, hho=-0.02275)
+OpCostCoeff.PrIc &lt;- rbind(
+               hbw=c(lowInc=-0.5417, midInc=-0.5417, highInc=-0.5417),
+               hbs=c(lowInc=-0.4033, midInc=-0.4033, highInc=-0.4033),
+               hbr=c(lowInc=-0.4033, midInc=-0.4033, highInc=-0.4033),
+               hbo=c(lowInc=-0.4033, midInc=-0.4033, highInc=-0.4033))
+
+# Define bike and walk access utility coefficients
+BikeAccessCoeff.Pr &lt;- c(hbw=-3.217, hbs=-1.839, hbr=-1.839, hbo=-1.839)
+WalkAccessCoeff.Pr &lt;- c(hbw=-4.389, hbs=-2.532, hbr=-2.532, hbo=-2.532)
+</pre>
+</div>
+<div class="section" id="calculate-and-save-the-size-variables-for-each-trip-purpose">
+<h1><a name="calculate-and-save-the-size-variables-for-each-trip-purpose">Calculate and Save the Size Variables for each Trip Purpose</a></h1>
+<pre class="literal-block">
+# Load the utility descriptions
+sizeVarUtils &lt;- readUtils(&quot;inputs/sizeVarUtils.csv&quot;)
+verifyVarName(&quot;sizeVarUtils&quot;,varDictionary)
+
+# Load function for calculating the size variables and saving them to disk
+source(&quot;rcode/tci/calc_size_vars.R&quot;)
+
+for(pr in Pr){
+     for(ic in Ic){
+          CombinedPrIc &lt;- paste(pr, ic, sep=&quot;&quot;)
+          calcSizeVars(CombinedPrIc)
+          }
+     }
+</pre>
+</div>
+<div class="section" id="calculate-utilities-and-logsums">
+<h1><a name="calculate-utilities-and-logsums">Calculate utilities and logsums</a></h1>
+<pre class="literal-block">
+for(pr in Pr){
+      accessUtilities(pr)
+      }
+for(pr in Pr){
+      accessLogSum(pr)
+      }
+</pre>
+</div>
+</div>
+</body>
+</html>

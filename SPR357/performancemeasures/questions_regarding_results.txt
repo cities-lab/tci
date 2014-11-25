@@ -1,0 +1,22 @@
+Questions about RVMPO Performance Measures Outputs
+
+Maps and Graphs in final_output\tci\graphics\plot_tci
+-----------------------------------------------------
+
+1.   attraction_scores.wmf - Why do there appear to be islands of much lower attractiveness in Medford and Ashland?
+2.   district_alt_mode_coverage.wmf - Why are the percetages so much higher than in the research report (Figure 4.13)?
+3.   district_nonauto_auto_cost.wmf - Why is the ratio for Ashland negative. Also, except for Ashland, the ratios are much lower than in the research report?
+4.   district_tci.wmf - No obvious problems
+5.   hist_ave_cost_by_income_purpose.wmf - Why is the range of values narrower than in the research report?
+6.   hist_nonauto_cost_ratio_by_income_purpose.wmf - This is a set of maps, not a set of histograms. It looks to be maps of nonauto market coverage by trip purpose and income. I'm surprised by the rural TAZs that have 100 percent coverage for non-work trips. Also, some TAZs are missing from the maps. What are their values?
+7.   hist_nonauto_percent_by_income_purpose.wmf - This is a set of maps, not a set of histograms. It looks to be maps of TCI by trip purpose and calculation method. The patterns are similar to those of maps in the research report. The color ranges vary more between the calculation methods. I don't see any obvious problems.
+8.   hist_tci_by_modeagg_income.wmf - The patterns are similar to those in the research report. The ranges are more restricted. I don't see any obvious problems.
+9.   hist_tci_by_modeagg_purpose.wmf - Much less dispersion of values than those in the research report.
+10.  map_ave_cost_by_income_purpose.wmf - Much smaller range of values than maps in research report. Also transit has a more pronounced effect on increasing average costs for shopping trips.
+11.  map_nonauto_auto_cost_ratio_by_income_purpose.wmf - Pattern looks very different than in research report. It looks like there are missing values along transit corridors.
+12.  map_nonauto_percent_by_income_purpose.wmf - Very different than the maps in the research report. Most of the TAZs for most purposes and income groups are in the 90-100 percent alternative mode market coverage. This seems much too high. The research report graphs show a much more reasonable distribution.
+13.  map_tci_by_modeagg_income.wmf - The patterns look reasonable, but the values are quite a bit lower than in the research report.
+14.  map_tci_by_modeagg_purpose.wmf - The patterns look reasonable, but the values are lower than in the research report.
+
+
+  

@@ -1,0 +1,81 @@
+~/**********************************************************
+~/  The parameters for the macro call are as follows:
+~/  1) From Node, 2) To Node
+~/*****************************************************************************
+~/  The following matrices and extra attribute must be defined before running
+~/  mf93 Select Link Peak Period Trip Length
+~/  mf95 -Select Link Volume Weighted Trip Length
+~/  ms83 -Select Link Total Peak Period Trips
+~/  ms85 -Average Select Link Trip Length
+~/  @slfr1 -Holds Select Link Volumes
+~/********************************************************************************
+~/  The following matrices come from the TripLen.mac. This macro is run first by R
+~/  mf4:p1veh  pm1vehicle             
+~/ 
+mm
+~o=32
+~/
+s=%3%
+~/***********************
+~/ Reset all Matrices to 0
+~/***********************
+3.21
+~+#1#y#mf93#n#0###n#1##4
+3.21
+~+#1#y#mf95#n#0###n#1##4
+3.21
+~+#1#y#ms83#n#0###1##4
+3.21
+~+#1#y#ms85#n#0###1##4
+~/
+~/***********************
+~/ Reset all links to 0
+~/***********************
+2.41
+~+#1#y#@slfr1#n#0##all#2#1##6
+~/
+~/*************************            
+~/Tag link for select link
+~/*************************
+2.41
+~+#1#y#@slfr1#n#0##all#2#2#1#y#@slfr1#n#1##l=%1%,%2%##2#2#6
+~/
+~/******************************************
+~/ Peak Period Select Link -Saves out mf93
+~/******************************************
+2
+5.11
+~+#1#2#1#5#mf4##mf4##6#@slfr1#.max.#0.5,1.5#mf93#n#4#100#.01#.01
+5.21
+2
+~/
+~/**************************
+~/ Peak Total Trips -Save out ms83
+~/**************************
+3.21
+~+#1#y#ms83#n#mf93##mf93##y#100,844##100,844##+#+#1##4
+~/
+~/*****************************   
+~/ Daily OD Trip Length Matrix    
+~/*****************************   
+3.21
+~+#1#y#mf95#n#(mf90*mf93)/ms83###n#1##4
+~/
+~/**************************
+~/ Average Daily Trip Length
+~/**************************
+3.21
+~+#1#y#ms85#n#mf95##mf95##y#100,844##100,844##+#+#1##4
+
+~/**************************
+~/ Output Average Daily Trip Length
+~/**************************
+3.14
+3
+ms85
+
+SLTripLength.txt
+5
+9
+~/**************************
+c=end of Select Link Trip Length macro

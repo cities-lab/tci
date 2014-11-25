@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.7: http://docutils.sourceforge.net/" />
+<title>plot_tci_measures.R</title>
+<meta name="author" content="Brian Gregor" />
+<meta name="date" content="9/26/05" />
+<meta name="copyright" content="Oregon Department of Transportation" />
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="plot-tci-measures-r">
+<h1 class="title">plot_tci_measures.R</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Brian Gregor</td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>9/26/05</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference" href="mailto:brian.j.gregor&#64;odot.state.or.us">brian.j.gregor&#64;odot.state.or.us</a></td></tr>
+<tr><th class="docinfo-name">Copyright:</th>
+<td>Oregon Department of Transportation</td></tr>
+<tr class="field"><th class="docinfo-name">license:</th><td class="field-body">GPL2</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="description">
+<h1><a name="description">Description</a></h1>
+<p>This script generates a variety of plots and maps of the tci related measures.</p>
+</div>
+<div class="section" id="load-the-results">
+<h1><a name="load-the-results">Load the results</a></h1>
+<pre class="literal-block">
+# Reference data
+load(&quot;tci/MarketAttractions.ZiIcPr.RData&quot;)
+load(&quot;tci/MarketLogSums.ZiIcPr.RData&quot;)
+load(&quot;tci/AttractionScore.RData&quot;)
+load(&quot;tci/AttractionScoreTransit.RData&quot;)
+load(&quot;tci/ReferenceZone.RData&quot;)
+load(&quot;tci/ReferenceAttractions.RData&quot;)
+
+# Best market cost
+load(&quot;tci/BestMarketCost.ZiIc.RData&quot;)
+load(&quot;tci/BestMarketCost.ZiPr.RData&quot;)
+load(&quot;tci/BestMarketCost.Zi.RData&quot;)
+load(&quot;tci/BestMarketCost.DiIc.RData&quot;)
+load(&quot;tci/BestMarketCost.DiPr.RData&quot;)
+load(&quot;tci/BestMarketCost.Di.RData&quot;)
+
+# Composite market cost
+load(&quot;tci/CompMarketCost.ZiIc.RData&quot;)
+load(&quot;tci/CompMarketCost.ZiPr.RData&quot;)
+load(&quot;tci/CompMarketCost.Zi.RData&quot;)
+load(&quot;tci/CompMarketCost.DiIc.RData&quot;)
+load(&quot;tci/CompMarketCost.DiPr.RData&quot;)
+load(&quot;tci/CompMarketCost.Di.RData&quot;)
+
+# Average market cost
+load(&quot;tci/AveMarketCost.ZiIc.RData&quot;)
+load(&quot;tci/AveMarketCost.ZiPr.RData&quot;)
+load(&quot;tci/AveMarketCost.Zi.RData&quot;)
+load(&quot;tci/AveMarketCost.DiIc.RData&quot;)
+load(&quot;tci/AveMarketCost.DiPr.RData&quot;)
+load(&quot;tci/AveMarketCost.Di.RData&quot;)
+
+# Travel Cost Index
+load(&quot;tci/Tci.ZiIc.RData&quot;)
+load(&quot;tci/Tci.ZiPr.RData&quot;)
+load(&quot;tci/Tci.Zi.RData&quot;)
+load(&quot;tci/Tci.DiIc.RData&quot;)
+load(&quot;tci/Tci.DiPr.RData&quot;)
+load(&quot;tci/Tci.Di.RData&quot;)
+
+# Travel Cost Index 2
+load(&quot;tci/Tci2.ZiIc.RData&quot;)
+load(&quot;tci/Tci2.ZiPr.RData&quot;)
+load(&quot;tci/Tci2.Zi.RData&quot;)
+load(&quot;tci/Tci2.DiIc.RData&quot;)
+load(&quot;tci/Tci2.DiPr.RData&quot;)
+load(&quot;tci/Tci2.Di.RData&quot;)
+
+# Travel Cost Index 3
+load(&quot;tci/Tci3.ZiIc.RData&quot;)
+load(&quot;tci/Tci3.ZiPr.RData&quot;)
+load(&quot;tci/Tci3.Zi.RData&quot;)
+load(&quot;tci/Tci3.DiIc.RData&quot;)
+load(&quot;tci/Tci3.DiPr.RData&quot;)
+load(&quot;tci/Tci3.Di.RData&quot;)
+
+# Average non-auto market cost
+load(&quot;tci/NonAutoMarketCost.ZiIc.RData&quot;)
+load(&quot;tci/NonAutoMarketCost.ZiPr.RData&quot;)
+load(&quot;tci/NonAutoMarketCost.Zi.RData&quot;)
+load(&quot;tci/NonAutoMarketCost.DiIc.RData&quot;)
+load(&quot;tci/NonAutoMarketCost.DiPr.RData&quot;)
+load(&quot;tci/NonAutoMarketCost.Di.RData&quot;)
+
+# Average auto market cost
+load(&quot;tci/AutoMarketCost.ZiIc.RData&quot;)
+load(&quot;tci/AutoMarketCost.ZiPr.RData&quot;)
+load(&quot;tci/AutoMarketCost.Zi.RData&quot;)
+load(&quot;tci/AutoMarketCost.DiIc.RData&quot;)
+load(&quot;tci/AutoMarketCost.DiPr.RData&quot;)
+load(&quot;tci/AutoMarketCost.Di.RData&quot;)
+
+# Alternative mode market coverage
+load(&quot;tci/AltMarketCoverage.ZiIcPr.RData&quot;)
+load(&quot;tci/AltMarketCoverage.ZiIc.RData&quot;)
+load(&quot;tci/AltMarketCoverage.ZiPr.RData&quot;)
+load(&quot;tci/AltMarketCoverage.Zi.RData&quot;)
+load(&quot;tci/AltMarketCoverage.DiIc.RData&quot;)
+load(&quot;tci/AltMarketCoverage.DiPr.RData&quot;)
+load(&quot;tci/AltMarketCoverage.Di.RData&quot;)
+
+# NonAutoCostRatio
+load(&quot;tci/NonAutoCostRatio.ZiIcPr.RData&quot;)
+load(&quot;tci/NonAutoCostRatio.ZiIc.RData&quot;)
+load(&quot;tci/NonAutoCostRatio.ZiPr.RData&quot;)
+load(&quot;tci/ANonAutoCostRatio.Zi.RData&quot;)
+load(&quot;tci/NonAutoCostRatio.DiIc.RData&quot;)
+load(&quot;tci/NonAutoCostRatio.DiPr.RData&quot;)
+load(&quot;tci/ANonAutoCostRatio.Di.RData&quot;)
+</pre>
+</div>
+<div class="section" id="load-mapping-data-and-functions">
+<h1><a name="load-mapping-data-and-functions">Load mapping data and functions</a></h1>
+<pre class="literal-block">
+# load required libraries
+library(&quot;maptools&quot;)
+library(&quot;RColorBrewer&quot;)
+
+# identify location of data
+ShapesDirectory &lt;- &quot;C:/medfordmodel/gis&quot;
+
+# read in the taz data shapefile
+TazFile &lt;- paste(ShapesDirectory, &quot;TAZ.shp&quot;, sep=&quot;/&quot;)
+TazShape &lt;- read.shape(TazFile)
+
+# extract the attribute data
+TazData &lt;- TazShape$att.data
+
+# convert to polygon file for mapping
+TazPoly &lt;- Map2poly(TazShape, TazShape$att.data$TAZ)
+
+# make an index vector to the taz
+TazIndex &lt;- as.character(TazData$TAZ)
+
+# get the location of the reference zone
+TazCentroids.ZiXy &lt;- get.Pcent(TazShape)
+rownames(TazCentroids.ZiXy) &lt;- TazIndex
+RefZoneCent &lt;- TazCentroids.ZiXy[ReferenceZone,]
+
+# write a function to plot taz values as a coropleth map
+coropleth &lt;- function(geo=TazPoly, data, DataIndex=TazIndex, palette=&quot;Blues&quot;, breaks,
+                         LegendSize=1, PlotRef=TRUE, LegendOffset=c(1,1),
+                         LegendTitle=NULL, RefColor=&quot;red&quot;, ...){
+     DataCut &lt;- cut(data[DataIndex], breaks, include.lowest=TRUE, labels=FALSE)
+     ColorPalette &lt;- brewer.pal(length(breaks)-1, palette)
+     colors &lt;- ColorPalette[DataCut]
+     plot(geo, col=colors, xaxt=&quot;n&quot;, yaxt=&quot;n&quot;, border=NA, ...)
+     if(PlotRef) points(RefZoneCent[1], RefZoneCent[2], pch=1, col=RefColor, cex=2, lwd=2)
+     LegendText &lt;- paste(breaks[1:(length(breaks)-1)], breaks[2:length(breaks)], sep=&quot; - &quot;)
+     if(LegendSize != 0){
+          legend(720000*LegendOffset[1], 277100*LegendOffset[2], legend=LegendText,
+               title=LegendTitle, cex=LegendSize, fill=ColorPalette)
+          }
+     if(PlotRef){
+       points(619220, 150140, pch=1, col=RefColor, cex=2, lwd=2)
+       text(623250, 150140, &quot;Reference Zone&quot;, pos=4)
+       }
+     }
+
+# Make names for household income groups and trip types for plotting
+IcNames &lt;- c(&quot;Low Income&quot;, &quot;Mid Income&quot;, &quot;High Income&quot;)
+names(IcNames) &lt;- Ic
+PrNames &lt;- c(&quot;Work&quot;, &quot;Shopping&quot;, &quot;Recreation&quot;, &quot;Other&quot;)
+names(PrNames) &lt;- Pr
+</pre>
+</div>
+<div class="section" id="plot-histograms-and-maps-of-various-measures">
+<h1><a name="plot-histograms-and-maps-of-various-measures">Plot histograms and maps of various measures</a></h1>
+<div class="section" id="plot-histograms-and-map-of-attraction-scores">
+<h2><a name="plot-histograms-and-map-of-attraction-scores">Plot histograms and map of attraction scores</a></h2>
+<pre class="literal-block">
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(c(1,2),nrow=2), widths=4, heights=c(3,1))
+# Calculate log of scores and set -Inf to -14
+AttractionScore2 &lt;- log(AttractionScore)
+AttractionScore2[is.infinite(AttractionScore2)] &lt;- -14
+# Set margins for 1st plot
+Opar &lt;- par(mar=c(1,1,2.25,1))
+# Plot map of scores
+coropleth(TazPoly, AttractionScore2, TazIndex, &quot;RdYlBu&quot;,
+     breaks=c(-14, seq(-10, 0, 2), 0.5, 1, 2, 3, 4),
+     main=&quot;&quot;, LegendOffset=c(1.05,1), LegendTitle=&quot;log(score)&quot;,
+     RefColor=&quot;red&quot;)
+# Add plot title
+# mtext(&quot;Geographic and Frequency Distributions of Attraction Scores&quot;, line=1, cex=1.15)
+# Set margins for 2nd plot
+par(mar=c(4,5,1,1))
+# Plot histogram of scores, using the same breaks and colors as the map
+HistData &lt;- rep(AttractionScore2, rowSums(Hh.ZiIc))
+hist(HistData, xlab=&quot;&quot;, ylab=&quot;&quot;,
+     breaks=c(-14, seq(-10, 0, 2), 0.5, 1, 2, 3, 4),
+     col=brewer.pal(11, &quot;RdYlBu&quot;), main=&quot;&quot;, freq=FALSE)
+mtext(&quot;Household\nFrequency&quot;, side=2, line=2.25)
+mtext(&quot;log(score)&quot;, side=1, line=2)
+# Save the plot and restore the graphics parameters
+savePlot(filename=&quot;tci/graphics/attraction_scores&quot;)
+par(Opar)
+</pre>
+</div>
+<div class="section" id="plot-household-histograms-of-average-market-costs-for-all-purposes-and-incomes">
+<h2><a name="plot-household-histograms-of-average-market-costs-for-all-purposes-and-incomes">Plot household histograms of average market costs for all purposes and incomes</a></h2>
+<pre class="literal-block">
+# Define breaks and limits for histograms
+Breaks &lt;- seq(0, 3, 0.25)
+Xlim &lt;- c(0,3)
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:12,nrow=4))
+Opar &lt;- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ic in Ic){
+     for(pr in Pr){
+          HistData &lt;- rep(AveMarketCost.ZiIcPr[,ic,pr], Hh.ZiIc[,ic])
+          hist(HistData, xlab=&quot;&quot;, xlim=Xlim, breaks=Breaks, axes=FALSE,
+          ylab=&quot;&quot;, col=&quot;skyblue&quot;, main=NULL, freq=FALSE, ylim=c(0,2.5))
+          axis(1, at=seq(0,2.5,0.5))
+          if(ic == &quot;lowInc&quot;) mtext(PrNames[pr], side=2, line=3)
+          if(pr == &quot;hbw&quot;) mtext(IcNames[ic], side=3, line=1)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/hist_ave_cost_by_income_purpose&quot;)
+</pre>
+</div>
+<div class="section" id="plot-maps-of-average-market-costs-for-all-purposes-and-incomes">
+<h2><a name="plot-maps-of-average-market-costs-for-all-purposes-and-incomes">Plot maps of average market costs for all purposes and incomes</a></h2>
+<pre class="literal-block">
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:12,nrow=4))
+Opar &lt;- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ic in Ic){
+     for(pr in Pr){
+          if((ic == &quot;highInc&quot;) &amp; (pr == &quot;hbw&quot;)){
+               coropleth(TazPoly, AveMarketCost.ZiIcPr[,ic,pr], TazIndex, &quot;RdYlBu&quot;,
+               breaks=c(seq(0, 2, 0.25), 3, 4.5), LegendSize=0.75, PlotRef=FALSE,
+               main=&quot;&quot;, LegendOffset=c(1.014, 1.012))
+          } else {
+               coropleth(TazPoly, AveMarketCost.ZiIcPr[,ic,pr], TazIndex, &quot;RdYlBu&quot;,
+               breaks=c(seq(0, 2, 0.25), 3, 4.5), LegendSize=0, PlotRef=FALSE,
+               main=&quot;&quot;)
+          }
+          if(ic == &quot;lowInc&quot;) mtext(PrNames[pr], side=2, line=1.75)
+          if(pr == &quot;hbw&quot;) mtext(IcNames[ic], side=3, line=1)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/map_ave_cost_by_income_purpose&quot;)
+</pre>
+</div>
+<div class="section" id="plot-household-histograms-of-tci-values-by-purpose-for-each-mode-aggregregation-type">
+<h2><a name="plot-household-histograms-of-tci-values-by-purpose-for-each-mode-aggregregation-type">Plot household histograms of TCI values by purpose for each mode aggregregation type</a></h2>
+<pre class="literal-block">
+# Define a vector of data aggregation types
+Ag &lt;- c(&quot;Tci.ZiPr&quot;, &quot;Tci2.ZiPr&quot;, &quot;Tci3.ZiPr&quot;)
+names(Ag) &lt;- c(&quot;Average&quot;, &quot;Minimum&quot;, &quot;Composite&quot;)
+# Define breaks and limits for histograms
+Breaks &lt;- seq(0, 6, 0.5)
+Xlim &lt;- c(0,6)
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:12,nrow=4))
+Opar &lt;- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ag in names(Ag)){
+     for(pr in Pr){
+          HistData &lt;- rep(get(Ag[ag])[,pr], rowSums(Hh.ZiIc))
+          HistData &lt;- HistData[(HistData &gt; 0) &amp; (HistData &lt; 6)]
+          hist(HistData, xlab=&quot;&quot;, breaks=Breaks, xlim=Xlim, ylim=c(0,1.75),
+          ylab=&quot;&quot;, col=&quot;skyblue&quot;, main=NULL, freq=FALSE, axes=FALSE)
+          axis(1, at=seq(0,6,1))
+          if(ag == &quot;Average&quot;) mtext(PrNames[pr], side=2, line=3)
+          if(pr == &quot;hbw&quot;) mtext(ag, side=3, line=1)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/hist_tci_by_modeagg_purpose&quot;)
+</pre>
+</div>
+<div class="section" id="plot-household-histograms-of-tci-values-by-income-for-each-mode-aggregregation-type">
+<h2><a name="plot-household-histograms-of-tci-values-by-income-for-each-mode-aggregregation-type">Plot household histograms of TCI values by income for each mode aggregregation type</a></h2>
+<pre class="literal-block">
+windows(6, 4.5)
+# Define a vector of data aggregation types
+Ag &lt;- c(&quot;Tci.ZiIc&quot;, &quot;Tci2.ZiIc&quot;, &quot;Tci3.ZiIc&quot;)
+names(Ag) &lt;- c(&quot;Average&quot;, &quot;Minimum&quot;, &quot;Composite&quot;)
+# Define breaks and limits for histograms
+Breaks &lt;- seq(0, 6, 0.5)
+Xlim &lt;- c(0,6)
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:9,nrow=3))
+Opar &lt;- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ag in names(Ag)){
+     for(ic in Ic){
+          HistData &lt;- rep(get(Ag[ag])[,ic], Hh.ZiIc[,ic])
+          HistData &lt;- HistData[(HistData &gt; 0) &amp; (HistData &lt; 6)]
+          hist(HistData, xlab=&quot;&quot;, breaks=Breaks, xlim=Xlim, ylim=c(0,1.75),
+          ylab=&quot;&quot;, col=&quot;skyblue&quot;, main=NULL, freq=FALSE, axes=FALSE)
+          axis(1, at=seq(0,6,1))
+          if(ag == &quot;Average&quot;) mtext(IcNames[ic], side=2, line=3)
+          if(ic == &quot;lowInc&quot;) mtext(ag, side=3, line=1)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/hist_tci_by_modeagg_income&quot;)
+dev.off()
+</pre>
+</div>
+<div class="section" id="plot-maps-of-tci-values-by-aggregation-type-by-incomes">
+<h2><a name="plot-maps-of-tci-values-by-aggregation-type-by-incomes">Plot maps of TCI values by aggregation type by incomes</a></h2>
+<pre class="literal-block">
+windows(6, 4.5)
+# Define a vector of data aggregation types
+Ag &lt;- c(&quot;Tci.ZiIc&quot;, &quot;Tci2.ZiIc&quot;, &quot;Tci3.ZiIc&quot;)
+names(Ag) &lt;- c(&quot;Average&quot;, &quot;Minimum&quot;, &quot;Composite&quot;)
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:9,nrow=3))
+Opar &lt;- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ag in names(Ag)){
+     for(ic in Ic){
+          MapData &lt;- get(Ag[ag])[,ic]
+          if((ic == &quot;lowInc&quot;) &amp; (ag == &quot;Composite&quot;)){
+               coropleth(TazPoly, MapData, TazIndex, &quot;RdYlBu&quot;,
+               breaks=c(seq(0.25, 2, 0.25), 3, 6, 12, 36), LegendSize=0.75, PlotRef=FALSE,
+               main=&quot;&quot;, LegendOffset=c(1.011, 1.02))
+          } else {
+               coropleth(TazPoly, MapData, TazIndex, &quot;RdYlBu&quot;,
+               breaks=c(seq(0.25, 2, 0.25), 3, 6, 12, 36), LegendSize=0, PlotRef=FALSE,
+               main=&quot;&quot;)
+          }
+          if(ag == &quot;Average&quot;) mtext(IcNames[ic], side=2, line=1.75)
+          if(ic == &quot;lowInc&quot;) mtext(ag, side=3, line=1.75)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/map_tci_by_modeagg_income&quot;)
+dev.off()
+</pre>
+</div>
+<div class="section" id="plot-maps-of-tci-values-by-aggregation-type-by-purpose">
+<h2><a name="plot-maps-of-tci-values-by-aggregation-type-by-purpose">Plot maps of TCI values by aggregation type by purpose</a></h2>
+<pre class="literal-block">
+# Define a vector of data aggregation types
+Ag &lt;- c(&quot;Tci.ZiPr&quot;, &quot;Tci2.ZiPr&quot;, &quot;Tci3.ZiPr&quot;)
+names(Ag) &lt;- c(&quot;Average&quot;, &quot;Minimum&quot;, &quot;Composite&quot;)
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:12,nrow=4))
+Opar &lt;- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ag in names(Ag)){
+     for(pr in Pr){
+          MapData &lt;- get(Ag[ag])[,pr]
+          MapData[MapData &lt; 0] &lt;- 35
+          if((pr == &quot;hbw&quot;) &amp; (ag == &quot;Composite&quot;)){
+               coropleth(TazPoly, MapData, TazIndex, &quot;RdYlBu&quot;,
+               breaks=c(seq(0.25, 2, 0.25), 3, 6, 12, 36), LegendSize=0.75, PlotRef=FALSE,
+               main=&quot;&quot;, LegendOffset=c(1.02, 1.02))
+          } else {
+               coropleth(TazPoly, MapData, TazIndex, &quot;RdYlBu&quot;,
+               breaks=c(seq(0.25, 2, 0.25), 3, 6, 12, 36), LegendSize=0, PlotRef=FALSE,
+               main=&quot;&quot;)
+          }
+          if(ag == &quot;Average&quot;) mtext(PrNames[pr], side=2, line=1.75)
+          if(pr == &quot;hbw&quot;) mtext(ag, side=3, line=1.75)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/map_tci_by_modeagg_purpose&quot;)
+</pre>
+</div>
+<div class="section" id="plot-histograms-of-alternative-mode-market-coverage-by-purpose-and-income">
+<h2><a name="plot-histograms-of-alternative-mode-market-coverage-by-purpose-and-income">Plot histograms of alternative mode market coverage by purpose and income</a></h2>
+<pre class="literal-block">
+# Set up breaks and limits for plotting
+Breaks &lt;- c(0,10,20,30,40,50,60,70,80,90,100)
+Xlim &lt;- c(0,100)
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:12,nrow=4))
+Opar &lt;- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ic in Ic){
+     for(pr in Pr){
+          HistData &lt;- rep(AltMarketCoverage.ZiIcPr[,ic,pr], Hh.ZiIc[,ic])
+          hist(HistData, xlab=&quot;&quot;, xlim=Xlim, breaks=Breaks, axes=FALSE,
+          ylab=&quot;&quot;, col=&quot;skyblue&quot;, ylim=c(0,0.07), main=NULL, freq=FALSE)
+          axis(1, at=seq(0, 100, 20))
+          if(ic == &quot;lowInc&quot;) mtext(PrNames[pr], side=2, line=3)
+          if(pr == &quot;hbw&quot;) mtext(IcNames[ic], side=3, line=1)
+          }
+     }
+savePlot(filename=&quot;tci/graphics/hist_nonauto_percent_by_income_purpose&quot;)
+# Restore graphics parameters
+par(Opar)
+</pre>
+</div>
+<div class="section" id="map-alternative-mode-market-coverage-by-purpose-and-income">
+<h2><a name="map-alternative-mode-market-coverage-by-purpose-and-income">Map alternative mode market coverage by purpose and income</a></h2>
+<pre class="literal-block">
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:12,nrow=4))
+Opar &lt;- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ic in Ic){
+     for(pr in Pr){
+          if((ic == &quot;highInc&quot;) &amp; (pr == &quot;hbw&quot;)){
+               coropleth(TazPoly, round(AltMarketCoverage.ZiIcPr[,ic,pr],0), TazIndex, &quot;RdYlBu&quot;,
+               breaks=seq(0,100,10), LegendSize=0.75, PlotRef=FALSE,
+               main=&quot;&quot;, LegendOffset=c(1.02, 1.012))
+          } else {
+               coropleth(TazPoly, round(AltMarketCoverage.ZiIcPr[,ic,pr],0), TazIndex, &quot;RdYlBu&quot;,
+               breaks=seq(0,100,10), LegendSize=0, PlotRef=FALSE,
+               main=&quot;&quot;)
+          }
+          if(ic == &quot;lowInc&quot;) mtext(PrNames[pr], side=2, line=1.75)
+          if(pr == &quot;hbw&quot;) mtext(IcNames[ic], side=3, line=1.75)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/map_nonauto_percent_by_income_purpose&quot;)
+</pre>
+</div>
+<div class="section" id="plot-histograms-of-non-auto-cost-ratio-by-purpose-and-income">
+<h2><a name="plot-histograms-of-non-auto-cost-ratio-by-purpose-and-income">Plot histograms of non-auto cost ratio by purpose and income</a></h2>
+<pre class="literal-block">
+# Set up breaks and limits for plotting
+ Breaks &lt;- seq(0, 275, 25)
+ Xlim &lt;- c(0, 275)
+ # Set up plot layout, map will go on top and histogram on bottom
+ nf &lt;- layout(matrix(1:12,nrow=4))
+ Opar &lt;- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
+ # Iterate through all purposes and incomes and plot histograms
+ for(ic in Ic){
+      for(pr in Pr){
+           HistData &lt;- rep(NonAutoCostRatio.ZiIcPr[,ic,pr], Hh.ZiIc[,ic])
+           hist(HistData, xlab=&quot;&quot;, xlim=Xlim, breaks=Breaks, axes=FALSE,
+           ylab=&quot;&quot;, col=&quot;skyblue&quot;, ylim=c(0,0.025), main=NULL, freq=FALSE)
+           axis(1, at=seq(0, 250, 50))
+           if(ic == &quot;lowInc&quot;) mtext(PrNames[pr], side=2, line=3)
+           if(pr == &quot;hbw&quot;) mtext(IcNames[ic], side=3, line=1)
+           }
+      }
+ savePlot(filename=&quot;tci/graphics/hist_nonauto_auto_cost_ratio_by_income_purpose&quot;)
+ # Restore graphics parameters
+ par(Opar)
+</pre>
+</div>
+<div class="section" id="map-non-auto-cost-ratio-by-purpose-and-income">
+<h2><a name="map-non-auto-cost-ratio-by-purpose-and-income">Map non-auto cost ratio by purpose and income</a></h2>
+<pre class="literal-block">
+# Set up plot layout, map will go on top and histogram on bottom
+nf &lt;- layout(matrix(1:12,nrow=4))
+Opar &lt;- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
+# Iterate through all purposes and incomes and plot histograms
+for(ic in Ic){
+     for(pr in Pr){
+          if((ic == &quot;highInc&quot;) &amp; (pr == &quot;hbw&quot;)){
+               coropleth(TazPoly, round(NonAutoCostRatio.ZiIcPr[,ic,pr],0), TazIndex, &quot;RdYlBu&quot;,
+               breaks=seq(0, 275,25), LegendSize=0.75, PlotRef=FALSE,
+               main=&quot;&quot;, LegendOffset=c(1.02, 1.012))
+          } else {
+               coropleth(TazPoly, round(NonAutoCostRatio.ZiIcPr[,ic,pr],0), TazIndex, &quot;RdYlBu&quot;,
+               breaks=seq(0, 275,25), LegendSize=0, PlotRef=FALSE,
+               main=&quot;&quot;)
+          }
+          if(ic == &quot;lowInc&quot;) mtext(PrNames[pr], side=2, line=1.75)
+          if(pr == &quot;hbw&quot;) mtext(IcNames[ic], side=3, line=1.75)
+          }
+     }
+par(Opar)
+savePlot(filename=&quot;tci/graphics/map_nonauto_auto_cost_ratio_by_income_purpose&quot;)
+</pre>
+</div>
+<div class="section" id="set-up-districts-reference-vectors">
+<h2><a name="set-up-districts-reference-vectors">Set up districts reference vectors</a></h2>
+<pre class="literal-block">
+Districts.Zo &lt;- districts$ugb
+names(Districts.Zo) &lt;- districts$zone
+DiNames &lt;- c(&quot;Outside UGB&quot;, &quot;Eagle Point&quot;, &quot;Central Point&quot;, &quot;Medford&quot;, &quot;Jacksonville&quot;,
+          &quot;Phoenix&quot;, &quot;Talent&quot;, &quot;Ashland&quot;)
+names(DiNames) &lt;- unique(Districts.Zo)
+Districts.Zi &lt;- Districts.Zo[Zi] ; rm(Districts.Zo)
+</pre>
+</div>
+<div class="section" id="plot-comparisons-of-travel-cost-indices-by-ugb">
+<h2><a name="plot-comparisons-of-travel-cost-indices-by-ugb">Plot comparisons of travel cost indices by UGB</a></h2>
+<pre class="literal-block">
+# Set up graphic parameters
+Opar &lt;- par(mfrow=c(2,2), mar=c(2,3,2,2), oma=c(1,1,2.25,1))
+#Barplot of average market costs by district
+BarCenter &lt;- barplot(Tci.Di, xlab=&quot;&quot;, ylab=&quot;Travel Cost Index&quot;, col=brewer.pal(8, &quot;Pastel1&quot;),
+     main=NULL, axisnames=FALSE)
+mtext(&quot;Average Market Cost&quot;, side=1, line=0.5, cex=1)
+mtext(&quot;TCI&quot;, side=2, line=2.5)
+text(as.vector(BarCenter), 0.1, labels=DiNames, srt=90, pos=4, offset=0)
+#Barplot of auto market costs by district
+BarCenter &lt;- barplot(Tci2.Di, xlab=&quot;&quot;, ylab=&quot;Travel Cost Index&quot;, col=brewer.pal(8, &quot;Pastel1&quot;),
+     main=NULL, axisnames=FALSE)
+mtext(&quot;TCI&quot;, side=2, line=2.5)
+mtext(&quot;Minimum Market Cost&quot;, side=1, line=0.5, cex=1)
+text(as.vector(BarCenter), 0.2, labels=DiNames, srt=90, pos=4, offset=0)
+#Barplot of non-auto market costs by district
+BarCenter &lt;- barplot(Tci3.Di, xlab=&quot;&quot;, ylab=&quot;Travel Cost Index&quot;, col=brewer.pal(8, &quot;Pastel1&quot;),
+     main=NULL, axisnames=FALSE)
+mtext(&quot;Composite Market Cost&quot;, side=1, line=0.5, cex=1)
+mtext(&quot;TCI&quot;, side=2, line=2.5)
+text(as.vector(BarCenter), 0.075, labels=DiNames, srt=90, pos=4, offset=0)
+# mtext(&quot;Comparison of TCI Values by Calculation Method and UGB&quot;, outer=TRUE, line=1, cex=1.15)
+savePlot(filename=&quot;tci/graphics/district_tci&quot;)
+# Restore graphics parameters
+par(Opar)
+</pre>
+</div>
+<div class="section" id="plot-alternative-mode-coverage">
+<h2><a name="plot-alternative-mode-coverage">Plot alternative mode coverage</a></h2>
+<pre class="literal-block">
+windows(6.5, 4)
+# Set up graphic parameters
+Opar &lt;- par(mar=c(2,3,2,2), oma=c(1,1,1,1))
+ # Barplot of alternative mode market coverage
+BarCenter &lt;- barplot(AltMarketCoverage.Di, xlab=&quot;&quot;, ylab=&quot;&quot;, col=brewer.pal(8, &quot;Pastel1&quot;),
+      main=NULL, axisnames=FALSE, ylim=c(0,100))
+mtext(&quot;Percent&quot;, side=2, line=2.5)
+text(as.vector(BarCenter), 5, labels=DiNames, srt=90, pos=4, offset=0)
+savePlot(filename=&quot;tci/graphics/district_alt_mode_coverage&quot;)
+# Restore graphics parameters
+par(Opar)
+dev.off()
+</pre>
+</div>
+<div class="section" id="plot-non-auto-to-auto-cost-ratio">
+<h2><a name="plot-non-auto-to-auto-cost-ratio">Plot non-auto to auto cost ratio</a></h2>
+<pre class="literal-block">
+windows(6.5, 4)
+# Set up graphic parameters
+Opar &lt;- par(mar=c(2,3,2,2), oma=c(1,1,1,1))
+# Barplot of ratio of non-auto market cost to auto market cost
+BarCenter &lt;- barplot(NonAutoCostRatio.Di, xlab=&quot;&quot;, ylab=&quot;&quot;, col=brewer.pal(8, &quot;Pastel1&quot;),
+     main=NULL, axisnames=FALSE)
+mtext(&quot;Ratio&quot;, side=2, line=2.5)
+text(as.vector(BarCenter), 5, labels=DiNames, srt=90, pos=4, offset=0)
+# mtext(&quot;Alternative Mode Coverage and Cost Ratio&quot;, outer=TRUE, line=1, cex=1.15)
+savePlot(filename=&quot;tci/graphics/district_nonauto_auto_cost&quot;)
+# Restore graphics parameters
+par(Opar)
+dev.off()
+</pre>
+</div>
+</div>
+</div>
+</body>
+</html>

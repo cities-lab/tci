@@ -1,0 +1,71 @@
+mm
+~o=32
+~/******************************
+~/******************************
+~/
+~/ The matrices below must be created
+~/ The Matrices below must be available
+~/  mf35: pkper   Peak Period Vehicle trips               
+~/  mf36: opper   Off-Peak Period Vehicle Trips 
+~/ The matrices below must be initialized
+~/  mf90:pkhlen  Peak Period Trip Length                          
+~/  mf92:wtglen  Volume Weighted Trip Length
+~/  ms80:pkptrp  Total Peak Period Trips                  
+~/  ms82:avdlln  Average Daily Trip Length   
+~/                   
+~/******************************
+~/******************************
+c=start of assignment macro
+~!erase assign.rpt
+reports=assign.rpt
+~/
+s=%1%
+~/***********************
+~/ Reset all Matrices to 0
+~/***********************
+3.21
+~+#1#y#mf90#n#0###n#1##4
+3.21
+~+#1#y#mf92#n#0###n#1##4
+3.21
+~+#1#y#ms80#n#0###1##4
+3.21
+~+#1#y#ms82#n#0###1##4
+~/
+~/************************************************
+~/*** Peak Period OD Trip Length -Saves out mf90
+~/************************************************
+5.11
+~+#1#2#1#5#mf4##mf4##4#+##mf90#n#1#100#.01#.01
+5.21
+2
+~/
+~/***********************************
+~/ Peak Total Trips -Saves out ms100
+~/***********************************
+3.21
+~+#1#y#ms80#n#mf4##mf4##y#100,844##100,844##+#+#1##4
+~/
+~/**********************************************   
+~/ Daily OD Trip Length Matrix -Saves out mf92    
+~/**********************************************   
+3.21
+~+#1#y#mf92#n#(mf90*mf4)/ms80###n#1##4
+~/
+~/********************************************
+~/ Average Daily Trip Length -Saves out ms92
+~/********************************************
+3.21
+~+#1#y#ms82#n#mf92##mf92##y#100,844##100,844##+#+#1##4
+~/**********************************
+~/ Output Average Daily Trip Length
+~/**********************************
+3.14
+3
+ms82
+ 
+TripLength.txt
+5
+9
+~/**************************
+c=end of Daily Trip Length macro

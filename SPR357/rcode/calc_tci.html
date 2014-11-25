@@ -1,0 +1,869 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.7: http://docutils.sourceforge.net/" />
+<title>calc_tci.R</title>
+<meta name="author" content="Brian Gregor" />
+<meta name="date" content="9/26/05" />
+<meta name="copyright" content="Oregon Department of Transportation" />
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="calc-tci-r">
+<h1 class="title">calc_tci.R</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Brian Gregor</td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>9/26/05</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference" href="mailto:brian.j.gregor&#64;odot.state.or.us">brian.j.gregor&#64;odot.state.or.us</a></td></tr>
+<tr><th class="docinfo-name">Copyright:</th>
+<td>Oregon Department of Transportation</td></tr>
+<tr class="field"><th class="docinfo-name">license:</th><td class="field-body">GPL2</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="description">
+<h1><a name="description">Description</a></h1>
+<p>This script calculates the travel cost index (TCI), percent of market accessible by non-auto travel modes, and auto dependence index.</p>
+</div>
+<div class="section" id="load-the-reference-data">
+<h1><a name="load-the-reference-data">Load the reference data</a></h1>
+<pre class="literal-block">
+# Identify the path to the model run where the reference data is stored
+ReferenceDirectory &lt;- &quot;&quot;
+# Load the reference zone
+load(paste(ReferenceDirectory, &quot;tci/ReferenceZone.RData&quot;, sep=&quot;&quot;))
+# Load the reference attractions
+load(paste(ReferenceDirectory, &quot;tci/ReferenceAttractions.RData&quot;, sep=&quot;&quot;))
+</pre>
+</div>
+<div class="section" id="define-functions-used-in-the-script">
+<h1><a name="define-functions-used-in-the-script">Define functions used in the script</a></h1>
+<div class="section" id="define-a-function-to-calculate-cost-to-travel-to-market-place">
+<h2><a name="define-a-function-to-calculate-cost-to-travel-to-market-place">Define a function to calculate cost to travel to market place</a></h2>
+<p>This function is applied to each TAZ by trip purpose and income group the steps are:
+*   Put zones in order of ascending cost. This is used to define the market place for the zone. The costs used for this purpose may be different than the costs used to calculate average market access costs. For example, the average cost for all modes might be used to define the market place, but the market access cost might be calculated for a particular mode.
+*   Calculate the cumulative sum of size variables for the zones in the ascending cost order.
+*   Identify the market place as the set of zones that have size variables equal to the reference market basket.
+*   Calculate a weighted average of travel costs.
+:Parameter: SizeVar.Zi - A vector of size variables
+:Parameter: AveCost.Zi - A vector of costs to use for placing zones in order of cost
+:Parameter: Cost.Zi - The vector of costs to use for calculating the average market cost
+:Parameter: RefAttr - The reference market basket for the trip purpose and income group
+:Return: AveMarketCost - The average cost to access the market basket</p>
+<pre class="literal-block">
+calcAveMarketCost &lt;- function(SizeVar.Zi, AveCost.Zi, Cost.Zi, RefAttr){
+     CostOrder &lt;- order(AveCost.Zi)
+     AttrCumSum &lt;- cumsum(SizeVar.Zi[CostOrder])
+     MarketZones &lt;- names(AttrCumSum)[AttrCumSum &lt;= RefAttr]
+     AveMarketCost &lt;- sum(Cost.Zi[MarketZones] * SizeVar.Zi[MarketZones]) /
+                    sum(SizeVar.Zi[MarketZones])
+     AveMarketCost
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-the-average-cost-for-non-auto-modes-to-travel-to-market-place">
+<h2><a name="define-a-function-to-calculate-the-average-cost-for-non-auto-modes-to-travel-to-market-place">Define a function to calculate the average cost for non-auto modes to travel to market place</a></h2>
+<p>This function is applied to each TAZ by trip purpose and income group the steps are:
+*   Put zones in order of ascending cost.
+*   Calculate the cumulative sum of size variables for the zones in the ascending cost order.
+*   Identify the market place as the set of zones that have size variables equal to the reference market basket.
+*   Identify the minimum non-auto cost to each zone.
+*   Calculate the non-auto market access cost as a weighted average of the minimum non-auto costs.
+:Parameter: SizeVar.Zi - A vector of size variables
+:Parameter: AveCost.Zi - A vector of costs to use for placing zones in order of cost
+:Parameter: ModeCost.ZiMd - The matrix of costs by zone and mode to use for calculating the average non-auto market access cost
+:Parameter: RefAttr - The reference market basket for the trip purpose and income group
+:Return: NonAutoMarketCost - The average non-auto cost to access the market basket</p>
+<pre class="literal-block">
+calcNonAutoMarketCost &lt;- function(SizeVar.Zi, AveCost.Zi, ModeCost.ZiMd, RefAttr){
+     CostOrder &lt;- order(AveCost.Zi)
+     AttrCumSum &lt;- cumsum(SizeVar.Zi[CostOrder])
+     MarketZones &lt;- names(AttrCumSum)[AttrCumSum &lt;= RefAttr]
+     NonAutoMarketCosts.ZiMd &lt;- ModeCost.ZiMd[MarketZones,
+                                   c(&quot;busWalk&quot;, &quot;parkAndRideBus&quot;, &quot;bike&quot;, &quot;walk&quot;)]
+     NonAutoMarketCosts.ZiMd[is.infinite(NonAutoMarketCosts.ZiMd)] &lt;- NA
+     MinNonAutoCosts.Zi &lt;- apply(NonAutoMarketCosts.ZiMd, 1, function(x)
+                              min(x, na.rm=TRUE))
+     NonAutoMarketCost &lt;- sum(MinNonAutoCosts.Zi * SizeVar.Zi[MarketZones]) /
+                          sum(SizeVar.Zi[MarketZones])
+     NonAutoMarketCost
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-the-average-cost-for-auto-modes-to-travel-to-market-place">
+<h2><a name="define-a-function-to-calculate-the-average-cost-for-auto-modes-to-travel-to-market-place">Define a function to calculate the average cost for auto modes to travel to market place</a></h2>
+<p>This function is applied to each TAZ by trip purpose and income group the steps are:
+*   Put zones in order of ascending cost.
+*   Calculate the cumulative sum of size variables for the zones in the ascending cost order.
+*   Identify the market place as the set of zones that have size variables equal to the reference market basket.
+*   Identify the average auto cost to each zone.
+*   Calculate the auto market access cost as a weighted average of the average auto costs.
+:Parameter: SizeVar.Zi - A vector of size variables
+:Parameter: AveCost.Zi - A vector of costs to use for placing zones in order of cost
+:Parameter: ModeCost.ZiMd - The matrix of costs by zone and mode to use for calculating the average auto market access cost
+:Parameter: RefAttr - The reference market basket for the trip purpose and income group
+:Return: AveMarketCost - The average auto cost to access the market basket</p>
+<pre class="literal-block">
+calcAutoMarketCost &lt;- function(SizeVar.Zi, AveCost.Zi, ModeCost.ZiMd, RefAttr){
+     CostOrder &lt;- order(AveCost.Zi)
+     AttrCumSum &lt;- cumsum(SizeVar.Zi[CostOrder])
+     MarketZones &lt;- names(AttrCumSum)[AttrCumSum &lt;= RefAttr]
+     AutoMarketCosts.ZiMd &lt;- ModeCost.ZiMd[MarketZones,
+                                   c(&quot;driveAlone&quot;, &quot;drivePass&quot;, &quot;pass&quot;)]
+     MeanAutoCosts.Zi &lt;- apply(AutoMarketCosts.ZiMd, 1, function(x) mean(x, na.rm=TRUE))
+     AutoMarketCost &lt;- sum(MeanAutoCosts.Zi * SizeVar.Zi[MarketZones]) /
+                          sum(SizeVar.Zi[MarketZones])
+     AutoMarketCost
+     }
+</pre>
+</div>
+<div class="section" id="define-a-function-to-calculate-percent-of-market-place-accessible-by-non-auto-modes">
+<h2><a name="define-a-function-to-calculate-percent-of-market-place-accessible-by-non-auto-modes">Define a function to calculate percent of market place accessible by non-auto modes</a></h2>
+<p>This function is applied to each TAZ by trip purpose and income group the steps are:
+*   Put zones in order of ascending cost.
+*   Calculate the cumulative sum of size variables for the zones in the ascending cost order.
+*   Identify the market place as the set of zones that have size variables equal to the reference market basket.
+*   Identify the zones in the market place that are accessible by non-auto modes
+*   Sum the size variables in the zones that are accessible by non-auto modes
+*   Divide by the sum of size variables for all zones in the market place
+:Parameter: SizeVar.Zi - A vector of size variables
+:Parameter: AveCost.Zi - A vector of costs to use for placing zones in order of cost
+:Parameter: AltPractical.ZiMd - A matrix identifying the zones that are accessible by each mode
+:Parameter: RefAttr - The reference market basket for the trip purpose and income group
+:Return: PctAltCoverage - The percentage of the market basket that is accessible by alternate modes</p>
+<pre class="literal-block">
+calcModeMarketPct &lt;- function(SizeVar.Zi, AveCost.Zi, AltPractical.ZiMd, RefAttr){
+     CostOrder &lt;- order(AveCost.Zi)
+     AttrCumSum &lt;- cumsum(SizeVar.Zi[CostOrder])
+     MarketZones &lt;- names(AttrCumSum)[AttrCumSum &lt;= RefAttr]
+     AltMarketSet.ZiMd &lt;- AltPractical.ZiMd[MarketZones,]
+     AltMarket.Md &lt;- apply(AltMarketSet.ZiMd, 2, function(x) sum(SizeVar.Zi[MarketZones][x]))
+     NonAutoMarketSet.Zi &lt;- apply(AltMarketSet.ZiMd, 1, function(x) any(x))
+     NonAutoMarket &lt;- sum(SizeVar.Zi[MarketZones][NonAutoMarketSet.Zi])
+     AltMarket.Md &lt;- c(AltMarket.Md, allNonAuto=NonAutoMarket)
+     PctAltCoverage &lt;- 100 * AltMarket.Md / sum(SizeVar.Zi[MarketZones])
+     PctAltCoverage
+     }
+</pre>
+</div>
+</div>
+<div class="section" id="calculate-the-measures-for-each-zone-mode-income-and-purpose">
+<h1><a name="calculate-the-measures-for-each-zone-mode-income-and-purpose">Calculate the measures for each zone, mode, income and purpose</a></h1>
+<div class="section" id="make-an-array-which-identifies-zones-impractical-to-reach-by-non-auto-modes-of-travel">
+<h2><a name="make-an-array-which-identifies-zones-impractical-to-reach-by-non-auto-modes-of-travel">Make an array which identifies zones impractical to reach by non-auto modes of travel</a></h2>
+<p>This is used in the subsequent calculations that loop through purpose and income but only has to be done once.</p>
+<pre class="literal-block">
+AltImpractical.ZiZiMd &lt;- array(FALSE, dim=c(length(Zi), length(Zi), 4),
+                         dimnames=list(Zi, Zi, Md[4:7]))
+# Load trip distance and time data
+load(&quot;inputs/RData/tripDist.Rdata&quot;)
+dimnames(tripDist) &lt;- list(Zo,Zo)
+tripDist.ZiZi &lt;- tripDist[Zi,Zi]
+BikeTime.ZiZi &lt;- 60 * tripDist.ZiZi / 10
+WalkTime.ZiZi &lt;- 60 * tripDist.ZiZi / 3
+load(&quot;inputs/RData/ivTimepeakbusWalk.RData&quot;)
+dimnames(ivTimepeakbusWalk) &lt;- list(Zo,Zo)
+BusWalkTime.ZiZi &lt;- ivTimepeakbusWalk[Zi,Zi]; rm(ivTimepeakbusWalk)
+load(&quot;inputs/RData/ivTimepeakparkAndRideBus.RData&quot;)
+dimnames(ivTimepeakparkAndRideBus) &lt;- list(Zo,Zo)
+BusPnRTime.ZiZi &lt;- ivTimepeakparkAndRideBus[Zi,Zi]; rm(ivTimepeakparkAndRideBus)
+load(&quot;inputs/RData/ivTimepeakdriveAlone.RData&quot;)
+dimnames(ivTimepeakdriveAlone) &lt;- list(Zo,Zo)
+AutoTime.ZiZi &lt;- ivTimepeakdriveAlone[Zi,Zi]; rm(ivTimepeakdriveAlone)
+# Impractical trips are those that take longer than 30 minutes and are
+# 30 minutes longer than corresponding auto trips
+AltImpractical.ZiZiMd[,,&quot;bike&quot;] &lt;- (BikeTime.ZiZi &gt; 30) |
+                                   (BikeTime.ZiZi &gt; 30 + AutoTime.ZiZi)
+AltImpractical.ZiZiMd[,,&quot;walk&quot;] &lt;- (WalkTime.ZiZi &gt; 30) |
+                                   (WalkTime.ZiZi &gt; 30 + AutoTime.ZiZi)
+AltImpractical.ZiZiMd[,,&quot;busWalk&quot;] &lt;- (BusWalkTime.ZiZi &gt; 30) |
+                                   (BusWalkTime.ZiZi &gt; 30 + AutoTime.ZiZi)
+AltImpractical.ZiZiMd[,,&quot;parkAndRideBus&quot;] &lt;- (BusPnRTime.ZiZi &gt; 30) |
+                                   (BusPnRTime.ZiZi &gt; 30 + AutoTime.ZiZi)
+# Convert NA values (no bus service) to TRUE
+AltImpractical.ZiZiMd[is.na(AltImpractical.ZiZiMd)] &lt;- TRUE
+# Convert into array of zones that are practical to reach by alt modes
+AltPractical.ZiZiMd &lt;- !AltImpractical.ZiZiMd ; rm(AltImpractical.ZiZiMd)
+</pre>
+</div>
+<div class="section" id="begin-iteration-by-trip-purpose">
+<h2><a name="begin-iteration-by-trip-purpose">Begin iteration by trip purpose</a></h2>
+<pre class="literal-block">
+for(pr in Pr){
+
+     # Define Arrays to Store Results
+     AveMarketCost.ZiIc &lt;- array(0, dim=c(length(Zi), length(Ic)),
+                         dimnames=list(Zi, Ic))
+     BestMarketCost.ZiIc &lt;- array(0, dim=c(length(Zi), length(Ic)),
+                         dimnames=list(Zi, Ic))
+     CompMarketCost.ZiIc &lt;- array(0, dim=c(length(Zi), length(Ic)),
+                         dimnames=list(Zi, Ic))
+     AveMarketCost.ZiMdIc &lt;- array(0, dim=c(length(Zi), length(Md), length(Ic)),
+                         dimnames=list(Zi, Md, Ic))
+     NonAutoMarketCost.ZiIc &lt;- array(0, dim=c(length(Zi), length(Ic)),
+                         dimnames=list(Zi, Ic))
+     AutoMarketCost.ZiIc &lt;- array(0, dim=c(length(Zi), length(Ic)),
+                         dimnames=list(Zi, Ic))
+     AltMarketCoverage.ZiMdIc &lt;- array(0, dim=c(length(Zi), 5, length(Ic)),
+                         dimnames=list(Zi, c(Md[4:7], &quot;allNonAuto&quot;), Ic))
+
+# Begin iteration by income group
+     for(ic in Ic){
+
+          # Load the size variable data and assign to SizeVar.ZiZi
+          SizeVarFileName &lt;- paste(&quot;sizevars/SizeVar&quot;, pr, ic, &quot;.RData&quot;, sep=&quot;&quot;)
+          load(SizeVarFileName) ; rm(SizeVarFileName)
+          SizeVarObjName &lt;- paste(&quot;sizeVar&quot;, pr, ic, sep=&quot;&quot;)
+          SizeVar.ZoZo &lt;- get(SizeVarObjName)
+          rm(list=ls()[ls()==SizeVarObjName]) ; rm(SizeVarObjName)
+          dimnames(SizeVar.ZoZo) &lt;- list(Zo, Zo)
+          SizeVar.ZiZi &lt;- SizeVar.ZoZo[Zi,Zi] ; rm(SizeVar.ZoZo)
+
+          # Identify the reference market attractions
+          RefAttr &lt;- ReferenceAttractions[ic,pr]
+
+          # Initialize an array to hold all the mode utility data
+          ModesExpUtils.ZiZiMd &lt;- array(0, dim=c(length(Zi), length(Zi), length(Md)),
+                              dimnames=list(Zi, Zi, Md))
+
+          # Populate the array with the mode utility data
+          for(md in Md){
+
+               # Load the array of zone to zone utilities and assign to Util.ZiZi
+               if(md == &quot;bike&quot;){
+                    ExpUtil.ZiZi &lt;- exp(BikeAccessCoeff.Pr[pr] * 60 * tripDist.ZiZi / 10)
+                    }
+               if(md == &quot;walk&quot;){
+                    ExpUtil.ZiZi &lt;- exp(WalkAccessCoeff.Pr[pr] * 60 * tripDist.ZiZi / 3)
+                    }
+               if((md != &quot;bike&quot;) &amp; (md != &quot;walk&quot;)) {
+                    ModeUtilFileName &lt;- paste(&quot;access/util&quot;, md, ic, pr, &quot;.Rdata&quot;, sep=&quot;&quot;)
+                    load(ModeUtilFileName) ; rm(ModeUtilFileName)
+                    ModeUtilObjName &lt;- paste(&quot;util&quot;, md, ic, pr, sep=&quot;&quot;)
+                    ExpUtil.ZoZo &lt;- get(ModeUtilObjName)
+                    rm(list=ls()[ls()==ModeUtilObjName]) ; rm(ModeUtilObjName)
+                    dimnames(ExpUtil.ZoZo) &lt;- list(Zo, Zo)
+                    ExpUtil.ZiZi &lt;- ExpUtil.ZoZo[Zi,Zi] ; rm(ExpUtil.ZoZo)
+                    }
+
+               # Add the mode matrix to the array
+               ModesExpUtils.ZiZiMd[,,md] &lt;- ExpUtil.ZiZi ; rm(ExpUtil.ZiZi)
+               }
+
+          # Correct problem with utility for short walk and bike trips
+          # Setting everything greater than 1 to 1 makes a minimum
+          # trip time of approximately X minutes
+          ModesExpUtils.ZiZiMd[ModesExpUtils.ZiZiMd &gt; 0.99] &lt;- 0.99
+
+          # Calculate the dollar cost corresponding to the utilities
+          ModesCosts.ZiZiMd &lt;- log(ModesExpUtils.ZiZiMd) / OpCostCoeff.PrIc[pr,ic]
+
+          # Calculate the mode probabilities for all modes
+          ModeProbs.ZiZiMd &lt;- sweep(ModesExpUtils.ZiZiMd, c(1,2),
+                                   apply(ModesExpUtils.ZiZiMd, c(1,2), sum), &quot;/&quot;)
+
+          # Calculate the best cost among the modes
+          BestCosts.ZiZi &lt;- apply(ModesCosts.ZiZiMd, c(1,2), function(x) min(x, na.rm=TRUE))
+
+          # Calculate the composite cost of all modes
+          CompCosts.ZiZi &lt;- log(apply(ModesExpUtils.ZiZiMd, c(1,2), sum)) / OpCostCoeff.PrIc[pr,ic]
+
+          # Calculate the average cost across all modes
+          AveCosts.ZiZi &lt;- apply(ModesCosts.ZiZiMd * ModeProbs.ZiZiMd, c(1,2),
+                              function(x) sum(x, na.rm=TRUE))
+
+          # Clean up memory
+          rm(ModeProbs.ZiZiMd); gc()
+
+          # Calculate the mode probabilities for just the non-auto modes
+          AltModeProbs.ZiZiMd &lt;- sweep(ModesExpUtils.ZiZiMd[,,4:7], c(1,2),
+                                   apply(ModesExpUtils.ZiZiMd[,,4:7], c(1,2), sum), &quot;/&quot;)
+
+          # Calculate the average cost across non-auto modes
+          AveAltCosts.ZiZi &lt;- apply(ModesCosts.ZiZiMd[,,4:7] * AltModeProbs.ZiZiMd, c(1,2),
+                              function(x) sum(x, na.rm=TRUE))
+
+          # Clean up memory
+          rm(AltModeProbs.ZiZiMd); gc()
+
+          # Calculate the mode probabilities for just the auto modes
+          AutoModeProbs.ZiZiMd &lt;- sweep(ModesExpUtils.ZiZiMd[,,1:3], c(1,2),
+                                   apply(ModesExpUtils.ZiZiMd[,,1:3], c(1,2), sum), &quot;/&quot;)
+
+          # Calculate the average cost across auto modes
+          AveAutoCosts.ZiZi &lt;- apply(ModesCosts.ZiZiMd[,,1:3] * AutoModeProbs.ZiZiMd, c(1,2),
+                              function(x) sum(x, na.rm=TRUE))
+
+          # Clean up memory
+          rm(AutoModeProbs.ZiZiMd); gc()
+
+          # Calculate best cost to access market place
+          BestMarketCost.Zi &lt;- numeric(length(Zi))
+          names(BestMarketCost.Zi) &lt;- Zi
+          for(zi in Zi){
+               BestMarketCost.Zi[zi] &lt;- calcAveMarketCost(SizeVar.ZiZi[zi,],
+                   BestCosts.ZiZi[zi,], BestCosts.ZiZi[zi,], RefAttr)
+               }
+
+          BestMarketCost.ZiIc[,ic] &lt;- BestMarketCost.Zi; rm(BestMarketCost.Zi)
+
+          # Calculate composite cost to access market place
+          CompMarketCost.Zi &lt;- numeric(length(Zi))
+          names(CompMarketCost.Zi) &lt;- Zi
+          for(zi in Zi){
+               CompMarketCost.Zi[zi] &lt;- calcAveMarketCost(SizeVar.ZiZi[zi,],
+                   CompCosts.ZiZi[zi,], CompCosts.ZiZi[zi,], RefAttr)
+             }
+
+          CompMarketCost.ZiIc[,ic] &lt;- CompMarketCost.Zi; rm(CompMarketCost.Zi)
+
+          # Calculate average cost to access market place
+          AveMarketCost.Zi &lt;- numeric(length(Zi))
+          names(AveMarketCost.Zi) &lt;- Zi
+          for(zi in Zi){
+               AveMarketCost.Zi[zi] &lt;- calcAveMarketCost(SizeVar.ZiZi[zi,],
+                         AveCosts.ZiZi[zi,], AveCosts.ZiZi[zi,], RefAttr)
+               }
+
+          AveMarketCost.ZiIc[,ic] &lt;- AveMarketCost.Zi; rm(AveMarketCost.Zi)
+
+          # Calculate average cost to access market place by mode
+          AveMarketCost.ZiMd &lt;- matrix(0, length(Zi), length(Md), dimnames=list(Zi,Md))
+          for(zi in Zi){
+               for(md in Md){
+                    AveMarketCost.ZiMd[zi,md] &lt;- calcAveMarketCost(SizeVar.ZiZi[zi,],
+                         AveCosts.ZiZi[zi,], ModesCosts.ZiZiMd[zi,,md], RefAttr)
+                    }
+               }
+
+          AveMarketCost.ZiMdIc[,,ic] &lt;- AveMarketCost.ZiMd; rm(AveMarketCost.ZiMd)
+
+          # Calculate non-auto market costs
+          NonAutoMarketCost.Zi &lt;- numeric(length(Zi))
+          names(NonAutoMarketCost.Zi) &lt;- Zi
+          ModesCostsInfToNa.ZiZiMd &lt;- ModesCosts.ZiZiMd
+          ModesCostsInfToNa.ZiZiMd[is.infinite(ModesCostsInfToNa.ZiZiMd)] &lt;- NA
+          for(zi in Zi){
+               NonAutoMarketCost.Zi[zi] &lt;- calcNonAutoMarketCost(SizeVar.ZiZi[zi,],
+                    AveCosts.ZiZi[zi,], ModesCostsInfToNa.ZiZiMd[zi,,], RefAttr)
+               }
+          rm(ModesCostsInfToNa.ZiZiMd)
+
+          NonAutoMarketCost.ZiIc[,ic] &lt;- NonAutoMarketCost.Zi; rm(NonAutoMarketCost.Zi)
+
+          # Calculate auto market times
+          AutoMarketCost.Zi &lt;- numeric(length(Zi))
+          names(AutoMarketCost.Zi) &lt;- Zi
+          for(zi in Zi){
+               AutoMarketCost.Zi[zi] &lt;- calcAutoMarketCost(SizeVar.ZiZi[zi,],
+                    AveCosts.ZiZi[zi,], ModesCosts.ZiZiMd[zi,,], RefAttr)
+               }
+
+          AutoMarketCost.ZiIc[,ic] &lt;- AutoMarketCost.Zi; rm(AutoMarketCost.Zi)
+
+
+          # Calculate market proportions accessible by non-auto modes
+          AltMarketCoverage.ZiMd &lt;- matrix(0, length(Zi), 5,
+               dimnames=list(Zi,c(Md[4:7], &quot;allNonAuto&quot;)))
+          for(zi in Zi){
+               AltMarketCoverage.ZiMd[zi,] &lt;- calcModeMarketPct(SizeVar.ZiZi[zi,],
+                    AveAltCosts.ZiZi[zi,], AltPractical.ZiZiMd[zi,,], RefAttr)
+                    }
+
+          AltMarketCoverage.ZiMdIc[,,ic] &lt;- AltMarketCoverage.ZiMd; rm(AltMarketCoverage.ZiMd)
+
+          # Clean up memory
+          rm(ModesExpUtils.ZiZiMd, ModesCosts.ZiZiMd)
+
+     # Save the results for each income group
+     save(BestMarketCost.ZiIc,
+          file=paste(&quot;tci/&quot;, pr, &quot;BestMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;))
+     save(CompMarketCost.ZiIc,
+          file=paste(&quot;tci/&quot;, pr, &quot;CompMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;))
+     save(AveMarketCost.ZiIc,
+          file=paste(&quot;tci/&quot;, pr, &quot;AveMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;))
+     save(AveMarketCost.ZiMdIc,
+          file=paste(&quot;tci/&quot;, pr, &quot;AveMarketCost.ZiMdIc.RData&quot;, sep=&quot;&quot;))
+     save(NonAutoMarketCost.ZiIc,
+          file=paste(&quot;tci/&quot;, pr, &quot;NonAutoMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;))
+     save(AutoMarketCost.ZiIc,
+          file=paste(&quot;tci/&quot;, pr, &quot;AutoMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;))
+     save(AltMarketCoverage.ZiMdIc,
+          file=paste(&quot;tci/&quot;, pr, &quot;AltMarketCoverage.ZiMdIc.RData&quot;, sep=&quot;&quot;))
+
+     # End loop through income groups
+     }
+
+# Clean up memory
+rm(BestMarketCost.ZiIc, CompMarketCost.ZiIc, AveMarketCost.ZiIc,
+     AveMarketCost.ZiMdIc, NonAutoMarketCost.ZiIc, AutoMarketCost.ZiIc,
+     AltMarketCoverage.ZiMdIc)
+gc()
+
+# End loop through purposes
+}
+</pre>
+</div>
+</div>
+<div class="section" id="combine-the-results-into-arrays-by-purpose">
+<h1><a name="combine-the-results-into-arrays-by-purpose">Combine the results into arrays by purpose</a></h1>
+<pre class="literal-block">
+BestMarketCost.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+                                    dimnames=list(Zi,Ic,Pr))
+for(pr in Pr){
+      FileName &lt;- paste(&quot;tci/&quot;, pr, &quot;BestMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;)
+      load(FileName)
+      BestMarketCost.ZiIcPr[,,pr] &lt;- BestMarketCost.ZiIc
+      rm(BestMarketCost.ZiIc)
+      save(BestMarketCost.ZiIcPr, file=&quot;tci/BestMarketCost.ZiIcPr.RData&quot;)
+      }
+
+CompMarketCost.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+                                    dimnames=list(Zi,Ic,Pr))
+for(pr in Pr){
+      FileName &lt;- paste(&quot;tci/&quot;, pr, &quot;CompMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;)
+      load(FileName)
+      CompMarketCost.ZiIcPr[,,pr] &lt;- CompMarketCost.ZiIc
+      rm(CompMarketCost.ZiIc)
+      save(CompMarketCost.ZiIcPr, file=&quot;tci/CompMarketCost.ZiIcPr.RData&quot;)
+      }
+
+AveMarketCost.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+                                    dimnames=list(Zi,Ic,Pr))
+for(pr in Pr){
+      FileName &lt;- paste(&quot;tci/&quot;, pr, &quot;AveMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;)
+      load(FileName)
+      AveMarketCost.ZiIcPr[,,pr] &lt;- AveMarketCost.ZiIc
+      rm(AveMarketCost.ZiIc)
+      save(AveMarketCost.ZiIcPr, file=&quot;tci/AveMarketCost.ZiIcPr.RData&quot;)
+      }
+
+AveMarketCost.ZiMdIcPr &lt;- array(0, dim=c(length(Zi), length(Md), length(Ic), length(Pr)),
+                                    dimnames=list(Zi,Md,Ic,Pr))
+for(pr in Pr){
+      FileName &lt;- paste(&quot;tci/&quot;, pr, &quot;AveMarketCost.ZiMdIc.RData&quot;, sep=&quot;&quot;)
+      load(FileName)
+      AveMarketCost.ZiMdIcPr[,,,pr] &lt;- AveMarketCost.ZiMdIc
+      rm(AveMarketCost.ZiMdIc)
+      save(AveMarketCost.ZiMdIcPr, file=&quot;tci/AveMarketCost.ZiMdIcPr.RData&quot;)
+      }
+
+NonAutoMarketCost.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+                                    dimnames=list(Zi,Ic,Pr))
+for(pr in Pr){
+      FileName &lt;- paste(&quot;tci/&quot;, pr, &quot;NonAutoMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;)
+      load(FileName)
+      NonAutoMarketCost.ZiIcPr[,,pr] &lt;- NonAutoMarketCost.ZiIc
+      rm(NonAutoMarketCost.ZiIc)
+      save(NonAutoMarketCost.ZiIcPr, file=&quot;tci/NonAutoMarketCost.ZiIcPr.RData&quot;)
+      }
+
+AutoMarketCost.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+                                    dimnames=list(Zi,Ic,Pr))
+for(pr in Pr){
+      FileName &lt;- paste(&quot;tci/&quot;, pr, &quot;AutoMarketCost.ZiIc.RData&quot;, sep=&quot;&quot;)
+      load(FileName)
+      AutoMarketCost.ZiIcPr[,,pr] &lt;- AutoMarketCost.ZiIc
+      rm(AutoMarketCost.ZiIc)
+      save(AutoMarketCost.ZiIcPr, file=&quot;tci/AutoMarketCost.ZiIcPr.RData&quot;)
+      }
+
+AltMarketCoverage.ZiMdIcPr &lt;- array(0, dim=c(length(Zi), 5, length(Ic), length(Pr)),
+                                    dimnames=list(Zi,c(Md[4:7], &quot;allNonAuto&quot;),Ic,Pr))
+for(pr in Pr){
+      FileName &lt;- paste(&quot;tci/&quot;, pr, &quot;AltMarketCoverage.ZiMdIc.RData&quot;, sep=&quot;&quot;)
+      load(FileName)
+      AltMarketCoverage.ZiMdIcPr[,,,pr] &lt;- AltMarketCoverage.ZiMdIc
+      rm(AltMarketCoverage.ZiMdIc)
+      save(AltMarketCoverage.ZiMdIcPr, file=&quot;tci/AltMarketCoverage.ZiMdIcPr.RData&quot;)
+      }
+</pre>
+<div class="section" id="summarize-the-aternative-mode-market-coverage">
+<h2><a name="summarize-the-aternative-mode-market-coverage">Summarize the aternative mode market coverage</a></h2>
+<pre class="literal-block">
+#Extract the average value that was computed
+AltMarketCoverage.ZiIcPr &lt;- AltMarketCoverage.ZiMdIcPr[,5,,]
+</pre>
+</div>
+</div>
+<div class="section" id="calculate-averages-by-income-group-and-purpose">
+<h1><a name="calculate-averages-by-income-group-and-purpose">Calculate averages by income group and purpose</a></h1>
+<p>The number of trips produced by income group and purpose will be used to aggregate tci measures</p>
+<div class="section" id="load-trip-data-by-purpose-and-aggregate-to-zone-and-income-group-level">
+<h2><a name="load-trip-data-by-purpose-and-aggregate-to-zone-and-income-group-level">Load trip data by purpose and aggregate to zone and income group level</a></h2>
+<pre class="literal-block">
+# Load trip production data
+load(&quot;tripgen/hbwTripProdAry.RData&quot;)
+load(&quot;tripgen/hbsTripProdAry.RData&quot;)
+load(&quot;tripgen/hbrTripProdAry.RData&quot;)
+load(&quot;tripgen/hboTripProdAry.RData&quot;)
+
+# Aggregate trips to income group level
+hbwTripProd.ZiIc &lt;- t(apply(apply(hbwTripProdAry, c(5,3), sum), 1,
+     function(x) c(x[1] + x[2], x[3], x[4])))[Zo %in% Zi,]
+dimnames(hbwTripProd.ZiIc) &lt;- list(Zi, Ic)
+rm(hbwTripProdAry)
+
+# Aggregate hbs trips
+hbsTripProd.ZiIc &lt;- t(apply(apply(hbsTripProdAry, c(5,3), sum), 1,
+     function(x) c(x[1] + x[2], x[3], x[4])))[Zo %in% Zi,]
+dimnames(hbsTripProd.ZiIc) &lt;- list(Zi, Ic)
+rm(hbsTripProdAry)
+
+# Aggregate hbr trips
+hbrTripProd.ZiIc &lt;- t(apply(apply(hbrTripProdAry, c(5,3), sum), 1,
+     function(x) c(x[1] + x[2], x[3], x[4])))[Zo %in% Zi,]
+dimnames(hbrTripProd.ZiIc) &lt;- list(Zi, Ic)
+rm(hbrTripProdAry)
+
+# Aggregate hbo trips
+hboTripProd.ZiIc &lt;- t(apply(apply(hboTripProdAry, c(5,3), sum), 1,
+     function(x) c(x[1] + x[2], x[3], x[4])))[Zo %in% Zi,]
+dimnames(hboTripProd.ZiIc) &lt;- list(Zi, Ic)
+rm(hboTripProdAry)
+
+# Put all the trips into an array
+TripProd.ZiIcPr &lt;- array(0, dim=c(length(Zi), length(Ic), length(Pr)),
+          dimnames=list(Zi,Ic,Pr))
+TripProd.ZiIcPr[,,&quot;hbw&quot;] &lt;- hbwTripProd.ZiIc
+TripProd.ZiIcPr[,,&quot;hbs&quot;] &lt;- hbsTripProd.ZiIc
+TripProd.ZiIcPr[,,&quot;hbr&quot;] &lt;- hbrTripProd.ZiIc
+TripProd.ZiIcPr[,,&quot;hbo&quot;] &lt;- hboTripProd.ZiIc
+</pre>
+</div>
+<div class="section" id="calculate-proportions-by-income-and-purpose">
+<h2><a name="calculate-proportions-by-income-and-purpose">Calculate proportions by income and purpose</a></h2>
+<pre class="literal-block">
+TripProd.ZiPr &lt;- apply(TripProd.ZiIcPr, c(1,3), sum)
+TripProd.ZiIc &lt;- apply(TripProd.ZiIcPr, c(1,2), sum)
+TripProd.Zi &lt;- apply(TripProd.ZiIcPr, 1, sum)
+TripProdIncProp.ZiIcPr &lt;- sweep(TripProd.ZiIcPr, c(1,3), TripProd.ZiPr, &quot;/&quot;)
+TripProdPurProp.ZiIcPr &lt;- sweep(TripProd.ZiIcPr, c(1,2), TripProd.ZiIc, &quot;/&quot;)
+TripProdIncPurProp.ZiIcPr &lt;- sweep(TripProd.ZiIcPr, 1, TripProd.Zi, &quot;/&quot;)
+</pre>
+</div>
+<div class="section" id="calculate-best-market-cost-by-purpose-and-income">
+<h2><a name="calculate-best-market-cost-by-purpose-and-income">Calculate best market cost by purpose and income</a></h2>
+<pre class="literal-block">
+BestMarketCost.ZiIc &lt;- apply(BestMarketCost.ZiIcPr * TripProdPurProp.ZiIcPr,
+                              c(1,2), sum)
+BestMarketCost.ZiPr &lt;- apply(BestMarketCost.ZiIcPr * TripProdIncProp.ZiIcPr,
+                              c(1,3), sum)
+BestMarketCost.Zi &lt;- apply(BestMarketCost.ZiIcPr * TripProdIncPurProp.ZiIcPr,
+                              1, sum)
+</pre>
+</div>
+<div class="section" id="calculate-composite-market-cost-by-purpose-and-income">
+<h2><a name="calculate-composite-market-cost-by-purpose-and-income">Calculate composite market cost by purpose and income</a></h2>
+<pre class="literal-block">
+CompMarketCost.ZiIc &lt;- apply(CompMarketCost.ZiIcPr * TripProdPurProp.ZiIcPr,
+                              c(1,2), sum)
+CompMarketCost.ZiPr &lt;- apply(CompMarketCost.ZiIcPr * TripProdIncProp.ZiIcPr,
+                              c(1,3), sum)
+CompMarketCost.Zi &lt;- apply(CompMarketCost.ZiIcPr * TripProdIncPurProp.ZiIcPr,
+                              1, sum)
+</pre>
+</div>
+<div class="section" id="calculate-average-market-cost-by-purpose-and-income">
+<h2><a name="calculate-average-market-cost-by-purpose-and-income">Calculate average market cost by purpose and income</a></h2>
+<pre class="literal-block">
+AveMarketCost.ZiIc &lt;- apply(AveMarketCost.ZiIcPr * TripProdPurProp.ZiIcPr,
+                              c(1,2), sum)
+AveMarketCost.ZiPr &lt;- apply(AveMarketCost.ZiIcPr * TripProdIncProp.ZiIcPr,
+                              c(1,3), sum)
+AveMarketCost.Zi &lt;- apply(AveMarketCost.ZiIcPr * TripProdIncPurProp.ZiIcPr,
+                              1, sum)
+</pre>
+</div>
+<div class="section" id="calculate-transportation-cost-index-tci-from-averages">
+<h2><a name="calculate-transportation-cost-index-tci-from-averages">Calculate transportation cost index (tci) from averages</a></h2>
+<p>The TCI is calculated from the average market cost</p>
+<pre class="literal-block">
+Tci.ZiIc &lt;- sweep(AveMarketCost.ZiIc, 2, AveMarketCost.ZiIc[ReferenceZone,], &quot;/&quot;)
+Tci.ZiPr &lt;- sweep(AveMarketCost.ZiPr, 2, AveMarketCost.ZiPr[ReferenceZone,], &quot;/&quot;)
+Tci.Zi &lt;- AveMarketCost.Zi / AveMarketCost.Zi[ReferenceZone]
+</pre>
+</div>
+<div class="section" id="calculate-transportation-cost-index-tci-from-best-costs">
+<h2><a name="calculate-transportation-cost-index-tci-from-best-costs">Calculate transportation cost index (tci) from best costs</a></h2>
+<p>The TCI2 calculates the TCI using the minimum market access cost</p>
+<pre class="literal-block">
+Tci2.ZiIc &lt;- sweep(BestMarketCost.ZiIc, 2, BestMarketCost.ZiIc[ReferenceZone,], &quot;/&quot;)
+Tci2.ZiPr &lt;- sweep(BestMarketCost.ZiPr, 2, BestMarketCost.ZiPr[ReferenceZone,], &quot;/&quot;)
+Tci2.Zi &lt;- BestMarketCost.Zi / BestMarketCost.Zi[ReferenceZone]
+</pre>
+</div>
+<div class="section" id="calculate-transportation-cost-index-tci-from-composite-costs">
+<h2><a name="calculate-transportation-cost-index-tci-from-composite-costs">Calculate transportation cost index (tci) from composite costs</a></h2>
+<p>The TCI3 calculates the TCI using the composite market access cost</p>
+<pre class="literal-block">
+Tci3.ZiIc &lt;- 1 / sweep(CompMarketCost.ZiIc, 2, CompMarketCost.ZiIc[ReferenceZone,], &quot;/&quot;)
+Tci3.ZiPr &lt;- 1 / sweep(CompMarketCost.ZiPr, 2, CompMarketCost.ZiPr[ReferenceZone,], &quot;/&quot;)
+Tci3.Zi &lt;- 1 / (CompMarketCost.Zi / CompMarketCost.Zi[ReferenceZone])
+</pre>
+</div>
+<div class="section" id="calculate-average-auto-market-cost-by-purpose-and-income">
+<h2><a name="calculate-average-auto-market-cost-by-purpose-and-income">Calculate average auto market cost by purpose and income</a></h2>
+<pre class="literal-block">
+AutoMarketCost.ZiIc &lt;- apply(AutoMarketCost.ZiIcPr * TripProdPurProp.ZiIcPr,
+                              c(1,2), sum)
+AutoMarketCost.ZiPr &lt;- apply(AutoMarketCost.ZiIcPr * TripProdIncProp.ZiIcPr,
+                              c(1,3), sum)
+AutoMarketCost.Zi &lt;- apply(AutoMarketCost.ZiIcPr * TripProdIncPurProp.ZiIcPr,
+                              1, sum)
+</pre>
+</div>
+<div class="section" id="calculate-average-non-auto-market-cost-by-purpose-and-income">
+<h2><a name="calculate-average-non-auto-market-cost-by-purpose-and-income">Calculate average non-auto market cost by purpose and income</a></h2>
+<pre class="literal-block">
+NonAutoMarketCost.ZiIc &lt;- apply(NonAutoMarketCost.ZiIcPr * TripProdPurProp.ZiIcPr,
+                              c(1,2), sum)
+NonAutoMarketCost.ZiPr &lt;- apply(NonAutoMarketCost.ZiIcPr * TripProdIncProp.ZiIcPr,
+                              c(1,3), sum)
+NonAutoMarketCost.Zi &lt;- apply(NonAutoMarketCost.ZiIcPr * TripProdIncPurProp.ZiIcPr,
+                              1, sum)
+</pre>
+</div>
+<div class="section" id="calculate-average-alternative-mode-market-coverage">
+<h2><a name="calculate-average-alternative-mode-market-coverage">Calculate average alternative mode market coverage</a></h2>
+<pre class="literal-block">
+AltMarketCoverage.ZiIc &lt;- apply(AltMarketCoverage.ZiIcPr * TripProdPurProp.ZiIcPr,
+                              c(1,2), sum)
+AltMarketCoverage.ZiPr &lt;- apply(AltMarketCoverage.ZiIcPr * TripProdIncProp.ZiIcPr,
+                              c(1,3), sum)
+AltMarketCoverage.Zi &lt;- apply(AltMarketCoverage.ZiIcPr * TripProdIncPurProp.ZiIcPr,
+                              1, sum)
+</pre>
+</div>
+<div class="section" id="calculate-ratio-of-non-auto-time-to-auto-time">
+<h2><a name="calculate-ratio-of-non-auto-time-to-auto-time">Calculate ratio of non-auto time to auto time</a></h2>
+<pre class="literal-block">
+NonAutoCostRatio.ZiIcPr &lt;- NonAutoMarketCost.ZiIcPr / AutoMarketCost.ZiIcPr
+NonAutoCostRatio.ZiIc &lt;- NonAutoMarketCost.ZiIc / AutoMarketCost.ZiIc
+NonAutoCostRatio.ZiPr &lt;- NonAutoMarketCost.ZiPr / AutoMarketCost.ZiPr
+NonAutoCostRatio.Zi &lt;- NonAutoMarketCost.Zi / AutoMarketCost.Zi
+</pre>
+</div>
+</div>
+<div class="section" id="calculate-regional-averages">
+<h1><a name="calculate-regional-averages">Calculate regional averages</a></h1>
+<div class="section" id="load-district-designations">
+<h2><a name="load-district-designations">Load district designations</a></h2>
+<pre class="literal-block">
+load(&quot;inputs/RData/districts.RData&quot;)
+District.Zo &lt;- districts$ugb
+names(District.Zo) &lt;- districts$zone
+District.Zi &lt;- District.Zo[Zi] ; rm(District.Zo)
+District.Zi &lt;- as.character(District.Zi)
+Di &lt;- unique(District.Zi)
+</pre>
+</div>
+<div class="section" id="calculate-intra-district-proportions">
+<h2><a name="calculate-intra-district-proportions">Calculate intra-district proportions</a></h2>
+<pre class="literal-block">
+TripProd.Di &lt;- tapply(TripProd.Zi, District.Zi, sum)
+TripProdDi.Zi &lt;-  TripProd.Di[match(District.Zi, names(TripProd.Di))]
+TripProdDiProp.Zi &lt;- TripProd.Zi / TripProdDi.Zi
+
+TripProd.DiIc &lt;- apply(TripProd.ZiIc, 2, function(x) tapply(x, District.Zi, sum))
+TripProdDi.ZiIc &lt;- apply(TripProd.DiIc, 2, function(x) x[match(District.Zi, names(x))])
+TripProdDiProp.ZiIc &lt;- TripProd.ZiIc / TripProdDi.ZiIc
+
+TripProd.DiPr &lt;- apply(TripProd.ZiPr, 2, function(x) tapply(x, District.Zi, sum))
+TripProdDi.ZiPr &lt;- apply(TripProd.DiPr, 2, function(x) x[match(District.Zi, names(x))])
+TripProdDiProp.ZiPr &lt;- TripProd.ZiPr / TripProdDi.ZiPr
+</pre>
+</div>
+<div class="section" id="calculate-best-market-time-by-district">
+<h2><a name="calculate-best-market-time-by-district">Calculate best market time by district</a></h2>
+<pre class="literal-block">
+BestMarketCost.Di &lt;- tapply(TripProdDiProp.Zi * BestMarketCost.Zi, District.Zi, sum)
+BestMarketCost.DiIc &lt;- apply(TripProdDiProp.ZiIc * BestMarketCost.ZiIc, 2, function(x)
+                              tapply(x, District.Zi, sum))
+BestMarketCost.DiPr &lt;- apply(TripProdDiProp.ZiPr * BestMarketCost.ZiPr, 2, function(x)
+                              tapply(x, District.Zi, sum))
+</pre>
+</div>
+<div class="section" id="calculate-composite-market-time-by-district">
+<h2><a name="calculate-composite-market-time-by-district">Calculate composite market time by district</a></h2>
+<pre class="literal-block">
+CompMarketCost.Di &lt;- tapply(TripProdDiProp.Zi * CompMarketCost.Zi, District.Zi, sum)
+CompMarketCost.DiIc &lt;- apply(TripProdDiProp.ZiIc * CompMarketCost.ZiIc, 2, function(x)
+                              tapply(x, District.Zi, sum))
+CompMarketCost.DiPr &lt;- apply(TripProdDiProp.ZiPr * CompMarketCost.ZiPr, 2, function(x)
+                              tapply(x, District.Zi, sum))
+</pre>
+</div>
+<div class="section" id="calculate-average-market-time-by-district">
+<h2><a name="calculate-average-market-time-by-district">Calculate average market time by district</a></h2>
+<pre class="literal-block">
+AveMarketCost.Di &lt;- tapply(TripProdDiProp.Zi * AveMarketCost.Zi, District.Zi, sum)
+AveMarketCost.DiIc &lt;- apply(TripProdDiProp.ZiIc * AveMarketCost.ZiIc, 2, function(x)
+                              tapply(x, District.Zi, sum))
+AveMarketCost.DiPr &lt;- apply(TripProdDiProp.ZiPr * AveMarketCost.ZiPr, 2, function(x)
+                              tapply(x, District.Zi, sum))
+</pre>
+</div>
+<div class="section" id="calculate-transportation-cost-index-tci-by-district">
+<h2><a name="calculate-transportation-cost-index-tci-by-district">Calculate transportation cost index (tci) by district</a></h2>
+<p>The TCI is calculated from the average market cost</p>
+<pre class="literal-block">
+Tci.DiIc &lt;- sweep(AveMarketCost.DiIc, 2, AveMarketCost.ZiIc[ReferenceZone,], &quot;/&quot;)
+Tci.DiPr &lt;- sweep(AveMarketCost.DiPr, 2, AveMarketCost.ZiPr[ReferenceZone,], &quot;/&quot;)
+Tci.Di &lt;- AveMarketCost.Di / AveMarketCost.Zi[ReferenceZone]
+</pre>
+</div>
+<div class="section" id="calculate-tci2-by-district">
+<h2><a name="calculate-tci2-by-district">Calculate tci2 by district</a></h2>
+<p>The TCI2 calculates the TCI using the minimum market access cost</p>
+<pre class="literal-block">
+Tci2.DiIc &lt;- sweep(BestMarketCost.DiIc, 2, BestMarketCost.ZiIc[ReferenceZone,], &quot;/&quot;)
+Tci2.DiPr &lt;- sweep(BestMarketCost.DiPr, 2, BestMarketCost.ZiPr[ReferenceZone,], &quot;/&quot;)
+Tci2.Di &lt;- BestMarketCost.Di / BestMarketCost.Zi[ReferenceZone]
+</pre>
+</div>
+<div class="section" id="calculate-tci3-by-district">
+<h2><a name="calculate-tci3-by-district">Calculate tci3 by district</a></h2>
+<p>The TCI3 calculates the TCI using the composite market access cost</p>
+<pre class="literal-block">
+Tci3.DiIc &lt;- 1 / sweep(CompMarketCost.DiIc, 2, CompMarketCost.ZiIc[ReferenceZone,], &quot;/&quot;)
+Tci3.DiPr &lt;- 1 / sweep(CompMarketCost.DiPr, 2, CompMarketCost.ZiPr[ReferenceZone,], &quot;/&quot;)
+Tci3.Di &lt;- 1 / (CompMarketCost.Di / CompMarketCost.Zi[ReferenceZone])
+</pre>
+</div>
+<div class="section" id="calculate-average-auto-market-cost-by-district">
+<h2><a name="calculate-average-auto-market-cost-by-district">Calculate average auto market cost by district</a></h2>
+<pre class="literal-block">
+AutoMarketCost.Di &lt;- tapply(TripProdDiProp.Zi * AutoMarketCost.Zi, District.Zi, sum)
+AutoMarketCost.DiIc &lt;- apply(TripProdDiProp.ZiIc * AutoMarketCost.ZiIc, 2, function(x)
+                              tapply(x, District.Zi, sum))
+AutoMarketCost.DiPr &lt;- apply(TripProdDiProp.ZiPr * AutoMarketCost.ZiPr, 2, function(x)
+                              tapply(x, District.Zi, sum))
+</pre>
+</div>
+<div class="section" id="calculate-average-non-auto-market-cost-by-district">
+<h2><a name="calculate-average-non-auto-market-cost-by-district">Calculate average non-auto market cost by district</a></h2>
+<pre class="literal-block">
+NonAutoMarketCost.Di &lt;- tapply(TripProdDiProp.Zi * NonAutoMarketCost.Zi, District.Zi, sum)
+NonAutoMarketCost.DiIc &lt;- apply(TripProdDiProp.ZiIc * NonAutoMarketCost.ZiIc, 2, function(x)
+                              tapply(x, District.Zi, sum))
+NonAutoMarketCost.DiPr &lt;- apply(TripProdDiProp.ZiPr * NonAutoMarketCost.ZiPr, 2, function(x)
+                              tapply(x, District.Zi, sum))
+</pre>
+</div>
+<div class="section" id="calculate-average-alternative-mode-market-coverage-by-district">
+<h2><a name="calculate-average-alternative-mode-market-coverage-by-district">Calculate average alternative mode market coverage by district</a></h2>
+<pre class="literal-block">
+AltMarketCoverage.Di &lt;- tapply(TripProdDiProp.Zi * AltMarketCoverage.Zi, District.Zi, sum)
+AltMarketCoverage.DiIc &lt;- apply(TripProdDiProp.ZiIc * AltMarketCoverage.ZiIc, 2, function(x)
+                              tapply(x, District.Zi, sum))
+AltMarketCoverage.DiPr &lt;- apply(TripProdDiProp.ZiPr * AltMarketCoverage.ZiPr, 2, function(x)
+                              tapply(x, District.Zi, sum))
+</pre>
+</div>
+<div class="section" id="calculate-ratio-of-non-auto-time-to-average-time-by-district">
+<h2><a name="calculate-ratio-of-non-auto-time-to-average-time-by-district">Calculate ratio of non-auto time to average time by district</a></h2>
+<pre class="literal-block">
+NonAutoCostRatio.DiIc &lt;- NonAutoMarketCost.DiIc / AutoMarketCost.DiIc
+NonAutoCostRatio.DiPr &lt;- NonAutoMarketCost.DiPr / AutoMarketCost.DiPr
+NonAutoCostRatio.Di &lt;- NonAutoMarketCost.Di / AutoMarketCost.Di
+</pre>
+</div>
+</div>
+<div class="section" id="save-the-results">
+<h1><a name="save-the-results">Save the results</a></h1>
+<pre class="literal-block">
+# Best market cost
+save(BestMarketCost.ZiIc, file=&quot;tci/BestMarketCost.ZiIc.RData&quot;)
+save(BestMarketCost.ZiPr, file=&quot;tci/BestMarketCost.ZiPr.RData&quot;)
+save(BestMarketCost.Zi, file=&quot;tci/BestMarketCost.Zi.RData&quot;)
+save(BestMarketCost.DiIc, file=&quot;tci/BestMarketCost.DiIc.RData&quot;)
+save(BestMarketCost.DiPr, file=&quot;tci/BestMarketCost.DiPr.RData&quot;)
+save(BestMarketCost.Di, file=&quot;tci/BestMarketCost.Di.RData&quot;)
+
+# Composite market cost
+save(CompMarketCost.ZiIc, file=&quot;tci/CompMarketCost.ZiIc.RData&quot;)
+save(CompMarketCost.ZiPr, file=&quot;tci/CompMarketCost.ZiPr.RData&quot;)
+save(CompMarketCost.Zi, file=&quot;tci/CompMarketCost.Zi.RData&quot;)
+save(CompMarketCost.DiIc, file=&quot;tci/CompMarketCost.DiIc.RData&quot;)
+save(CompMarketCost.DiPr, file=&quot;tci/CompMarketCost.DiPr.RData&quot;)
+save(CompMarketCost.Di, file=&quot;tci/CompMarketCost.Di.RData&quot;)
+
+# Average market cost
+save(AveMarketCost.ZiIc, file=&quot;tci/AveMarketCost.ZiIc.RData&quot;)
+save(AveMarketCost.ZiPr, file=&quot;tci/AveMarketCost.ZiPr.RData&quot;)
+save(AveMarketCost.Zi, file=&quot;tci/AveMarketCost.Zi.RData&quot;)
+save(AveMarketCost.DiIc, file=&quot;tci/AveMarketCost.DiIc.RData&quot;)
+save(AveMarketCost.DiPr, file=&quot;tci/AveMarketCost.DiPr.RData&quot;)
+save(AveMarketCost.Di, file=&quot;tci/AveMarketCost.Di.RData&quot;)
+
+# Travel Cost Index
+save(Tci.ZiIc, file=&quot;tci/Tci.ZiIc.RData&quot;)
+save(Tci.ZiPr, file=&quot;tci/Tci.ZiPr.RData&quot;)
+save(Tci.Zi, file=&quot;tci/Tci.Zi.RData&quot;)
+save(Tci.DiIc, file=&quot;tci/Tci.DiIc.RData&quot;)
+save(Tci.DiPr, file=&quot;tci/Tci.DiPr.RData&quot;)
+save(Tci.Di, file=&quot;tci/Tci.Di.RData&quot;)
+
+# Travel Cost Index 2
+save(Tci2.ZiIc, file=&quot;tci/Tci2.ZiIc.RData&quot;)
+save(Tci2.ZiPr, file=&quot;tci/Tci2.ZiPr.RData&quot;)
+save(Tci2.Zi, file=&quot;tci/Tci2.Zi.RData&quot;)
+save(Tci2.DiIc, file=&quot;tci/Tci2.DiIc.RData&quot;)
+save(Tci2.DiPr, file=&quot;tci/Tci2.DiPr.RData&quot;)
+save(Tci2.Di, file=&quot;tci/Tci2.Di.RData&quot;)
+
+# Travel Cost Index 3
+save(Tci3.ZiIc, file=&quot;tci/Tci3.ZiIc.RData&quot;)
+save(Tci3.ZiPr, file=&quot;tci/Tci3.ZiPr.RData&quot;)
+save(Tci3.Zi, file=&quot;tci/Tci3.Zi.RData&quot;)
+save(Tci3.DiIc, file=&quot;tci/Tci3.DiIc.RData&quot;)
+save(Tci3.DiPr, file=&quot;tci/Tci3.DiPr.RData&quot;)
+save(Tci3.Di, file=&quot;tci/Tci3.Di.RData&quot;)
+
+# Average non-auto market cost
+save(NonAutoMarketCost.ZiIc, file=&quot;tci/NonAutoMarketCost.ZiIc.RData&quot;)
+save(NonAutoMarketCost.ZiPr, file=&quot;tci/NonAutoMarketCost.ZiPr.RData&quot;)
+save(NonAutoMarketCost.Zi, file=&quot;tci/NonAutoMarketCost.Zi.RData&quot;)
+save(NonAutoMarketCost.DiIc, file=&quot;tci/NonAutoMarketCost.DiIc.RData&quot;)
+save(NonAutoMarketCost.DiPr, file=&quot;tci/NonAutoMarketCost.DiPr.RData&quot;)
+save(NonAutoMarketCost.Di, file=&quot;tci/NonAutoMarketCost.Di.RData&quot;)
+
+# Average auto market cost
+save(AutoMarketCost.ZiIc, file=&quot;tci/AutoMarketCost.ZiIc.RData&quot;)
+save(AutoMarketCost.ZiPr, file=&quot;tci/AutoMarketCost.ZiPr.RData&quot;)
+save(AutoMarketCost.Zi, file=&quot;tci/AutoMarketCost.Zi.RData&quot;)
+save(AutoMarketCost.DiIc, file=&quot;tci/AutoMarketCost.DiIc.RData&quot;)
+save(AutoMarketCost.DiPr, file=&quot;tci/AutoMarketCost.DiPr.RData&quot;)
+save(AutoMarketCost.Di, file=&quot;tci/AutoMarketCost.Di.RData&quot;)
+
+# NonAutoCostRatio
+save(NonAutoCostRatio.ZiIcPr, file=&quot;tci/NonAutoCostRatio.ZiIcPr.RData&quot;)
+save(NonAutoCostRatio.ZiIc, file=&quot;tci/NonAutoCostRatio.ZiIc.RData&quot;)
+save(NonAutoCostRatio.ZiPr, file=&quot;tci/NonAutoCostRatio.ZiPr.RData&quot;)
+save(NonAutoCostRatio.Zi, file=&quot;tci/ANonAutoCostRatio.Zi.RData&quot;)
+save(NonAutoCostRatio.DiIc, file=&quot;tci/NonAutoCostRatio.DiIc.RData&quot;)
+save(NonAutoCostRatio.DiPr, file=&quot;tci/NonAutoCostRatio.DiPr.RData&quot;)
+save(NonAutoCostRatio.Di, file=&quot;tci/ANonAutoCostRatio.Di.RData&quot;)
+
+# Alternative mode market coverage
+save(AltMarketCoverage.ZiIcPr, file=&quot;tci/AltMarketCoverage.ZiIcPr.RData&quot;)
+save(AltMarketCoverage.ZiIc, file=&quot;tci/AltMarketCoverage.ZiIc.RData&quot;)
+save(AltMarketCoverage.ZiPr, file=&quot;tci/AltMarketCoverage.ZiPr.RData&quot;)
+save(AltMarketCoverage.Zi, file=&quot;tci/AltMarketCoverage.Zi.RData&quot;)
+save(AltMarketCoverage.DiIc, file=&quot;tci/AltMarketCoverage.DiIc.RData&quot;)
+save(AltMarketCoverage.DiPr, file=&quot;tci/AltMarketCoverage.DiPr.RData&quot;)
+save(AltMarketCoverage.Di, file=&quot;tci/AltMarketCoverage.Di.RData&quot;)
+</pre>
+</div>
+</div>
+</body>
+</html>
