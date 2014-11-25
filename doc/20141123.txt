@@ -18,7 +18,7 @@ Instead, I have uploaded only the model estimation results in /home/workspace/TC
 The model specifications are exactly the same as Merto's models, except dummy variables that indicate crossing a specific area.
 I have also uploaded a R script for loading logsum variables onto the PostgreSQL database in /home/workspace/TCI/code (loadLogsum.r).
 I will work on these things next week.
-create a predict function
-make the rmd file to work on the RStudio server
-combine the model results into one table
+* create a predict function
+* make the rmd file to work on the RStudio server
+* combine the model results into one table
 
