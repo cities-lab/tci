@@ -98,8 +98,7 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <li>one for each combination of 4 trip purposes and 3 income groups</li>
 </ul></li>
 </ul>
-<pre class="r"><code>setwd(&quot;~/tci/doc&quot;) # to save the html output resulting from the rmd file in this working directory 
-library(RPostgreSQL)
+<pre class="r"><code>library(RPostgreSQL)
 conn &lt;- dbConnect(PostgreSQL(), host=&quot;sapporo.usp.pdx.edu&quot;, user=&quot;smartdata&quot;, password=&quot;Smartaa00&quot;, dbname=&quot;portland&quot;)
 # 2011 OTAS
 activity &lt;- dbReadTable(conn, c(&quot;ohas_v2&quot;, &quot;activity2&quot;)) # the activity file from the 2011 OTAS</code></pre>

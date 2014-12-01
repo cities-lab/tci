@@ -31,7 +31,6 @@ Three different data sources are considered.
 * TAZ-to-TAZ logsum variables of multimodal accessibility funstions, provided by Portland Metro
     + one for each combination of 4 trip purposes and 3 income groups
 ```{r,message=FALSE}
-setwd("~/tci/doc") # to save the html output resulting from the rmd file in this working directory 
 library(RPostgreSQL)
 conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
 # 2011 OTAS
