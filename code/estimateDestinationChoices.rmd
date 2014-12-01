@@ -1,7 +1,7 @@
 ---
 title: "Destination Choice Model Estimation"
 author: "Kihong Kim and Liming Wang, Ph.D."
-date: "11/22/2014"
+date: "11/30/2014"
 output: html_document
 ---
 
@@ -31,7 +31,7 @@ Three different data sources are considered.
 * TAZ-to-TAZ logsum variables of multimodal accessibility funstions, provided by Portland Metro
     + one for each combination of 4 trip purposes and 3 income groups
 ```{r,message=FALSE}
-setwd("/home/workspace/TCI")
+setwd("~/tci/doc") # to save the html output resulting from the rmd file in this working directory 
 library(RPostgreSQL)
 conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
 # 2011 OTAS
@@ -210,42 +210,95 @@ hbo.long.IVs <- addIVs(hbo.long, hbo)
 ### Create as the mlogit data format
 ```{r}
 library(mlogit)
+# hbw.low
 hbw.low.md <- mlogit.data(hbw.long.IVs[which(hbw.long.IVs$hincLow==1),], shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+# hbw.med
 hbw.med.md <- mlogit.data(hbw.long.IVs[which(hbw.long.IVs$hincMed==1),], shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+# hbw.high
 hbw.high.md <- mlogit.data(hbw.long.IVs[which(hbw.long.IVs$hincHigh==1),], shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+# hbw
 hbw.md <- mlogit.data(hbw.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+# hbs
 hbs.md <- mlogit.data(hbs.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+# hbr
 hbr.md <- mlogit.data(hbr.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+# hbo
 hbo.md <- mlogit.data(hbo.long.IVs, shape="long", choice="chosen", id.var="tripid", alt.var="alt")
 ```
 
 ### Estimate destination choice models
+We almost follow Portland Metro's model specifications. In this study, however, several dummy variables in Metro's destination choice models that indicate a trip crossing a specific boundary, such as Columbia River, Willamette River, and West Hills, are excluded. In addition, we specify an additional model that combines all household income groups for home-based work trips. 
 ```{r}
 # hbw.low
 hbw.low.dc <- mlogit(chosen ~ hbw_logsum_low + I(hbw_logsum_low^2) + I(hbw_logsum_low^3)
   						+ TotEmp|0|0, hbw.low.md)
-summary(hbw.low.dc)
 # hbw.med
 hbw.med.dc <- mlogit(chosen ~ hbw_logsum_med + I(hbw_logsum_med^2) + I(hbw_logsum_med^3)
 							+ RetEmp + NonRet|0|0, hbw.med.md)
-summary(hbw.med.dc)
 # hbw.high
 hbw.high.md$NonRetSvcFin <- with(hbw.high.md, TotEmp - RetEmp - SvcEmp - FinEmp)
 hbw.high.dc <- mlogit(chosen ~ hbw_logsum_high + I(hbw_logsum_high^2) + I(hbw_logsum_high^3)
 							+ RetEmp + SvcEmp + FinEmp + NonRetSvcFin|0|0, hbw.high.md)
-summary(hbw.high.dc)
+# hbw
+hbw.dc <- mlogit(chosen ~ hbw_logsum_avg + I(hbw_logsum_avg^2) + I(hbw_logsum_avg^3)
+    				+ RetEmp + SvcEmp + FinEmp + GvtEmp|0|0, hbw.md)
 # hbs
 hbs.dc <- mlogit(chosen ~ hbs_logsum_avg + I(hbs_logsum_avg^2) + I(hbs_logsum_avg^3)
 						+ RetEmp + NonRet + HHold|0|0, hbs.md)
-summary(hbs.dc)
 # hbr
 hbr.dc <- mlogit(chosen ~ hbr_logsum_avg + I(hbr_logsum_avg^2) + I(hbr_logsum_avg^3)
 						+ TotEmp + HHold + ParkAcres|0|0, hbr.md)
-summary(hbr.dc)
 # hbo
 hbo.dc <- mlogit(chosen ~ hbo_logsum_avg + I(hbo_logsum_avg^2) + I(hbo_logsum_avg^3)
 						+ RetEmp + SvcEmp + GvtEmp + NonRetSvcGvt + HHold|0|0, hbo.md)
-summary(hbo.dc)
-
 ```
 
+### Summarize model results
+```{r}
+library(stargazer)
+#
+mfR2.null <- function(object, id.var){
+  data.name <- object$call$data
+  data <- eval(data.name, envir=parent.frame())
+  logLik0 <- sum(-log(table(data[[id.var]])))
+  1-logLik(object)/logLik0
+}
+#
+lratio.null <- function(object, id.var){
+  freq <- object$freq
+  data.name <- object$call$data
+  data <- eval(data.name,envir=parent.frame())
+  llo <- sum(-log(table(data[[id.var]])))
+  parameter.0 <- 0
+  stat <- -2*(llo-logLik(object))
+  names(stat) <- "chisq"
+  parameter <- length(coef(object))-parameter.0
+  names(parameter) <- "df"
+  pval <- pchisq(stat,df=parameter,lower.tail=FALSE)
+  lrtest <- list(statistic = stat,
+                 data.name = data.name,
+                 p.value = pval,
+                 parameter = parameter,
+                 method = "likelihood ratio test")
+  class(lrtest) <- "htest"
+  lrtest
+}
+# hbw destination choice models
+hbw.low.dc$mfR2 <- mfR2.null(hbw.low.dc, "tripid")
+hbw.low.dc$lratio <- lratio.null(hbw.low.dc, "tripid")
+hbw.med.dc$mfR2 <- mfR2.null(hbw.med.dc, "tripid")
+hbw.med.dc$lratio <- lratio.null(hbw.med.dc, "tripid")
+hbw.high.dc$mfR2 <- mfR2.null(hbw.high.dc, "tripid")
+hbw.high.dc$lratio <- lratio.null(hbw.high.dc, "tripid")
+hbw.dc$mfR2 <- mfR2.null(hbw.dc, "tripid")
+hbw.dc$lratio <- lratio.null(hbw.dc, "tripid")
+stargazer(hbw.low.dc, hbw.med.dc, hbw.high.dc, hbw.dc, type="html")
+# hbs, hbr, and hbo destination choice models
+hbs.dc$mfR2 <- mfR2.null(hbs.dc, "tripid")
+hbs.dc$lratio <- lratio.null(hbs.dc, "tripid")
+hbr.dc$mfR2 <- mfR2.null(hbr.dc, "tripid")
+hbr.dc$lratio <- lratio.null(hbr.dc, "tripid")
+hbo.dc$mfR2 <- mfR2.null(hbo.dc, "tripid")
+hbo.dc$lratio <- lratio.null(hbo.dc, "tripid")
+stargazer(hbs.dc, hbr.dc, hbo.dc, type="html")
+```
