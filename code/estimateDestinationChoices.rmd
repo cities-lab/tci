@@ -328,10 +328,11 @@ hbr.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbr==1),],
 hbo.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbo==1),],
                            shape="long", choice="chosen", id.var="tripid", alt.var="alt")
 # store the predicted probabilities
-hbw.low.pp <- cbind(hbw.low.md2[c("tripid","alt")], predict(hbw.low.dc, newdata=hbw.low.md2, type="probs"))
-hbw.med.pp <- cbind(hbw.med.md2[c("tripid","alt")], predict(hbw.med.dc, newdata=hbw.med.md2, type="probs"))
-hbw.high.pp <- cbind(hbw.high.md2[c("tripid","alt")], predict(hbw.high.dc, newdata=hbw.high.md2, type="probs"))
-hbs.pp <- cbind(hbs.md2[c("tripid","alt")], predict(hbs.dc, newdata=hbs.md2, type="probs"))
-hbr.pp <- cbind(hbr.md2[c("tripid","alt")], predict(hbr.dc, newdata=hbr.md2, type="probs"))
-hbo.pp <- cbind(hbo.md2[c("tripid","alt")], predict(hbo.dc, newdata=hbo.md2, type="probs"))
+hbw.low.pp <- cbind(hbw.low.md2["tripid"], predict(hbw.low.dc, newdata=hbw.low.md2, type="probs"))
+hbw.med.pp <- cbind(hbw.med.md2["tripid"], predict(hbw.med.dc, newdata=hbw.med.md2, type="probs"))
+hbw.high.md2$NonRetSvcFin <- with(hbw.high.md2, TotEmp - RetEmp - SvcEmp - FinEmp)
+hbw.high.pp <- cbind(hbw.high.md2["tripid"], predict(hbw.high.dc, newdata=hbw.high.md2, type="probs"))
+hbs.pp <- cbind(hbs.md2["tripid"], predict(hbs.dc, newdata=hbs.md2, type="probs"))
+hbr.pp <- cbind(hbr.md2["tripid"], predict(hbr.dc, newdata=hbr.md2, type="probs"))
+hbo.pp <- cbind(hbo.md2["tripid"], predict(hbo.dc, newdata=hbo.md2, type="probs"))
 ```
