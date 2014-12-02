@@ -1,8 +1,5 @@
 #This script prepares the workspace and file directories for calculating travel time and travel cost through employment centres methods 
 
-# set workplace and file directories 
-setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
-
 # Define income group abbreviation
 Ic <- c("lowInc", "midInc", "highInc")
 
@@ -24,4 +21,7 @@ Cm <- c("min", "weighted")
 modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, parkAndRideBus=0.35, bike=0.5, walk=0.5)
 
 # Load zone abbreviation 
-load("CenRdata/Zi.RData")
+load("data/CenTTime/CenRdata/Zi.RData")
+
+
+

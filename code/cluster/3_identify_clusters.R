@@ -6,6 +6,7 @@ require(maptools)
 require(rgeos)
 require(rgdal)
 
+
 # define a functon to identify clusters 
 
 identify_clusters <- function(map.df, filter=NULL, dist=NULL) {
@@ -45,7 +46,6 @@ identify_clusters <- function(map.df, filter=NULL, dist=NULL) {
 #writeOGR(map.df2[filter, ],"./","test_map",driver="ESRI Shapefile")
 
 
-
 identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, sum.cutoff=0){
     data.df <- map.df@data
     filter <- data.df[,colname] >= cutoff
@@ -54,8 +54,8 @@ identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, s
     summary(clusters.df$tot.emp)
     if (!is.null(sum.col)) {
     valid.clusters <- filter(summarise(group_by(clusters.df, cluster.id),
-                                       cluster.sum = sum(clusters.df[,sum.col])),
-                             cluster.id != 0 & cluster.sum >= sum.cutoff)
+                                       cluster.sum = eval(paste('sum(', sum.col, ')', sep='')), cluster.count=n()),
+                             cluster.id != 0 & cluster.count > 1 & cluster.sum >= sum.cutoff)
     }
     cluster.df <- filter(clusters.df, cluster.id %in% valid.clusters$cluster.id)
     cluster.df
