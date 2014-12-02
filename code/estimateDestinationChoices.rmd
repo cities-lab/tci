@@ -301,3 +301,37 @@ hbo.dc$mfR2 <- mfR2.null(hbo.dc, "tripid")
 hbo.dc$lratio <- lratio.null(hbo.dc, "tripid")
 stargazer(hbs.dc, hbr.dc, hbo.dc, type="text")
 ```
+
+### Predict destination choices
+```{r}
+# create a new data set
+newTrips <- subset(linked, !is.na(otaz) & !is.na(dtaz))
+newTrips <- newTrips[sample(nrow(newTrips), 1000), ]
+# generate a random choice set for each trip
+long <- expand.grid(alt=seq(1,numAlts,1), tripid=newTrips$tripid)
+CS <- as.vector(replicate(1000, sample(universalCS,10)))
+newTrips.long <- cbind(long,CS)
+newTrips.long$chosen <- FALSE
+# add independent variables
+newTrips.long.IVs <- addIVs(newTrips.long, newTrips)
+# create as a mlogit data format
+hbw.low.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbw==1&newTrips.long.IVs$hincLow==1),],
+                           shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbw.med.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbw==1&newTrips.long.IVs$hincMed==1),],
+                           shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbw.high.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbw==1&newTrips.long.IVs$hincHigh==1),],
+                           shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbs.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbs==1),],
+                           shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbr.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbr==1),],
+                           shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+hbo.md2 <- mlogit.data(newTrips.long.IVs[which(newTrips.long.IVs$hbo==1),],
+                           shape="long", choice="chosen", id.var="tripid", alt.var="alt")
+# store the predicted probabilities
+hbw.low.pp <- cbind(hbw.low.md2[c("tripid","alt")], predict(hbw.low.dc, newdata=hbw.low.md2, type="probs"))
+hbw.med.pp <- cbind(hbw.med.md2[c("tripid","alt")], predict(hbw.med.dc, newdata=hbw.med.md2, type="probs"))
+hbw.high.pp <- cbind(hbw.high.md2[c("tripid","alt")], predict(hbw.high.dc, newdata=hbw.high.md2, type="probs"))
+hbs.pp <- cbind(hbs.md2[c("tripid","alt")], predict(hbs.dc, newdata=hbs.md2, type="probs"))
+hbr.pp <- cbind(hbr.md2[c("tripid","alt")], predict(hbr.dc, newdata=hbr.md2, type="probs"))
+hbo.pp <- cbind(hbo.md2[c("tripid","alt")], predict(hbo.dc, newdata=hbo.md2, type="probs"))
+```
