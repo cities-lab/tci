@@ -15,14 +15,13 @@ for (pr in Pr) {
     load(CostFileName); rm(CostFileName)
     CostObjName <- paste(pr,ic,"cost", sep="")
     Cost <- get(CostObjName); rm( CostObjName)
+    Cost <- as.data.frame(Cost)
     rowindex <- c(1:nrow(Cost))
     
     Cost.Zi <- matrix(0, nrow=2162, ncol=1)
-    
-    
     for (i in rowindex) {
       
-      Cost.Zi[Cost[i,1],1] <- Cost[i,2]
+      Cost.Zi[Cost[i, 1],1] <- Cost[i,2]
       
     }
     
