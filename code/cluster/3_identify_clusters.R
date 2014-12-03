@@ -53,11 +53,13 @@ identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, s
     clusters.df <- clusters.shp@data
     summary(clusters.df$tot.emp)
     if (!is.null(sum.col)) {
-    valid.clusters <- filter(summarise(group_by(clusters.df, cluster.id),
-                                       cluster.sum = sum(clusters.df[, sum.col]), cluster.count=n()),
-                             cluster.id != 0 & cluster.count > 1 & cluster.sum >= sum.cutoff)
+       valid.clusters <- clusters.df %>%
+          group_by(cluster.id) %>%
+          summarise_(cluster.sum = paste("sum(", sum.col, ")", sep=""), cluster.count="n()") %>%
+                filter(cluster.id != 0 & cluster.count > 1 & cluster.sum >= sum.cutoff) %>%
+                dplyr::select(cluster.id)
     }
-    cluster.df <- filter(clusters.df, cluster.id %in% valid.clusters$cluster.id)
+    cluster.df <- inner_join(clusters.df, valid.clusters)
     cluster.df
 }
 
