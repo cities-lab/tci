@@ -54,7 +54,7 @@ identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, s
     summary(clusters.df$tot.emp)
     if (!is.null(sum.col)) {
     valid.clusters <- filter(summarise(group_by(clusters.df, cluster.id),
-                                       cluster.sum = eval(paste('sum(', sum.col, ')', sep='')), cluster.count=n()),
+                                       cluster.sum = sum(clusters.df[, sum.col]), cluster.count=n()),
                              cluster.id != 0 & cluster.count > 1 & cluster.sum >= sum.cutoff)
     }
     cluster.df <- filter(clusters.df, cluster.id %in% valid.clusters$cluster.id)
