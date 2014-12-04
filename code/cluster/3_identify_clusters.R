@@ -5,7 +5,8 @@
 require(maptools)
 require(rgeos)
 require(rgdal)
-
+require(dplyr)
+require(lazyeval)
 
 # define a functon to identify clusters 
 
@@ -55,9 +56,10 @@ identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, s
     if (!is.null(sum.col)) {
        valid.clusters <- clusters.df %>%
           group_by(cluster.id) %>%
-          summarise_(cluster.sum = paste("sum(", sum.col, ")", sep=""), cluster.count="n()") %>%
-                filter(cluster.id != 0 & cluster.count > 1 & cluster.sum >= sum.cutoff) %>%
-                dplyr::select(cluster.id)
+          summarise_(cluster.sum = interp(~sum(col.name), col.name=as.name(sum.col), 
+                     cluster.count=~n()) %>%
+          filter(cluster.id != 0 & cluster.count > 1 & cluster.sum >= sum.cutoff) %>%
+          dplyr::select(cluster.id)
     }
     cluster.df <- inner_join(clusters.df, valid.clusters)
     cluster.df
