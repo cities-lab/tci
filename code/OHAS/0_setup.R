@@ -2,7 +2,7 @@
 # travel time and travel cost with OHAS data
 
 # Set workspace
-setwd("/home/yanghuajie/tci/data/OHASTTime/")
+setwd("~/tci")
 
 # Define income group abbreviation
 Ic <- c("lowInc", "midInc", "highInc")
@@ -16,4 +16,4 @@ Pr <- c("hbw", "hbs", "hbr", "hbo")
 IncomeCoeff.Ic <- c(lowInc=1,midInc=2,highInc=3)
 
 # Load zone abbreviation 
-load("Rdata/Zi.RData")
+load("data/OHASTTime/Rdata/Zi.RData")
