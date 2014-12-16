@@ -1,5 +1,5 @@
 # This scripts identify linked trips, not place-based trips, by income groups and trip purposes
- 
+
 ### Load data from the PostgreSQL database
 # the household file of the 2011 OTAS
 

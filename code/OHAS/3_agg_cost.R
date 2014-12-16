@@ -1,4 +1,4 @@
-# This scripts aggregate cost by trip purpose and income group
+# This scri pts aggregate cost by trip purpose and income group
 
 # combine the cost into array    
 Cost.ZiIcPr <- array(0, dim=c(length(Zi), length(Ic), length(Pr)), dimnames=list(Zi,Ic,Pr))
