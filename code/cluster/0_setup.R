@@ -2,7 +2,7 @@
 # and travel cost with employment centres methods 
 
 # Set workspace
-setwd("/home/yanghuajie/tci/data/CenTTime/")
+setwd("~/tci")
 
 # Define income group abbreviation
 Ic <- c("lowInc", "midInc", "highInc")

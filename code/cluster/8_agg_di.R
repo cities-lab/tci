@@ -6,7 +6,7 @@
 
 #:: 
 
-     load("CenRdata/districts.RData")
+     load("data/CenTTime/CenRdata/districts.RData")
      District.Zo <- districts$ugb
      names(District.Zo) <- districts$zone
      District.Zi <- District.Zo[Zi] ; rm(District.Zo)

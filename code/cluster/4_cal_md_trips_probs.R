@@ -23,7 +23,8 @@ for(pr in Pr){
   # Begin iteration by income group
   for(ic in Ic){
     # Load trip distribution matrices for each income group
-    DistFileName <- paste("CenRdata/tripdist/", pr, ic, "Dist.RData", sep="")
+
+    DistFileName <- paste("data/CenTTime/CenRdata/tripdist/", pr, ic, "Dist.RData", sep="")
     load(DistFileName); rm(DistFileName)
     
     # Get trip matrix 
@@ -46,7 +47,7 @@ for(pr in Pr){
         ExpUtil.ZiZi <- exp(WalkAccessCoeff.Pr[pr] * 60 * tripDist.ZiZi / 3)
       }
       if((md != "bike") & (md != "walk")) {
-        ModeUtilFileName <- paste("CenRdata/access/util", md, ic, pr, ".RData", sep="")
+        ModeUtilFileName <- paste("data/CenTTime/CenRdata/access/util", md, ic, pr, ".RData", sep="")
         load(ModeUtilFileName) ; rm(ModeUtilFileName)
         ModeUtilObjName <- paste("util", md, ic, pr, sep="")
         ExpUtil.ZiZi <- get(ModeUtilObjName)

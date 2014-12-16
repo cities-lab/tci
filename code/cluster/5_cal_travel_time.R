@@ -5,7 +5,13 @@
 min_tt <- function(centers, tt) {
   min_tt <- NULL
   for (zi in 1:dim(tt)[1]) {
+    if (all(is.na(tt[zi,centers]))) {
+      print(zi) #there are zones without certain access to centers, eg. busWalk
+    }
+    
     min_tt[zi] <- min(tt[zi,centers], na.rm=TRUE)
+    min_tt[zi] <- ifelse(is.infinite(min_tt[zi]), NA, min_tt[zi])
+    
   }
   min_tt
 }

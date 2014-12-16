@@ -1,8 +1,10 @@
 ## This scripts generate a variety of plots and maps of costs 
 
 
-# load results 
-#===============
+source("code/openGraphSaveGraph.R")
+
+WD <- getwd()
+setwd("data/CenTTime/")
 
 #::
 
@@ -81,6 +83,9 @@
  	 }
 	}
 
+## load vector of zone names 
+     load("CenRdata/Zi.RData")
+
 # make names for household incme groups and trip types for plotting 
      
      IcNames <- c("Low Income", "Mid Income", "High Income")
@@ -90,10 +95,6 @@
      PrNames <- c("Work", "Shopping", "Recreation", "Other")
      Pr <- c("hbw", "hbs", "hbr", "hbo")
      names(PrNames) <- Pr
-
-
-# load saveGraph function 
-source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
 
 ########
 ## Map minimal travel time cost during offpeak time 
@@ -111,7 +112,6 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
 
 	mtext("OffPeak Minimal Travel Time Cost")
   saveGraph(filename="graphics/minoffpeakAggCost_Zi", type="pdf")
-  
 
 ## Map minimal travel time cost during peak time
 ## -------------------------------------------
@@ -202,7 +202,6 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
     
     saveGraph(filename="graphics/map_cost_by_income_tp_cm_income", type="pdf")
 
-
 #Plot maps of cost by purposes for each calculate method and time period
 
 #------------------------------------------------------
@@ -240,8 +239,6 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
     
     saveGraph(filename="graphics/map_cost_by_income_tp_cm_purpose", type="pdf")
 
-
-
 #Plot household histograms of cost by purpose for each calculate method and time period
 #------------------------------------------------------------------------------------
 
@@ -269,7 +266,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
                }
           }
      par(Opar)
-    saveGraph(filename="graphics/hist_cost_by_cm_tp_purpose", type="pdf")
+     saveGraph(filename="graphics/hist_cost_by_cm_tp_purpose", type="pdf")
 
 
 #Plot household histograms of cost by income for each calculate method and time period
@@ -301,7 +298,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
           }
      par(Opar)
 
-      saveGraph(filename="graphics/hist_cost_by_cm_tp_income", type="pdf")
+     saveGraph(filename="graphics/hist_cost_by_cm_tp_income", type="pdf")
 
 #Plot density line of cost by purpose for each calculate method and time period
 #------------------------------------------------------------------------------------
@@ -352,7 +349,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
           }
      par(Opar)
 
-    saveGraph(filename="graphics/density_cost_by_cm_tp_income", type="pdf")
+     saveGraph(filename="graphics/density_cost_by_cm_tp_income", type="pdf")
 
 #Plot comparisons of travel cost indices by UGB
 #----------------------------------------------
@@ -399,7 +396,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
      
      mtext("Comparison of Cost Values by Calculation Method and Time Period", outer=TRUE, line=1, cex=1.15)
      
-      saveGraph(filename="graphics/district_cost",type="pdf")
+     saveGraph(filename="graphics/district_cost",type="pdf")
      
      # Restore graphics parameters
      par(Opar)
@@ -431,7 +428,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
                }
           }
      par(Opar)
-      saveGraph(filename="graphics/hist_minoffpeak_cost_by_income_purpose", type="pdf") 
+     saveGraph(filename="graphics/hist_minoffpeak_cost_by_income_purpose", type="pdf") 
 
 
 #Plot household histograms of minimal travel time during peak costs for all purposes and incomes
@@ -458,7 +455,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
                }
           }
      par(Opar)
-      saveGraph(filename="graphics/hist_minpeak_cost_by_income_purpose", type="pdf") 
+     saveGraph(filename="graphics/hist_minpeak_cost_by_income_purpose", type="pdf") 
 
 #Plot household histograms of weighted travel time during offpeak costs for all purposes and incomes
 #------------------------------------------------------------------------------
@@ -484,7 +481,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
                }
           }
      par(Opar)
-      saveGraph(filename="graphics/hist_weightedoffpeak_cost_by_income_purpose", type="pdf") 
+     saveGraph(filename="graphics/hist_weightedoffpeak_cost_by_income_purpose", type="pdf") 
 
 
 #Plot household histograms of weighted travel time during peak costs for all purposes and incomes
@@ -511,7 +508,7 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
                }
           }
      par(Opar)
-      saveGraph(filename="graphics/hist_weightedpeak_cost_by_income_purpose", type="pdf") 
+     saveGraph(filename="graphics/hist_weightedpeak_cost_by_income_purpose", type="pdf") 
 
 ######## map *.ZiIcPr
 #Plot maps of minimal travel time during offpeak costs for all purposes and incomes
@@ -689,7 +686,11 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
           }
 
  par(Opar)
+<<<<<<< HEAD
      saveGraph(filename="graphics/density_minpeak_cost_by_income_purpose", type="pdf")
+=======
+    saveGraph(filename="graphics/density_minpeak_cost_by_income_purpose", type="pdf")
+>>>>>>> 608566c449fab35db6f30ce48f0027df942e9b08
 
 
 
@@ -736,4 +737,6 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
           }
  
  par(Opar)
-     saveGraph(filename="graphics/density_weightedpeak_cost_by_income_purpose", type="pdf")
+ saveGraph(filename="graphics/density_weightedpeak_cost_by_income_purpose", type="pdf")
+
+setwd(WD)
