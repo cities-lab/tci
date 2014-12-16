@@ -1,7 +1,6 @@
 # This script calculates minimal travel time and weighted average travel time to centers, 
 # converts travel time into monetary cost and combines cost into arrays. 
 
-
 # define a function of calculate minimal 
 min_tt <- function(centers, tt) {
   min_tt <- NULL
@@ -29,8 +28,8 @@ cost.conversion <- 24.77/60
 
 #::
 for (pr in Pr) { 
-  # load taz index of centers assign to Centers
-  CenterFileName <- paste("data/CenTTime/CenRdata/",pr,"ci.RData", sep="")
+  # load taz index of centers 
+  CenterFileName <- paste("CenRdata/",pr,"ci.RData", sep="")
   load(CenterFileName);  rm(CenterFileName)
   CentersObjName <- paste(pr,"ci", sep="")
   Centers <- get(CentersObjName); rm(CentersObjName)
@@ -46,7 +45,7 @@ for (pr in Pr) {
       for (md in Md ) {
         
         # load trips matrix
-        TripsMdFileName <- paste("data/CenTTime/CenRdata/tripbymode/", pr, ic, md, "trips.RData", sep="")
+        TripsMdFileName <- paste("CenRdata/tripbymode/", pr, ic, md, "trips.RData", sep="")
         load(TripsMdFileName); rm(TripsMdFileName)
         TripsMdObjName <- paste(pr, ic, md, "trips", sep="")
         TripsMd <- get(TripsMdObjName); rm(TripsMdObjName)
@@ -54,7 +53,7 @@ for (pr in Pr) {
         if ((md == "bike")|(md=="walk")) {
           
           # load travel time for bike and walk 
-          TTimeFileName <- paste("data/CenTTime/CenRdata/", md, "Time",md, pr, ".RData", sep="")
+          TTimeFileName <- paste("CenRdata/", md, "Time",md, pr, ".RData", sep="")
           load(TTimeFileName); rm(TTimeFileName)
           TTimeObjName <- paste(md,"Time", md, pr, sep="")
           TTime <- get(TTimeObjName); rm(TTimeObjName)
@@ -62,12 +61,12 @@ for (pr in Pr) {
           # calculate and save minimal travel time for bike and walk 
           minTTime <- min_tt(Centers, TTime)
           assign(paste("min", pr, ic,md, "time", sep=""), minTTime)
-          save(list=paste("min", pr, ic,md, "time", sep=""), file = paste("data/CenTTime/results/traveltime/", "min", pr,ic,md,"time.RData", sep=""))
+          save(list=paste("min", pr, ic,md, "time", sep=""), file = paste("results/traveltime/", "min", pr,ic,md,"time.RData", sep=""))
           
           # calculate and save minimal travel time cost for bike and walk					
           minTTimeCost <- minTTime*modecosttrans.Md[md]*cost.conversion
           assign(paste("min", pr,ic, md, "timecost", sep=""), minTTimeCost)
-          save(list=paste("min", pr,ic, md, "timecost", sep=""), file = paste("data/CenTTime/results/travelcost/", "min", pr,ic, md,"timecost.RData", sep=""))
+          save(list=paste("min", pr,ic, md, "timecost", sep=""), file = paste("results/travelcost/", "min", pr,ic, md,"timecost.RData", sep=""))
           
           # combine cost into array 
           TTimecost.ZiMdCm[,md,"min"] <- minTTimeCost       
@@ -76,13 +75,13 @@ for (pr in Pr) {
           # calculate and save weighted average travel time for bike and walk 
           weightedTTime <- weighted_avg_tt(Centers, TTime, TripsMd)
           assign(paste("weighted", pr, ic,md, "time", sep=""), weightedTTime)
-          save(list=paste("weighted", pr, ic,md, "time", sep=""), file = paste("data/CenTTime/results/traveltime/", "weighted", pr,ic,md,"time.RData", sep=""))
+          save(list=paste("weighted", pr, ic,md, "time", sep=""), file = paste("results/traveltime/", "weighted", pr,ic,md,"time.RData", sep=""))
           
           
           # calculate and save weighted average travel time for bike and walk 
           weightedTTimeCost <- weightedTTime*modecosttrans.Md[md]*cost.conversion
           assign(paste("weighted", pr,ic, md, "timecost", sep=""), weightedTTimeCost)
-          save(list=paste("weighted", pr,ic, md, "timecost", sep=""), file = paste("data/CenTTime/results/travelcost/", "weighted", pr,ic, md,"timecost.RData", sep=""))
+          save(list=paste("weighted", pr,ic, md, "timecost", sep=""), file = paste("results/travelcost/", "weighted", pr,ic, md,"timecost.RData", sep=""))
           
           # combine cost into array 
           TTimecost.ZiMdCm[,md,"weighted"] <- weightedTTimeCost
@@ -99,7 +98,7 @@ for (pr in Pr) {
           
           
           # load travel time for md: driveAlone, drivePass, pass, busWalk, parkAndRideBus
-          TTimeTpFileName <- paste("data/CenTTime/CenRdata/", md, tp, "Time.RData", sep="")
+          TTimeTpFileName <- paste("CenRdata/", md, tp, "Time.RData", sep="")
           load(TTimeTpFileName); rm(TTimeTpFileName)
           TTimeTpObjName <- paste(md, tp, "Time", sep = "")
           TTimeTp <- get(TTimeTpObjName); rm(TTimeTpObjName)	
@@ -108,13 +107,13 @@ for (pr in Pr) {
           minTTimeTp <-  min_tt(Centers, TTimeTp)
           assign(paste("min", pr, ic,md,tp, "time", sep=""), minTTimeTp)
           save(list=paste("min",pr,ic,md,tp,"time", sep=""), 
-               file = paste("data/CenTTime/results/traveltime/", "min", pr,ic,md,tp,"time.RData", sep=""))
+               file = paste("results/traveltime/", "min", pr,ic,md,tp,"time.RData", sep=""))
           
           # calculate and save minimal travel time cost for md: driveAlone, drivePass, pass, busWalk, parkAndRideBus
           minTTimeCostTp <- minTTimeTp*modecosttrans.Md[md]*cost.conversion
           assign(paste("min", pr,ic, md,tp, "timecost", sep=""), minTTimeCostTp)
           save(list=paste("min", pr,ic,md,tp, "timecost", sep=""), 
-               file = paste("data/CenTTime/results/travelcost/", "min", pr,ic, md,tp,"timecost.RData", sep=""))
+               file = paste("results/travelcost/", "min", pr,ic, md,tp,"timecost.RData", sep=""))
           
           # combine cost into array 
           TTimecost.ZiMdCm[,md,"min"] <- minTTimeCostTp
@@ -125,13 +124,13 @@ for (pr in Pr) {
           weightedTTimeTp <-  weighted_avg_tt(Centers, TTimeTp,TripsMd)
           assign(paste("weighted", pr, ic,md,tp, "time", sep=""), weightedTTimeTp)
           save(list=paste("weighted",pr,ic, md, tp, "time", sep=""), 
-               file = paste("data/CenTTime/results/traveltime/", "weighted", pr,ic,md,tp,"time.RData", sep=""))
+               file = paste("results/traveltime/", "weighted", pr,ic,md,tp,"time.RData", sep=""))
           
           # calculate and save weighted average travel time cost for md: driveAlone, drivePass, pass, busWalk, parkAndRideBus
           weightedTTimeCostTp <- weightedTTimeTp*modecosttrans.Md[md]*cost.conversion
           assign(paste("weighted", pr,ic, md,tp, "timecost", sep=""), weightedTTimeCostTp)
           save(list=paste("weighted", pr,ic,md,tp, "timecost", sep=""), 
-               file = paste("data/CenTTime/results/travelcost/", "weighted", pr,ic, md,tp,"timecost.RData", sep=""))
+               file = paste("results/travelcost/", "weighted", pr,ic, md,tp,"timecost.RData", sep=""))
           
           # combine cost into array 
           TTimecost.ZiMdCm[,md,"weighted"] <- weightedTTimeCostTp
@@ -146,7 +145,7 @@ for (pr in Pr) {
       
       assign(paste(pr, ic, tp,"TimeCost.ZiMdCm", sep=""), TTimecost.ZiMdCm)
       save(list=paste(pr,ic,tp, "TimeCost.ZiMdCm", sep=""), 
-           file = paste("data/CenTTime/results/costarray/", pr,ic, tp,"TimeCost.ZiMdCm.RData", sep=""))
+           file = paste("results/costarray/", pr,ic, tp,"TimeCost.ZiMdCm.RData", sep=""))
       
       rm(TTimecost.ZiMdCm)
       

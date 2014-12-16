@@ -1,5 +1,5 @@
-## This script identifies TAZs index of clusters with at least two tazs, each with employment density above 
-##  D, that together with at least E total employment or sizeterms 
+## This script identifies TAZs index of clusters with at least two tazs, each with employment 
+## density above D, that together with at least E total employment or sizeterms 
 
 # load required libraries
 require(maptools)

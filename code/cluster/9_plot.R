@@ -1,6 +1,4 @@
-
-# set workplace and file directories 
-setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
+## This scripts generate a variety of plots and maps of costs 
 
 
 # load results 
@@ -9,35 +7,35 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
 #::
 
    	#  minoffpeak results
-      load("results\\aggcostcmtp\\minoffpeakAggCost.ZiIcPr.RData")
-	load("results\\aggcostcmtp\\minoffpeakAggCost.ZiIC.RData")
-      load("results\\aggcostcmtp\\minoffpeakAggCost.ZiPr.RData")
-      load("results\\aggcostcmtp\\minoffpeakAggCost.Zi.RData")
-      load("results\\aggcostcmtp\\minoffpeakAggCost.Di.RData")
+      load("results/aggcostcmtp/minoffpeakAggCost.ZiIcPr.RData")
+      load("results/aggcostcmtp/minoffpeakAggCost.ZiIC.RData")
+      load("results/aggcostcmtp/minoffpeakAggCost.ZiPr.RData")
+      load("results/aggcostcmtp/minoffpeakAggCost.Zi.RData")
+      load("results/aggcostcmtp/minoffpeakAggCost.Di.RData")
 
       #  minpeak results
-      load("results\\aggcostcmtp\\minpeakAggCost.ZiIcPr.RData")
-	load("results\\aggcostcmtp\\minpeakAggCost.ZiIC.RData")
-      load("results\\aggcostcmtp\\minpeakAggCost.ZiPr.RData")
-      load("results\\aggcostcmtp\\minpeakAggCost.Zi.RData")
-      load("results\\aggcostcmtp\\minpeakAggCost.Di.RData")
+      load("results/aggcostcmtp/minpeakAggCost.ZiIcPr.RData")
+	    load("results/aggcostcmtp/minpeakAggCost.ZiIC.RData")
+      load("results/aggcostcmtp/minpeakAggCost.ZiPr.RData")
+      load("results/aggcostcmtp/minpeakAggCost.Zi.RData")
+      load("results/aggcostcmtp/minpeakAggCost.Di.RData")
 
 	#  weightedoffpeak results
-      load("results\\aggcostcmtp\\weightedoffpeakAggCost.ZiIcPr.RData")
-	load("results\\aggcostcmtp\\weightedoffpeakAggCost.ZiIC.RData")
-      load("results\\aggcostcmtp\\weightedoffpeakAggCost.ZiPr.RData")
-      load("results\\aggcostcmtp\\weightedoffpeakAggCost.Zi.RData")
-      load("results\\aggcostcmtp\\weightedoffpeakAggCost.Di.RData")
+      load("results/aggcostcmtp/weightedoffpeakAggCost.ZiIcPr.RData")
+     	load("results/aggcostcmtp/weightedoffpeakAggCost.ZiIC.RData")
+      load("results/aggcostcmtp/weightedoffpeakAggCost.ZiPr.RData")
+      load("results/aggcostcmtp/weightedoffpeakAggCost.Zi.RData")
+      load("results/aggcostcmtp/weightedoffpeakAggCost.Di.RData")
 
       #  weightedpeak results
-      load("results\\aggcostcmtp\\weightedpeakAggCost.ZiIcPr.RData")
-	load("results\\aggcostcmtp\\weightedpeakAggCost.ZiIC.RData")
-      load("results\\aggcostcmtp\\weightedpeakAggCost.ZiPr.RData")
-      load("results\\aggcostcmtp\\weightedpeakAggCost.Zi.RData")
-      load("results\\aggcostcmtp\\weightedpeakAggCost.Di.RData")
+      load("results/aggcostcmtp/weightedpeakAggCost.ZiIcPr.RData")
+	    load("results/aggcostcmtp/weightedpeakAggCost.ZiIC.RData")
+      load("results/aggcostcmtp/weightedpeakAggCost.ZiPr.RData")
+      load("results/aggcostcmtp/weightedpeakAggCost.Zi.RData")
+      load("results/aggcostcmtp/weightedpeakAggCost.Di.RData")
 
       # load household number in each TAZ by income group
-	  load("CenRdata\\Hh.ZiIc.RData")
+      load("CenRdata/Hh.ZiIc.RData")
 
 #Load mapping data and functions
 #===============================
@@ -83,9 +81,6 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
  	 }
 	}
 
-## load vector of zone names 
-     load("CenRdata\\Zi.RData")
-
 # make names for household incme groups and trip types for plotting 
      
      IcNames <- c("Low Income", "Mid Income", "High Income")
@@ -96,6 +91,9 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
      Pr <- c("hbw", "hbs", "hbr", "hbo")
      names(PrNames) <- Pr
 
+
+# load saveGraph function 
+source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
 
 ########
 ## Map minimal travel time cost during offpeak time 
@@ -112,9 +110,8 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           	      main="", LegendTitle="Travel Time Cost")
 
 	mtext("OffPeak Minimal Travel Time Cost")
-	savePlot(filename="graphics\\minoffpeakAggCost_Zi", type="pdf")
-
-
+  saveGraph(filename="graphics/minoffpeakAggCost_Zi", type="pdf")
+  
 
 ## Map minimal travel time cost during peak time
 ## -------------------------------------------
@@ -130,8 +127,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           		main="", LegendTitle="Travel Time Cost")
 
 	mtext("Peak Minimal Travel Time Cost")
-
- 	savePlot(filename="graphics\\minpeakAggCost_Zi", type="pdf")
+ 	saveGraph(filename="graphics/minpeakAggCost_Zi", type="pdf")
 
 
 ## Map weighted travel time cost during offpeak time 
@@ -148,7 +144,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           	      main="", LegendTitle="Travel Time Cost")
 
 	mtext("OffPeak Minimal Travel Time Cost")
-	savePlot(filename="graphics\\weightedoffpeakAggCost_Zi", type="pdf")
+	saveGraph(filename="graphics/weightedoffpeakAggCost_Zi", type="pdf")
 
 
 
@@ -167,9 +163,9 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
 
 	mtext("Peak Minimal Travel Time Cost")
 
- 	savePlot(filename="graphics\\weightedpeakAggCost_Zi", type="pdf")
+ 	saveGraph(filename="graphics/weightedpeakAggCost_Zi", type="pdf")
 
-########
+##
 #Plot maps of cost by incomes for each calculate method and time period
 #-----------------------------------------------------------------------
 
@@ -204,11 +200,8 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
     
+    saveGraph(filename="graphics/map_cost_by_income_tp_cm_income", type="pdf")
 
-
-     savePlot(filename="graphics\\map_cost_by_income_tp_cm_income", type="pdf")
-
-     dev.off()
 
 #Plot maps of cost by purposes for each calculate method and time period
 
@@ -245,10 +238,8 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
     
+    saveGraph(filename="graphics/map_cost_by_income_tp_cm_purpose", type="pdf")
 
-
-     savePlot(filename="graphics\\map_cost_by_income_tp_cm_purpose", type="pdf")
-     dev.off()
 
 
 #Plot household histograms of cost by purpose for each calculate method and time period
@@ -278,7 +269,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
                }
           }
      par(Opar)
-     savePlot(filename="graphics\\hist_cost_by_cm_tp_purpose", type="pdf")
+    saveGraph(filename="graphics/hist_cost_by_cm_tp_purpose", type="pdf")
 
 
 #Plot household histograms of cost by income for each calculate method and time period
@@ -310,7 +301,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
 
-     savePlot(filename="graphics\\hist_cost_by_cm_tp_income", type="pdf")
+      saveGraph(filename="graphics/hist_cost_by_cm_tp_income", type="pdf")
 
 #Plot density line of cost by purpose for each calculate method and time period
 #------------------------------------------------------------------------------------
@@ -334,7 +325,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
                }
           }
      par(Opar)
-    savePlot(filename="graphics\\density_cost_by_cm_tp_purpose", type="pdf")
+     saveGraph(filename="graphics/density_cost_by_cm_tp_purpose", type="pdf")
 
 
 #Plot density line of cost by income for each calculate method and time period
@@ -361,7 +352,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
 
-     savePlot(filename="graphics\\density_cost_by_cm_tp_income", type="pdf")
+    saveGraph(filename="graphics/density_cost_by_cm_tp_income", type="pdf")
 
 #Plot comparisons of travel cost indices by UGB
 #----------------------------------------------
@@ -408,7 +399,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
      
      mtext("Comparison of Cost Values by Calculation Method and Time Period", outer=TRUE, line=1, cex=1.15)
      
-     savePlot(filename="graphics\\district_cost",type="pdf")
+      saveGraph(filename="graphics/district_cost",type="pdf")
      
      # Restore graphics parameters
      par(Opar)
@@ -440,7 +431,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
                }
           }
      par(Opar)
-     savePlot(filename="graphics/hist_minoffpeak_cost_by_income_purpose", type="pdf") 
+      saveGraph(filename="graphics/hist_minoffpeak_cost_by_income_purpose", type="pdf") 
 
 
 #Plot household histograms of minimal travel time during peak costs for all purposes and incomes
@@ -467,7 +458,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
                }
           }
      par(Opar)
-     savePlot(filename="graphics/hist_minpeak_cost_by_income_purpose", type="pdf") 
+      saveGraph(filename="graphics/hist_minpeak_cost_by_income_purpose", type="pdf") 
 
 #Plot household histograms of weighted travel time during offpeak costs for all purposes and incomes
 #------------------------------------------------------------------------------
@@ -493,7 +484,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
                }
           }
      par(Opar)
-     savePlot(filename="graphics/hist_weightedoffpeak_cost_by_income_purpose", type="pdf") 
+      saveGraph(filename="graphics/hist_weightedoffpeak_cost_by_income_purpose", type="pdf") 
 
 
 #Plot household histograms of weighted travel time during peak costs for all purposes and incomes
@@ -520,7 +511,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
                }
           }
      par(Opar)
-     savePlot(filename="graphics/hist_weightedpeak_cost_by_income_purpose", type="pdf") 
+      saveGraph(filename="graphics/hist_weightedpeak_cost_by_income_purpose", type="pdf") 
 
 ######## map *.ZiIcPr
 #Plot maps of minimal travel time during offpeak costs for all purposes and incomes
@@ -553,7 +544,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
      
-     savePlot(filename="graphics/map_minoffpeak_cost_by_income_purpose", type="pdf")  
+      saveGraph(filename="graphics/map_minoffpeak_cost_by_income_purpose", type="pdf")  
 
 
 #Plot maps of minimal travel time during peak costs for all purposes and incomes
@@ -586,7 +577,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
      
-     savePlot(filename="graphics/map_minpeak_cost_by_income_purpose", type="pdf") 
+      saveGraph(filename="graphics/map_minpeak_cost_by_income_purpose", type="pdf") 
 
 
 #Plot maps of weighted travel time during offpeak costs for all purposes and incomes
@@ -619,7 +610,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
      
-     savePlot(filename="graphics/map_weightedoffpeak_cost_by_income_purpose", type="pdf")  
+      saveGraph(filename="graphics/map_weightedoffpeak_cost_by_income_purpose", type="pdf")  
 
 
 #Plot maps of weighted travel time during peak costs for all purposes and incomes
@@ -652,7 +643,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
      par(Opar)
      
-     savePlot(filename="graphics/map_weightedpeak_cost_by_income_purpose", type="pdf")  
+      saveGraph(filename="graphics/map_weightedpeak_cost_by_income_purpose", type="pdf")  
 
 ######## plot density line *ZiIcPr
 #Plot density line of minimal travel time during offpeak costs for each calculate method and time period
@@ -675,7 +666,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
 
  par(Opar)
-    savePlot(filename="graphics\\density_minoffpeak_cost_by_income_purpose", type="pdf")
+     saveGraph(filename="graphics/density_minoffpeak_cost_by_income_purpose", type="pdf")
 
 
 #Plot density line of minimal travel time during peak costs for each calculate method and time period
@@ -698,7 +689,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
 
  par(Opar)
-    savePlot(filename="graphics\\density_minpeak_cost_by_income_purpose", type="pdf")
+     saveGraph(filename="graphics/density_minpeak_cost_by_income_purpose", type="pdf")
 
 
 
@@ -722,7 +713,7 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
 
  par(Opar)
-    savePlot(filename="graphics\\density_weightedoffpeak_cost_by_income_purpose", type="pdf")
+     saveGraph(filename="graphics/density_weightedoffpeak_cost_by_income_purpose", type="pdf")
 
 
 #Plot density line of weighted average travel time costs during peak for each calculate method and time period
@@ -745,4 +736,4 @@ setwd("C:\\Users\\huajie\\Desktop\\CenTTime")
           }
  
  par(Opar)
-    savePlot(filename="graphics\\density_weightedpeak_cost_by_income_purpose", type="pdf")
+     saveGraph(filename="graphics/density_weightedpeak_cost_by_income_purpose", type="pdf")
