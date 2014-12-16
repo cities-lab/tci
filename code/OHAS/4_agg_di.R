@@ -1,5 +1,5 @@
 # This script aggregates cost by districts 
-
+ 
 # Combine the number of trips produced by income group and purpose into array 
 
 # aggregate Trips 

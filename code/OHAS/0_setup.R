@@ -1,6 +1,6 @@
 # This script prepares the workspace and file directories for calculating 
 # travel time and travel cost with OHAS data
-
+ 
 # Set workspace
 setwd("/home/yanghuajie/tci/data/OHASTTime/")
 

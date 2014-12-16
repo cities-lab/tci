@@ -48,7 +48,7 @@ for (pr in Pr) {
   # Begin iteration by income group
   for (ic in Ic) {
     
-    
+     
     # load trips array 
     TripsFileName <-  paste("Rdata/trips/", pr,ic,"trips.RData", sep="")
     load(TripsFileName); rm(TripsFileName)

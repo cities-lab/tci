@@ -1,5 +1,5 @@
 ## This scripts calculate cost and number of trips by income groups and purpose for each HTAZ (TAZ of household)
-
+ 
 ## Calculate travel time cost for each trip
 # create mode transformation coefficient 
 mode <- c(1:10,97)
