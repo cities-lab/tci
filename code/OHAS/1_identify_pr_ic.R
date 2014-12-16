@@ -78,6 +78,6 @@ newincome <- c(1,1,2,2,3,3,3,3,NA)
 incomenewcate  <- data.frame(income, newincome)
 linkedsubset <- merge(linkedsubset, incomenewcate, by="income", all.x=TRUE)
 
-save(linkedsubset, file="data\\OHASTTime\\RData\\linkedsubset.RData")
+save(linkedsubset, file="data/OHASTTime/RData/linkedsubset.RData")
 
 
