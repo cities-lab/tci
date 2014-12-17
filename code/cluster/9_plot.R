@@ -1,6 +1,6 @@
-## This scripts generate a variety of plots and maps of costs 
+# This scripts generate a variety of plots and maps of costs 
 
-
+# Load saveGraph function 
 source("code/openGraphSaveGraph.R")
 
 WD <- getwd()
@@ -96,7 +96,7 @@ setwd("data/CenTTime/")
      Pr <- c("hbw", "hbs", "hbr", "hbo")
      names(PrNames) <- Pr
 
-########
+
 ## Map minimal travel time cost during offpeak time 
 ## -------------------------------------------
 
@@ -686,12 +686,8 @@ setwd("data/CenTTime/")
           }
 
  par(Opar)
-<<<<<<< HEAD
-     saveGraph(filename="graphics/density_minpeak_cost_by_income_purpose", type="pdf")
-=======
-    saveGraph(filename="graphics/density_minpeak_cost_by_income_purpose", type="pdf")
->>>>>>> 608566c449fab35db6f30ce48f0027df942e9b08
 
+     saveGraph(filename="graphics/density_minpeak_cost_by_income_purpose", type="pdf")
 
 
 #Plot density line of weighted average travel time costs during offpeak for each calculate method and time period
@@ -739,4 +735,5 @@ setwd("data/CenTTime/")
  par(Opar)
  saveGraph(filename="graphics/density_weightedpeak_cost_by_income_purpose", type="pdf")
 
+# set workplace
 setwd(WD)

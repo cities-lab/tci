@@ -5,7 +5,7 @@ BikeAccessCoeff.Pr <- c(hbw=-3.217, hbs=-1.839, hbr=-1.839, hbo=-1.839)
 WalkAccessCoeff.Pr <- c(hbw=-4.389, hbs=-2.532, hbr=-2.532, hbo=-2.532)
 
 # Load trip distance 
-load("CenRdata/tripDist.RData")
+load("data/CenTTime/CenRdata/tripDist.RData")
 dimnames(tripDist) <- list(Zi,Zi)
 tripDist.ZiZi <- tripDist[Zi,Zi]
 
@@ -15,7 +15,7 @@ tripDist.ZiZi <- tripDist[Zi,Zi]
 #::
 for(pr in Pr){ 
   # load taz index of center
-  CenterFileName <- paste("CenRdata/",pr,"ci.RData", sep="")
+  CenterFileName <- paste("data/CenTTime/CenRdata/",pr,"ci.RData", sep="")
   load(CenterFileName);  rm(CenterFileName)
   CentersObjName <- paste(pr,"ci", sep="")
   Centers <- get(CentersObjName); rm(CentersObjName)
@@ -69,7 +69,7 @@ for(pr in Pr){
     ModeProbs.ZiZiMd <- sweep(ModesExpUtils.ZiZiMd, c(1,2),
                               apply(ModesExpUtils.ZiZiMd, c(1,2), sum), "/")
     assign(paste(pr, ic, "ModeProbs.ZiZiMd", sep=""), ModeProbs.ZiZiMd)
-    save(list=paste(pr, ic, "ModeProbs.ZiZiMd", sep=""), file=paste("CenRdata/modeprobs/", pr,ic, "ModeProbs.ZiZiMd.RData", sep=""))
+    save(list=paste(pr, ic, "ModeProbs.ZiZiMd", sep=""), file=paste("data/CenTTime/CenRdata/modeprobs/", pr,ic, "ModeProbs.ZiZiMd.RData", sep=""))
     
     # Calculate the trips 
     for(md in Md){
@@ -77,7 +77,7 @@ for(pr in Pr){
       TripsMd <- Trips.ZiZi*ModeProbs.ZiZiMd[,,md]
       assign(paste(pr, ic, md, "trips", sep=""), TripsMd)
       save(list=paste(pr, ic, md, "trips", sep=""),
-           file=paste("CenRdata/tripbymode/", pr,ic,md, "trips.RData", sep=""))
+           file=paste("data/CenTTime/CenRdata/tripbymode/", pr,ic,md, "trips.RData", sep=""))
       
       # combine trips into array 
       
@@ -86,7 +86,7 @@ for(pr in Pr){
       TotTrips.ZiMd[,md] <- rowSums(TripsMd[,Centers]) ;rm(TripsMd)
       assign(paste(pr, ic, "TotTrips.ZiMd", sep=""), TotTrips.ZiMd)
       save(list=paste(pr, ic, "TotTrips.ZiMd", sep=""), 
-           file = paste("results/tripsarray/", pr,ic, "TotTrips.ZiMd.RData", sep=""))
+           file = paste("data/CenTTime/results/tripsarray/", pr,ic, "TotTrips.ZiMd.RData", sep=""))
       
     }    
     
