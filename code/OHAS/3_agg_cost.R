@@ -11,7 +11,7 @@ for (pr in Pr) {
     
     
     # load trips array 
-    CostFileName <-  paste("Rdata/cost/", pr,ic,"cost.RData", sep="")
+    CostFileName <-  paste("data/OHASTTime/Rdata/cost/", pr,ic,"cost.RData", sep="")
     load(CostFileName); rm(CostFileName)
     CostObjName <- paste(pr,ic,"cost", sep="")
     Cost <- get(CostObjName); rm( CostObjName)
@@ -36,7 +36,7 @@ for (pr in Pr) {
 }
 
 # save cost array 
-save(Cost.ZiIcPr, file = "results/Cost.ZiIcPr.RData" )
+save(Cost.ZiIcPr, file = "data/OHASTTime/results/Cost.ZiIcPr.RData" )
 
 
 # combine the trips into array    
@@ -50,7 +50,7 @@ for (pr in Pr) {
     
      
     # load trips array 
-    TripsFileName <-  paste("Rdata/trips/", pr,ic,"trips.RData", sep="")
+    TripsFileName <-  paste("data/OHASTTime/Rdata/trips/", pr,ic,"trips.RData", sep="")
     load(TripsFileName); rm(TripsFileName)
     TripsObjName <- paste(pr,ic,"trips", sep="")
     Trips <- get(TripsObjName); rm(TripsObjName)
@@ -77,7 +77,7 @@ for (pr in Pr) {
 }
 
 # save Trips array 
-save(Trips.ZiIcPr, file = "results/Trips.ZiIcPr.RData" )  
+save(Trips.ZiIcPr, file = "data/OHASTTime/results/Trips.ZiIcPr.RData" )  
 
 
 # calculate trips by purpose and income 
@@ -88,12 +88,12 @@ Trips.Zi <-  apply(Trips.ZiIcPr, 1, function(x) sum(x, na.rm=TRUE))
 
 ## calculate cost by purpose and income groups
 Cost.ZiIc <- apply(Trips.ZiIcPr*Cost.ZiIcPr,c(1,2),function(x) sum(x, na.rm=TRUE))/Trips.ZiIc
-save(Cost.ZiIc, file="results/Cost.ZiIc.RData")
+save(Cost.ZiIc, file="data/OHASTTime/results/Cost.ZiIc.RData")
 
 Cost.ZiPr <- apply(Trips.ZiIcPr*Cost.ZiIcPr,c(1,3),function(x) sum(x, na.rm=TRUE))/Trips.ZiPr
-save(Cost.ZiPr, file="results/Cost.ZiPr.RData")
+save(Cost.ZiPr, file="data/OHASTTime/results/Cost.ZiPr.RData")
 
 Cost.Zi <- apply(Trips.ZiIcPr*Cost.ZiIcPr,1,function(x) sum(x, na.rm=TRUE))/Trips.Zi
-save(Cost.Zi, file="results/Cost.Zi.RData")
+save(Cost.Zi, file="data/OHASTTime/results/Cost.Zi.RData")
 
 

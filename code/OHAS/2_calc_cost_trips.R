@@ -1,13 +1,13 @@
-## This scripts calculate cost and number of trips by income groups and purpose for each HTAZ (TAZ of household)
+# This scripts calculate cost and number of trips by income groups and purpose for each HTAZ (TAZ of household)
 
-## Calculate travel time cost for each trip
+# Calculate travel time cost for each trip
 # create mode transformation coefficient 
 mode <- c(1:10,97)
 coef <- c(0.5,0.5,0.5,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.5)
 modecoef <- data.frame(mode, coef)
 
 ## load linkedsubset data 
-load("Rdata/linkedsubset.RData")
+load("data/OHASTTime/Rdata/linkedsubset.RData")
 
 # merge mode transformation coefficient 
 linkedsubset <- merge(linkedsubset, modecoef, by="mode", all.x=TRUE)
@@ -28,12 +28,12 @@ for (pr in Pr) {
     cost <- summarise(group_by(data, htaz), avecost = mean(cost, na.rm=TRUE))
     
     assign(paste(pr,ic,"cost",sep=""), cost)
-    save(list = paste(pr,ic,"cost",sep=""),file=paste("Rdata/cost/", pr,ic, "cost.RData",sep="")) 
+    save(list = paste(pr,ic,"cost",sep=""),file=paste("data/OHASTTime/Rdata/cost/", pr,ic, "cost.RData",sep="")) 
     
     trips <- summarise(group_by(data, htaz), trips.count = n())
     
     assign(paste(pr,ic,"trips",sep=""), trips)
-    save(list = paste(pr,ic,"trips",sep=""),file=paste("Rdata/trips/", pr,ic, "trips.RData",sep="")) 
+    save(list = paste(pr,ic,"trips",sep=""),file=paste("data/OHASTTime/Rdata/trips/", pr,ic, "trips.RData",sep="")) 
     
     # End loop through income group     
   }

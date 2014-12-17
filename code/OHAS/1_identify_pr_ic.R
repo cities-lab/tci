@@ -32,7 +32,7 @@ act <- mutate(act,
 linked <- filter(act, !(tpurp==7 & actNo!=1 & actNo!=maxAct))
 linked <- arrange(linked, sampn,perno,plano)
 
-save(linked, file="Rdata/linked.RData")
+save(linked, file="data/OHASTTime/Rdata/linked.RData")
 # update actNo and maxAct
 linked <- mutate(linked, 
                  actNo = ave(plano, sampn,perno, FUN=seq),
@@ -78,6 +78,6 @@ newincome <- c(1,1,2,2,3,3,3,3,NA)
 incomenewcate  <- data.frame(income, newincome)
 linkedsubset <- merge(linkedsubset, incomenewcate, by="income", all.x=TRUE)
 
-save(linkedsubset, file="Rdata/linkedsubset.RData")
+save(linkedsubset, file="data/OHASTTime/Rdata/linkedsubset.RData")
 
 

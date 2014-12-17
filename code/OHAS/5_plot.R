@@ -1,4 +1,11 @@
 # This script generates a variety of plots and maps of cost
+
+# load saveGraph function
+source("code/openGraphSaveGraph.R")
+
+WD <- getwd()
+setwd("data/OHASTTime/")
+
   
 # load results 
 #===============
@@ -11,7 +18,7 @@
   load("results/Cost.Zi.RData")
   load("results/Cost.Di.Rdata")
 
- # load household number in each TAZ by income group
+# load household number in each TAZ by income group
 	load("Rdata/Hh.ZiIc.RData")
 
 #Load mapping data and functions   
@@ -71,9 +78,6 @@
      Pr <- c("hbw", "hbs", "hbr", "hbo")
      names(PrNames) <- Pr
 
-
-# load saveGraph function 
-source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
 
 # Map cost  
 # -------------------------------------------
@@ -228,3 +232,6 @@ source("/home/yanghuajie/tci/code/openGraphSaveGraph.R")
 
           
      saveGraph(filename="graphics/district_cost",type="pdf")
+
+# set workplace
+setwd(WD)
