@@ -99,7 +99,7 @@
     hbsci <- dplyr::select (hbsci, TAZ)
     hbsci <- arrange(hbsci, TAZ)
     hbsci <- hbsci$TAZ
-    save(hbsci, file="data/CenTTime/CenRdata/hbwci.RData")
+    save(hbsci, file="data/CenTTime/CenRdata/hbsci.RData")
     
     # identify hbr tazs of centers 
     hbrci <- identify_centers(TAZPloyNoNA, "st.hbr.den", 1763, dist=1.0, sum.col="st.hbr", sum.cutoff=1000)

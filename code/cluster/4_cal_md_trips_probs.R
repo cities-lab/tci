@@ -71,6 +71,9 @@ for(pr in Pr){
     assign(paste(pr, ic, "ModeProbs.ZiZiMd", sep=""), ModeProbs.ZiZiMd)
     save(list=paste(pr, ic, "ModeProbs.ZiZiMd", sep=""), file=paste("data/CenTTime/CenRdata/modeprobs/", pr,ic, "ModeProbs.ZiZiMd.RData", sep=""))
     
+    # Define array to store trips
+    TotTrips.ZiMd <- array(0, dim=c(length(Zi), length(Md)), dimnames=list(Zi, Md))
+    
     # Calculate the trips 
     for(md in Md){
       
@@ -80,9 +83,7 @@ for(pr in Pr){
            file=paste("data/CenTTime/CenRdata/tripbymode/", pr,ic,md, "trips.RData", sep=""))
       
       # combine trips into array 
-      
-      TotTrips.ZiMd <- array(0, dim=c(length(Zi), length(Md)), dimnames=list(Zi, Md))
-      
+            
       TotTrips.ZiMd[,md] <- rowSums(TripsMd[,Centers]) ;rm(TripsMd)
       assign(paste(pr, ic, "TotTrips.ZiMd", sep=""), TotTrips.ZiMd)
       save(list=paste(pr, ic, "TotTrips.ZiMd", sep=""), 
