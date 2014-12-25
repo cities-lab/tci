@@ -1,0 +1,154 @@
+---
+title: "Estimation of Person Trip Rates"
+author: "Kihong Kim and Liming Wang, Ph.D."
+date: "12/23/2014"
+output: html_document
+---
+
+### Overview
+We develop (1) linear regression models and (2) zero inflated negative binomial models to estimate person trip rates.
+
+* Models are specified for each of the following home-based trip purposes.
+    + hbw: home-based work trips
+    + hbs: home-based shopping trips
+    + hbr: home-based recreation trips
+    + hbo: home-based non-school other trips
+* The dependent variable is the number of linked trips, not place-based trips, at the person level. For example, in the Year 2011 Oregon Travel and Activity Survey, which is a place-based survey, a transit travel is coded with 3 trips, including transit access, in transit, and transit egress. In our study, we use linked trips; that is, we convert the transit travel from 3 trips to 1 trip.
+* Two sets of independent variables are considered:
+    + sociodemographic characteristics of persons and their households (SD) from 2011 OTAS
+    + built environment characteristics of person's home census block groups (BE) from EPA's Smart Location Database
+    + the SD variables: household size, number of workers, number of students, household income, etc.
+    + the BE variables: EPA's Smart Location Database (Density (D1), Diversity (D2), Design (D3), Transit (D4), and Destination Accessibility (D5)
+
+### Load data from the PostgreSQL database
+Two different data sources are considered
+
+* 2011 Oregon Travel Activity Survey
+    + activity
+    + person
+    + household
+* EPA's Smart Location Database
+    + downloaded from [Smart Location Mapping](http://www.epa.gov/smartgrowth/smartlocationdatabase.htm) for our study area, and then converted to EPSG 2913 for the Coordinate Reference System
+    + for a full description of all variablels, please refer to [its Users' Guide](http://www.epa.gov/smartgrowth/pdf/sld_userguide.pdf)
+    + the household file and the Smart Location Database were spatially joined based on households' home census block groups, which is hh_sld
+
+```{r, echo=FALSE, message=FALSE}
+library(RPostgreSQL)
+library(pscl)
+library(memisc)
+conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+hh <- dbReadTable(conn, c("ohas_v2", "household")) # household file from the 2011 OTAS
+per <- dbReadTable(conn, c("ohas_v2", "person")) # person file from the 2011 OTAS
+#sld <- dbReadTable(conn, c("ohas_v2", "sld_metro")) # EPA's Smart Location Database
+hh_sld <- dbReadTable(conn, c("ohas_v2","hh_sld")) # a spatially joined table of household and Smart Location database 
+act <- dbReadTable(conn, c("ohas_v2", "activity")) # activity file from the 2011 OTAS
+act <- with(act, act[order(sampn,perno,plano),])
+act$actNo <- with(act, ave(plano, sampn,perno, FUN=seq))
+act$maxAct <- with(act, ave(actNo, sampn,perno, FUN=length))
+```
+
+### Create a dependent variable for each home-based trip purpose : number of linked trips per person
+* hbw (home-based work); work, not including all other activities at work and work related activities
+* hbs (home-based shopping); both routine and special shopping
+* hbr (home-based recreation); both outdoor and indoor recreation
+* hbo (home-based other); other home-based trips, not including school activities but including all other activities at school
+```{r}
+# create a new data set without the Change-of-Mode activities in the middle of the day to use only linked trips
+linked <- subset(act, !(tpurp==7 & actNo!=1 & actNo!=maxAct))
+# update actNo and maxAct
+linked$actNo <- with(linked, ave(plano, sampn,perno, FUN=seq))
+linked$maxAct <- with(linked, ave(actNo, sampn,perno, FUN=length))
+# update lastaggact
+linked$lastaggact <- c(NA, linked$thisaggact[-length(linked$thisaggact)])
+linked$lastaggact[linked$actNo==1] <- NA
+# update last_tpurp
+linked$last_tpurp <- c(NA, linked$tpurp[-length(linked$tpurp)])
+linked$last_tpurp[linked$actNo==1] <- NA
+# identity trip purposes
+attach(linked)
+# hbw
+linked$hbw <- 0
+linked$hbw[ ((last_tpurp==1|last_tpurp==2)&tpurp==3) | (last_tpurp==3&(tpurp==1|tpurp==2)) ] <- 1
+# hbs
+linked$hbs <- 0
+linked$hbs[ ((last_tpurp==1|last_tpurp==2)&tpurp%in%c(13,14)) | (last_tpurp%in%c(13,14)&(tpurp==1|tpurp==2)) ] <- 1
+# hbr
+linked$hbr <- 0
+linked$hbr[ ((last_tpurp==1|last_tpurp==2)&tpurp%in%c(20,21)) | (last_tpurp%in%c(20,21)&(tpurp==1|tpurp==2)) ] <- 1
+# hbo
+linked$hbo <- 0
+linked$hbo[ ((last_tpurp==1|last_tpurp==2)&(tpurp%in%c(4,6,7,8,9,10,11,12,15,16,17,18,19,22,96,97))) |
+              ((last_tpurp%in%c(4,6,7,8,9,10,11,12,15,16,17,18,19,22,96,97))&(tpurp==1|tpurp==2)) ] <- 1
+detach(linked)
+# calculate the number of linked trips by home-based trip purposes at the person level
+linked$perid <- with(linked, sampn*10+perno)
+#hba <- setNames(aggregate(linked[,"hba"], by=list(linked$perid), "sum"), c("perid", "numtrips"))
+hbw <- setNames(aggregate(linked[,"hbw"], by=list(linked$perid), "sum"), c("perid", "numtrips"))
+hbs <- setNames(aggregate(linked[,"hbs"], by=list(linked$perid), "sum"), c("perid", "numtrips"))
+hbr <- setNames(aggregate(linked[,"hbr"], by=list(linked$perid), "sum"), c("perid", "numtrips"))
+hbo <- setNames(aggregate(linked[,"hbo"], by=list(linked$perid), "sum"), c("perid", "numtrips"))
+```
+
+### Add independent variables
+```{r, echo=FALSE}
+# create independent variables
+# person
+per$perid <- with(per, sampn*10 + perno)
+per$female <- with(per, ifelse(gend==2,1,0))
+per$female[(per$gend==9)] <- NA
+per$age[(per$age==99)] <- NA
+per$licensed <- with(per, ifelse(lic==2|is.na(lic),0,1))
+per$licensed[(per$lic==9)] <- NA
+per$transit <- with(per, ifelse(trans==2|is.na(trans),0,1))
+per$transit[(per$trans==8|per$trans==9)] <- NA
+per$biker <- with(per, ifelse(pbike==2|is.na(pbike),0,1))
+per$biker[(per$pbike==8|per$pbike==9)] <- NA
+per$worker <- with(per, ifelse(works==2|is.na(works),0,1))
+per$retiree <- with(per, ifelse(wkstat!=1|is.na(wkstat),0,1))
+per$homemaker <- with(per, ifelse(wkstat!=3|is.na(wkstat),0,1))
+per$student <- with(per, ifelse(wkstat!=6|is.na(wkstat),0,1))
+# merge dependent variables with independent variables
+hbw <- merge(hbw, per, by="perid"); hbw <- merge(hbw, hh_sld, by="sampn")
+hbs <- merge(hbs, per, by="perid"); hbs <- merge(hbs, hh_sld, by="sampn")
+hbr <- merge(hbr, per, by="perid"); hbr <- merge(hbr, hh_sld, by="sampn")
+hbo <- merge(hbo, per, by="perid"); hbo <- merge(hbo, hh_sld, by="sampn")
+```
+
+### Develop linear regression models to estimate person trip rates
+```{r, echo=FALSE}
+# with person characteristics (f1)
+f1 <- as.formula(numtrips ~ female+age+licensed+transit+biker+worker+retiree+homemaker+student)
+f1.hbw <- lm(f1, data=hbw)
+f1.hbs <- lm(f1, data=hbs)
+f1.hbr <- lm(f1, data=hbr)
+f1.hbo <- lm(f1, data=hbo)
+f1.outputs <- mtable("HBW"=f1.hbw,"HBS"=f1.hbs,"HBR"=f1.hbr,"HBO"=f1.hbo)
+print(f1.outputs)
+# add household characteristics (f2)
+f2 <- update(f1, ~ . +hhsiz+hhwrk+hhstu+hhveh+hhlic)
+f2.hbw <- lm(f2, data=hbw)
+f2.hbs <- lm(f2, data=hbs)
+f2.hbr <- lm(f2, data=hbr)
+f2.hbo <- lm(f2, data=hbo)
+f2.outputs <- mtable("HBW"=f2.hbw,"HBS"=f2.hbs,"HBR"=f2.hbr,"HBO"=f2.hbo)
+print(f2.outputs)
+# add built environment characteristics (f3)
+f3 <- update(f2, ~ . +d1a+d1b+d1c5_ret10
+                     +d2a_jphh+d2b_e5mix+d2a_ephhm
+                     +d3a+d3b)
+f3.hbw <- lm(f3, data=hbw)
+f3.hbs <- lm(f3, data=hbs)
+f3.hbr <- lm(f3, data=hbr)
+f3.hbo <- lm(f3, data=hbo)
+f3.outputs <- mtable("HBW"=f3.hbw,"HBS"=f3.hbs,"HBR"=f3.hbr,"HBO"=f3.hbo)
+print(f3.outputs)
+```
+
+### Develop zero-inflated negative binomial (zinb) models
+```{r}
+#zinb.hbw <- zeroinfl(numtrips ~ female+age+licensed+transit+biker+worker+retiree+homemaker+student
+#                     +hhsiz+hhwrk+hhstu+hhveh+hhlic
+#                     +d1a+d1b+d1c5_ret10+d2a_jphh+d2b_e5mix+d2a_ephhm+d3a+d3b | 1,
+#                 data=hbw, dist="negbin", EM=TRUE)
+#summary(zinb.hbw)
+```
