@@ -1,15 +1,14 @@
-
-
-## This script aggregates LEHD employment from block level into TAZ level and
-## calculates employment and sizeterms density for each TAZ 
+## This script aggregates LEHD employment from block level into TAZ level,
+## calculates employment and sizeterms density for each TAZ.
+## The calculation results are added to shapefile, then identify clusters
   # read four counties blockgroup level LEHD data, with a tazindex column identifying
   # the taz id the block group is in 
-    FourCouLEHD <- read.csv("CenRdata/LEHD/FourCouLEHD.csv", header=TRUE)
+    FourCouLEHD <- read.csv("data/CenTTime/CenRdata/LEHD/FourCouLEHD.csv", header=TRUE)
     
   # load required package
     require(dplyr)
-  # rename column name   
-    FourCouLEHD <- rename(FourCouLEHD, TAZ=tazindex)  
+  # rename column name ##TODO: use rename() instead
+    FourCouLEHD <- dplyr::rename(FourCouLEHD, TAZ = tazindex)
   # get total employment by group 
     emp.by.taz <- summarise(group_by(FourCouLEHD, TAZ),
                           tot.emp=sum(C000,  na.rm=TRUE),
@@ -21,14 +20,14 @@
 
   # get number of Household in each taz
 
-    HHoldTable <- read.csv("CenRdata/csv/2010_hia.csv", header=TRUE)
+    HHoldTable <- read.csv("data/CenTTime/CenRdata/csv/2010_hia.csv", header=TRUE)
     HHoldTable$HHold <- rowSums(HHoldTable[,2:64]) 
     HHold <- subset(HHoldTable, select=c(taz, HHold))
     HHold$HHold <- round(HHold$HHold)
     colnames(HHold) <- c("TAZ", "HHold")
 
   # get park acres in each taz
-    ParkAcres <- read.csv("CenRdata/csv/ParkAc.csv", header=TRUE)
+    ParkAcres <- read.csv("data/CenTTime/CenRdata/csv/ParkAc.csv", header=TRUE)
   
   # Merge Employment and HHold, ParkAcres, area of TAZ
   
@@ -43,7 +42,7 @@
       require(rgeos)
       require(rgdal)
 
-      TAZPoly <- readShapePoly("gisserver/taz/TAZ.shp",
+      TAZPoly <- readShapePoly("data/CenTTime/gisserver/taz/TAZ.shp",
                                proj4string=CRS("+init=epsg:2913"))
                                # proj4string=CRS("+proj=lcc +lat_1=46 +lat_2=44.33333333333334 
                                # +lat_0=43.66666666666666 +lon_0=-120.5 +x_0=2500000.0001424 +y_0=0 +ellps=GRS80 
@@ -75,50 +74,45 @@
                           st.hbr.den = st.hbr / (Area * SQFT.KM2),
                           st.hbo.den = st.hbo / (Area * SQFT.KM2))
 
-    TAZPoly@data <- select(TotalData, TAZ, Area, tot.emp, totemp.den, st.hbs, st.hbs.den, st.hbr,st.hbr.den, st.hbo,st.hbo.den)
-    out.dir <- "gisserver/tazden/"
+    TAZPoly@data <- dplyr::select(TotalData, TAZ, Area, tot.emp, totemp.den, st.hbs, st.hbs.den, st.hbr,st.hbr.den, st.hbo,st.hbo.den)
+    out.dir <- "data/CenTTime/gisserver/tazden/"
     out.shp <- "tazden.*"
     unlink(paste(out.dir, out.shp, sep=""))
-    writeOGR(TAZPoly, "C:/Users/huajie/Desktop/CenTTime/gisserver/tazden", "tazden",driver="ESRI Shapefile") #need to save?
+    writeOGR(TAZPoly, "data/CenTTime/gisserver/tazden", "tazden",driver="ESRI Shapefile") 
     
     # eliminate TAZ with null value
     TAZPloyNoNA <- TAZPoly[!is.na(TAZPoly@data$totemp.den),]
     
     # load identify_centers function
-    source("Rcode/3_identify_clusters.R")
+    source("code/cluster/3_identify_clusters.R")
     
-    ### identify hbw centers 
+    
+    # identify hbw tazs of centers
     hbwci <- identify_centers(TAZPloyNoNA, "totemp.den", 2500, dist=1.0, sum.col="tot.emp", sum.cutoff=1000)
-    save(hbwci, file="CenRdata/hbwci.RData") #need to save?  
-
-    # get index of TAZ belons to centers
-    hbwci <- subset(hbwci, select="TAZ")
-    hbwci<- hbwci[order(hbwci$TAZ),]
-  
-
-    # identify hbs centers 
-    hbsci <- identify_centers(taztest, "st.hbs.den", 102, dist=1.0, sum.col="st.hbs", sum.cutoff=1000)
-    save(hbsci, file="CenRdata/hbsci.RData") #need to save?  
+    hbwci <- dplyr::select (hbwci, TAZ)
+    hbwci <- arrange(hbwci, TAZ)
+    hbwci <- hbwci$TAZ
+    save(hbwci, file="data/CenTTime/CenRdata/hbwci.RData")
     
-    # get index of TAZ belons to centers
-    hbsci <- subset(hbsci, select="TAZ")
-    hbsci<- hbsci[order(hbsci$TAZ),]
+    # identify hbs tazs of centers 
+    hbsci <- identify_centers(TAZPloyNoNA, "st.hbs.den", 102, dist=1.0, sum.col="st.hbs", sum.cutoff=1000)
+    hbsci <- dplyr::select (hbsci, TAZ)
+    hbsci <- arrange(hbsci, TAZ)
+    hbsci <- hbsci$TAZ
+    save(hbsci, file="data/CenTTime/CenRdata/hbsci.RData")
     
+    # identify hbr tazs of centers 
+    hbrci <- identify_centers(TAZPloyNoNA, "st.hbr.den", 1763, dist=1.0, sum.col="st.hbr", sum.cutoff=1000)
+    hbrci <- dplyr::select (hbrci, TAZ)
+    hbrci <- arrange(hbrci, TAZ)
+    hbrci <-hbrci$TAZ
+    save(hbrci, file="data/CenTTime/CenRdata/hbrci.RData")
     
-    # identify hbr centers 
-    hbrci <- identify_centers(taztest, "st.hbr.den", 1763, dist=1.0, sum.col="st.hbr", sum.cutoff=1000)
-    str(hbrci)
-    save(hbrci, file="CenRdata/hbrci.RData") #need to save?  
-    
-    # get index of TAZ belons to centers
-    hbrci <- subset(hbrci, select="TAZ")
-    hbrci<- hbrci[order(hbrci$TAZ),]
-    
-    # identify hbr centers
-    hboci <- identify_centers(taztest, "st.hbo.den", 495, dist=1.0, sum.col="st.hbo", sum.cutoff=1000)
-    save(hboci, file="CenRdata/hboci.RData") #need to save?  
-    
-    # get index of TAZ belons to centers
-    hboci <- subset(hboci, select="TAZ")
-    hboci<- hboci[order(hboci$TAZ),]
+    # identify hbo tazs of centers 
+    hboci <- identify_centers(TAZPloyNoNA, "st.hbo.den", 495, dist=1.0, sum.col="st.hbo", sum.cutoff=1000)
+    hboci <- dplyr::select (hboci, TAZ)
+    hboci <- arrange(hboci, TAZ)
+    hboci <- hboci$TAZ
+    save(hboci, file="data/CenTTime/CenRdata/hboci.RData")
    
+    

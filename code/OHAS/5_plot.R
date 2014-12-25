@@ -1,21 +1,27 @@
-# This scripts generates a variety of plots and maps of cost
+# This script generates a variety of plots and maps of cost
 
+# load saveGraph function
+source("code/openGraphSaveGraph.R")
 
+WD <- getwd()
+setwd("data/OHASTTime/")
+
+  
 # load results 
 #===============
 
 #::
 
-   	#  cost 
-      load("results/Cost.ZiPr.RData")
-      load("results/Cost.ZiIc.RData")
-      load("results/Cost.Zi.RData")
-      load("results/Cost.Di.RData")
+ #  load cost
+  load("results/Cost.ZiPr.RData")
+  load("results/Cost.ZiIc.RData")
+  load("results/Cost.Zi.RData")
+  load("results/Cost.Di.Rdata")
 
-      # load household number in each TAZ by income group
-	load("Rdata\\Hh.ZiIc.RData")
+# load household number in each TAZ by income group
+	load("Rdata/Hh.ZiIc.RData")
 
-#Load mapping data and functions
+#Load mapping data and functions   
 #===============================
 
 #::
@@ -25,7 +31,7 @@
 	library(RColorBrewer)
 
 	# read in the taz data shapefile
-	TazFile <- paste("gis/", "TAZ.shp", sep="/")
+	TazFile <- paste("gis/", "TAZ.shp", sep="/") 
 	TazPoly <- readShapePoly(TazFile)
 
 	# extract the attribute data
@@ -59,8 +65,8 @@
  	 }
 	}
 
-## load vector of zone names 
-     load("Rdata\\Zi.RData")
+# load vector of zone names 
+     load("Rdata/Zi.RData")
 
 # make names for household incme groups and trip types for plotting 
      
@@ -72,24 +78,25 @@
      Pr <- c("hbw", "hbs", "hbr", "hbo")
      names(PrNames) <- Pr
 
-## Map cost  
-## -------------------------------------------
+
+# Map cost  
+# -------------------------------------------
 
 #::
 
-    # load minimal travel time cost during offpeak
-	Cost.Zi <- round(Cost.Zi,2)
-      Cost.Zi[is.na(Cost.Zi)] <- 0
+  # load minimal travel time cost during offpeak
+	  Cost.Zi <- round(Cost.Zi,2)
+    Cost.Zi[is.na(Cost.Zi)] <- 0
 	## map 
 	coropleth(TazPoly, Cost.Zi, TazIndex, "RdYlBu",
                   breaks=c(seq(0, 4, 0.5),6,10,35), LegendSize=0.6, PlotRef=FALSE,
           	      main="", LegendTitle="Travel Time Cost")
 
 	mtext("OHAS Travel Time Cost", cex=1.8)
-	savePlot(filename="graphics\\Cost_Zi", type="pdf")
+	saveGraph(filename="graphics/Cost_Zi", type="pdf")
 
 
-#Plot maps of cost by purposes 
+# Plot maps of cost by purposes 
 #------------------------------------------------------
 
 #::
@@ -117,12 +124,11 @@
             par(Opar)
     
       
-     savePlot(filename="graphics\\map_cost_by_purpose", type="pdf")
-     dev.off()
+     saveGraph(filename="graphics/map_cost_by_purpose", type="pdf")
 
 
 
-#Plot maps of cost by income groups 
+# Plot maps of cost by income groups 
 #------------------------------------------------------
 
 #::
@@ -149,10 +155,10 @@
             par(Opar)
     
       
-     savePlot(filename="graphics\\map_cost_by_income", type="pdf")
-     dev.off()
+     saveGraph(filename="graphics/map_cost_by_income", type="pdf")
 
-#Plot household histograms of cost by purpose for each calculate method and time period
+
+# Plot household histograms of cost by purpose for each calculate method and time period
 #------------------------------------------------------------------------------------
 
 #::
@@ -176,9 +182,9 @@
                }
          
      par(Opar)
-     savePlot(filename="graphics\\hist_cost_purpose", type="pdf")
+     saveGraph(filename="graphics/hist_cost_purpose", type="pdf")
 
-#Plot household histograms of cost by income for each calculate method and time period
+# Plot household histograms of cost by income for each calculate method and time period
 #------------------------------------------------------------------------------------
 
 #::
@@ -202,10 +208,10 @@
                }
          
      par(Opar)
-     savePlot(filename="graphics\\hist_cost_income", type="pdf")
+     saveGraph(filename="graphics/hist_cost_income", type="pdf")
 
 
-#Plot comparisons of travel time costs by UGB
+# Plot comparisons of travel time costs by UGB
 #----------------------------------------------
 
 #::
@@ -225,4 +231,7 @@
      text(as.vector(BarCenter), 0.1, labels=DiNames, srt=90, pos=4, offset=0)
 
           
-     savePlot(filename="graphics\\district_cost",type="pdf")
+     saveGraph(filename="graphics/district_cost",type="pdf")
+
+# set workplace
+setwd(WD)
