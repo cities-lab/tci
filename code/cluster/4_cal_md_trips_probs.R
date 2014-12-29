@@ -5,7 +5,7 @@ BikeAccessCoeff.Pr <- c(hbw=-3.217, hbs=-1.839, hbr=-1.839, hbo=-1.839)
 WalkAccessCoeff.Pr <- c(hbw=-4.389, hbs=-2.532, hbr=-2.532, hbo=-2.532)
 
 # Load trip distance 
-load("data/CenTTime/CenRdata/tripDist.RData")
+load("data/CommonData/tripDist.RData")
 dimnames(tripDist) <- list(Zi,Zi)
 tripDist.ZiZi <- tripDist[Zi,Zi]
 
@@ -24,7 +24,7 @@ for(pr in Pr){
   for(ic in Ic){
     # Load trip distribution matrices for each income group
 
-    DistFileName <- paste("data/CenTTime/CenRdata/tripdist/", pr, ic, "Dist.RData", sep="")
+    DistFileName <- paste("data/CommonData/tripdist/", pr, ic, "Dist.RData", sep="")
     load(DistFileName); rm(DistFileName)
     
     # Get trip matrix 
@@ -47,7 +47,7 @@ for(pr in Pr){
         ExpUtil.ZiZi <- exp(WalkAccessCoeff.Pr[pr] * 60 * tripDist.ZiZi / 3)
       }
       if((md != "bike") & (md != "walk")) {
-        ModeUtilFileName <- paste("data/CenTTime/CenRdata/access/util", md, ic, pr, ".RData", sep="")
+        ModeUtilFileName <- paste("data/TCIPortland50/performancemeasures/intm_output/access/util", md, ic, pr, ".RData", sep="")
         load(ModeUtilFileName) ; rm(ModeUtilFileName)
         ModeUtilObjName <- paste("util", md, ic, pr, sep="")
         ExpUtil.ZiZi <- get(ModeUtilObjName)

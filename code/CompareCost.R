@@ -43,30 +43,33 @@
   # Load saveGraph function 
     source("code/openGraphSaveGraph.R")
   
-  # compare cost with density line plot 
-  # http://www.statmethods.net/graphs/density.html
 
-    library(sm)
+  # create required data frame
+
     AllCost.df <- data.frame(cost = c(WeightedAggCost.Zi,OHASCost.Zi, AveMarketCost.Zi,BestMarketCost.Zi,CompMarketCost.Zi),
                          method=factor(rep(c("Weighted", "OHAS", "Ave", "Best","Comp"),rep(2162,5))))
 
     AllCost.df$cost[is.na(AllCost.df$cost)] <- 0
      
-    # reoder factor
-    #http://stackoverflow.com/questions/18413756/re-ordering-factor-levels-in-data-frame
+  # reoder factor
+  #http://stackoverflow.com/questions/18413756/re-ordering-factor-levels-in-data-frame
     AllCost.df$method <- factor(AllCost.df$method, levels=c("Weighted", "OHAS", "Ave", "Best","Comp"))
   
     attach(AllCost.df)
-    
+
+  # compare cost with density line plot 
+  # http://www.statmethods.net/graphs/density.html
     # create value labels
     method.f <- factor(method, levels= c("Weighted", "OHAS", "Ave", "Best","Comp"), 
                    labels=c("WeightedAggCost", "OHASCost", "AveMarketCost", "BestMarketCost", "CompMarketCost"))
-
-    # plot densities
+  # load required package
+    library(sm)
+  
+  # plot densities
     sm.density.compare(cost, method, xlab="Cost")
     title(main="Cost distribution")
     
-    # add legend via mouse click
+  # add legend via mouse click
     colfill <- c(2:(2+length(levels(method.f))))
     legend(locator(1), levels(method.f), fill=colfill)
    

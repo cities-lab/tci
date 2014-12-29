@@ -13,7 +13,7 @@ TripProd.Zi <-  apply(Trips.ZiIcPr, 1, function(x) sum(x, na.rm=TRUE))
 
 #:: 
 
-load("data/OHASTTime/Rdata/districts.RData")
+load("data/CommonData/districts.RData")
 District.Zo <- districts$ugb
 names(District.Zo) <- districts$zone
 District.Zi <- District.Zo[Zi] ; rm(District.Zo)

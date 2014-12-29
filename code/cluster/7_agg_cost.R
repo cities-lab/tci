@@ -68,10 +68,10 @@ for (cm in Cm) {
 
 TripProd.ZiIcPr <- array(0, dim=c(length(Zi), length(Ic), length(Pr)), dimnames=list(Zi,Ic,Pr))
 
-load("data/CenTTime/CenRdata/tripgen/hbwTripProd.ZiIc.RData")
-load("data/CenTTime/CenRdata/tripgen/hbsTripProd.ZiIc.RData")
-load("data/CenTTime/CenRdata/tripgen/hbrTripProd.ZiIc.RData")
-load("data/CenTTime/CenRdata/tripgen/hboTripProd.ZiIc.RData")
+load("data/CommonData/tripgen/hbwTripProd.ZiIc.RData")
+load("data/CommonData/tripgen/hbsTripProd.ZiIc.RData")
+load("data/CommonData/tripgen/hbrTripProd.ZiIc.RData")
+load("data/CommonData/tripgen/hboTripProd.ZiIc.RData")
 
 TripProd.ZiIcPr[,,"hbw"] <- hbwTripProd.ZiIc
 TripProd.ZiIcPr[,,"hbs"] <- hbsTripProd.ZiIc

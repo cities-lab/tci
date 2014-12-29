@@ -16,4 +16,4 @@ Pr <- c("hbw", "hbs", "hbr", "hbo")
 IncomeCoeff.Ic <- c(lowInc=1,midInc=2,highInc=3)
 
 # Load zone abbreviation 
-load("data/OHASTTime/Rdata/Zi.RData")
+load("data/CommonData/Zi.RData")

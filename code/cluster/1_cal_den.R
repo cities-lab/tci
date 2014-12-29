@@ -84,7 +84,7 @@
     TAZPloyNoNA <- TAZPoly[!is.na(TAZPoly@data$totemp.den),]
     
     # load identify_centers function
-    source("code/cluster/3_identify_clusters.R")
+    #source("code/cluster/3_identify_clusters.R")
     
     
     # identify hbw tazs of centers

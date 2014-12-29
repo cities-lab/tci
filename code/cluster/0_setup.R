@@ -25,7 +25,8 @@ Cm <- c("min", "weighted")
 modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, parkAndRideBus=0.35, bike=0.5, walk=0.5)
 
 # Load zone abbreviation 
-load("data/CenTTime/CenRdata/Zi.RData")
+load("data/CommonData/Zi.RData")
 
-
+# Load required functions
+source("code/cluster/CenFunctions.R")
 

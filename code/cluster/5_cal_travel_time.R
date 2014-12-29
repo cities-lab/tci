@@ -1,31 +1,6 @@
 # This script calculates minimal travel time and weighted average travel time to centers, 
 # converts travel time into monetary cost and combines cost into arrays. 
 
-# define a function of calculate minimal 
-min_tt <- function(centers, tt) {
-  min_tt <- NULL
-  for (zi in 1:dim(tt)[1]) {
-    if (all(is.na(tt[zi,centers]))) {
-      print(zi) #there are zones without certain access to centers, eg. busWalk
-    }
-    
-    min_tt[zi] <- min(tt[zi,centers], na.rm=TRUE)
-    min_tt[zi] <- ifelse(is.infinite(min_tt[zi]), NA, min_tt[zi])
-    
-  }
-  min_tt
-}
-
-# define a function to calculate weighted average travel time 
-weighted_avg_tt <- function(centers, tt, trips) {
-  weighted_avg_tt <- NULL
-  for (zi in 1:dim(tt)[1]) {
-    trip.sum <- sum(trips[zi, centers])
-    weighted_avg_tt[zi] <- sum(tt[zi,centers]*trips[zi,centers], na.rm=TRUE)/trip.sum
-  }
-  weighted_avg_tt
-}
-
 # define a constant for converting time to cost 
 cost.conversion <- 24.77/60 
 
