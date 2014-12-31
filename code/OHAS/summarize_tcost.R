@@ -5,7 +5,7 @@ library(dplyr)
 library(tidyr)
 
 ## read OHAS activity, household, trip table
-load("data/OHAS_PDX.RData")
+load(file.path(INPUT_DIR, "OHAS_PDX.RData"))
 
 activity <- activity %>%
   dplyr::select(sampn, perno, plano, thisaggact, tpurp, mode, trpdur) %>%
@@ -50,14 +50,17 @@ linked <- linked %>% gather(tpurp.ch, flag, hbw:hbo) %>% filter(flag==1) %>% dpl
 # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
 household$inc.level = cut(household$income,
                           breaks=c(1, 3, 5, 9),
-                          labels=c("low","medium","high"),
+                          labels=c("lowInc", "midInc", "highInc"),
                           include.lowest=T, right=F)
 #low <- (1,2); median <- (3,4); high <- 5:8
 hh <- dplyr::select(household, sampn, inc.level, htaz)
 
 linked <- left_join(linked, hh, by="sampn")
 
-if(SAVE.INTERMEDIARIES) save(linked, file="data/linked_trips.RData")
+if(SAVE.INTERMEDIARIES) {
+  intm_file = file.path(INTERMEDIATE_DIR, "linked_trips.RData")
+  save(linked, file=intm_file)
+}
 
 linked <- left_join(linked, VOT.by.mode, by="mode")
 linked <- mutate(linked, trip.tcost=VOT*trpdur/60)
@@ -101,7 +104,7 @@ tcost.htaz <- tcost.hh %>%
 print(tcost.htaz)
 
 # summarize household-level travel time cost by taz and/or income level
-load("data/districts.RData")
+load(file.path(INPUT_DIR, "districts.RData"))
 tcost.hh <- left_join(tcost.hh, districts, by=c("htaz"="zone"))
 tcost.distr <- tcost.hh %>%
   rename(district.id=ugb) %>%
@@ -125,3 +128,8 @@ tcost.all <- tcost.hh %>%
             tcost.sd=sd(tcost, na.rm=T)
   )
 print(tcost.all)
+
+if(SAVE.INTERMEDIARIES) {
+  intm_file = file.path(INTERMEDIATE_DIR, "tcost.RData")
+  save(tcost.htaz.tpurp.inc, tcost.hh, tcost.htaz.inc, tcost.htaz, tcost.distr, tcost.all, file=intm_file)
+}

@@ -4,6 +4,16 @@
 # Set workspace
 setwd("~/tci")
 
+var_list.0 <- ls()
+
+INPUT_DIR <- 'data/'
+OUTPUT_DIR <- 'output/OHAS'
+dir.create(file.path(OUTPUT_DIR), showWarnings = FALSE)
+# whether to save intermediate results
+SAVE.INTERMEDIARIES <- TRUE
+INTERMEDIATE_DIR <- "output/intermediate/OHAS"
+dir.create(file.path(INTERMEDIATE_DIR), showWarnings = FALSE)
+
 # mode specific VOT
 hourly.wage <- 24.77
 mode <- c(1:10,97) #as being coded in OHAS
@@ -21,9 +31,9 @@ mode <- c(1:10,97) #as being coded in OHAS
 VOT <- c(0.5,0.5,0.5,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.5) * hourly.wage
 VOT.by.mode <- data.frame(mode, VOT)
 
-# wether to save intermediate results
-SAVE.INTERMEDIARIES <- TRUE
-
-##
+##start scripts
 source("code/OHAS/summarize_tcost.R")
 source("code/OHAS/plot_tcost.R")
+var_list.1 <- ls()
+rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
+rm(var_list.1)
