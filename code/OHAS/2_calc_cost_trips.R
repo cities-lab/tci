@@ -1,20 +1,76 @@
 # This scripts calculate cost and number of trips by income groups and purpose for each HTAZ (TAZ of household)
 
 # Calculate travel time cost for each trip
-# create mode transformation coefficient 
+# create mode transformation coefficient
+hourly.wage <- 24.77
 mode <- c(1:10,97)
-coef <- c(0.5,0.5,0.5,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.5)
-modecoef <- data.frame(mode, coef)
+VOT <- c(0.5,0.5,0.5,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.5) * hourly.wage
+VOT.by.mode <- data.frame(mode, VOT)
 
 ## load linkedsubset data 
-load("data/OHASTTime/Rdata/linkedsubset.RData")
+load("data/linked_trips.RData")
 
 # merge mode transformation coefficient 
-linkedsubset <- merge(linkedsubset, modecoef, by="mode", all.x=TRUE)
+linked <- left_join(linked, VOT.by.mode, by="mode")
+linked <- mutate(linked, trip.cost=VOT*trpdur/60)
 
-# calculate travel time cost 
-linkedsubset <- mutate(linkedsubset, cost = coef*24.77*trpdur/60)
+# summarize trip-level travel cost by taz, trip purpose, and income level
+cost.htaz.tpurp.inc <- linked %>%
+  group_by(htaz, tpurp.ch, inc.level) %>%
+  summarise(n = n(),
+            cost.min=min(trip.cost, na.rm=T),
+            cost.avg=mean(trip.cost, na.rm=T),
+            cost.max=max(trip.cost, na.rm=T),
+            cost.sd=sd(trip.cost, na.rm=T)
+            )
+# calculate household-level travel cost
+cost.hh <- linked %>%
+  group_by(sampn) %>%
+  summarise(cost=sum(trip.cost))
 
+# summarize household-level travel cost by taz and/or income level
+cost.hh <- left_join(cost.hh, hh, by="sampn")
+
+cost.htaz.inc <- cost.hh %>%
+  group_by(htaz, inc.level) %>%
+  summarise(n = n(),
+            cost.min=min(cost, na.rm=T),
+            cost.avg=mean(cost, na.rm=T),
+            cost.max=max(cost, na.rm=T),
+            cost.sd=sd(cost, na.rm=T)
+  )
+
+cost.htaz <- cost.hh %>%
+  group_by(htaz) %>%
+  summarise(n = n(),
+            cost.min=min(cost, na.rm=T),
+            cost.avg=mean(cost, na.rm=T),
+            cost.max=max(cost, na.rm=T),
+            cost.sd=sd(cost, na.rm=T)
+  )
+
+cost.all <- cost.hh %>%
+  mutate(all=1) %>%
+  group_by(all) %>%
+  summarise(n = n(),
+            cost.min=min(cost, na.rm=T),
+            cost.avg=mean(cost, na.rm=T),
+            cost.max=max(cost, na.rm=T),
+            cost.sd=sd(cost, na.rm=T)
+  )
+
+load("data/CommonData/districts.RData")
+
+cost.hh <- left_join(cost.hh, districts, by=c("htaz"="zone"))
+cost.distr <- cost.hh %>%
+  rename(district.id=ugb) %>%
+  group_by(district.id) %>%
+  summarise(n = n(),
+            cost.min=min(cost, na.rm=T),
+            cost.avg=mean(cost, na.rm=T),
+            cost.max=max(cost, na.rm=T),
+            cost.sd=sd(cost, na.rm=T)
+  )
 
 ## calculate cost and trips by purpose and income
 #:: Begin iteration by trip purpose 

@@ -4,26 +4,11 @@
 # Set workspace
 setwd("~/tci")
 
-# Define income group abbreviation
-Ic <- c("lowInc", "midInc", "highInc")
-
-# Define trip purpose abbreviation
-# The purposes for this study (now) are limited to the home-based trips
-# They exclude nonhome-based trips, school trips and college trips
-Pr <- c("hbw", "hbs", "hbr", "hbo")
-
-#Define income group category index
-IncomeCoeff.Ic <- c(lowInc=1,midInc=2,highInc=3)
-
-# Load zone abbreviation (zone id in character) 
-# LW: not being used?
-load("data/CommonData/Zi.RData")
-
 # mode specific VOT
 hourly.wage <- 24.77
 mode <- c(1:10,97) #as being coded in OHAS
 #1  WALK
-#2	BIKE
+#2  BIKE
 #3	AUTO / VAN/ TRUCK DRIVER
 #4	AUTO / VAN / TRUCK PASSENGER
 #5	BUS
@@ -36,5 +21,9 @@ mode <- c(1:10,97) #as being coded in OHAS
 VOT <- c(0.5,0.5,0.5,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.5) * hourly.wage
 VOT.by.mode <- data.frame(mode, VOT)
 
+# wether to save intermediate results
 SAVE.INTERMEDIARIES <- TRUE
-source("summarize_OHAS_tcost.R")
+
+##
+source("code/OHAS/summarize_tcost.R")
+source("code/OHAS/plot_tcost.R")
