@@ -107,7 +107,7 @@ print(tcost.htaz)
 load(file.path(INPUT_DIR, "districts.RData"))
 tcost.hh <- left_join(tcost.hh, districts, by=c("htaz"="zone"))
 tcost.distr <- tcost.hh %>%
-  rename(district.id=ugb) %>%
+  dplyr::rename(district.id=ugb) %>%
   group_by(district.id) %>%
   summarise(n = n(),
             tcost.min=min(tcost, na.rm=T),

@@ -18,9 +18,6 @@ setwd("data/OHASTTime/")
   load("results/Cost.Zi.RData")
   load("results/Cost.Di.Rdata")
 
-# load household number in each TAZ by income group
-	load("Rdata/Hh.ZiIc.RData")
-
 #Load mapping data and functions   
 #===============================
 
@@ -56,7 +53,7 @@ setwd("data/OHASTTime/")
   		if(PlotRef) points(RefZoneCent[1], RefZoneCent[2], pch=1, col=RefColor, cex=2, lwd=2)
   		LegendText <- paste(breaks[1:(length(breaks)-1)], breaks[2:length(breaks)], sep=" - ")
   		if(LegendSize != 0){
-    			legend("bottomleft", legend=LegendText,
+    			legend(7404637,611959, legend=LegendText,
            		title=LegendTitle, cex=LegendSize, fill=ColorPalette)
   		   }
   		if(PlotRef){
@@ -65,8 +62,7 @@ setwd("data/OHASTTime/")
  	 }
 	}
 
-# load vector of zone names 
-     load("Rdata/Zi.RData")
+
 
 # make names for household incme groups and trip types for plotting 
      
@@ -88,12 +84,13 @@ setwd("data/OHASTTime/")
 	  Cost.Zi <- round(Cost.Zi,2)
     Cost.Zi[is.na(Cost.Zi)] <- 0
 	## map 
+  par(mfrow=c(1,1))
 	coropleth(TazPoly, Cost.Zi, TazIndex, "RdYlBu",
-                  breaks=c(seq(0, 4, 0.5),6,10,35), LegendSize=0.6, PlotRef=FALSE,
+                  breaks=c(0,0.001,1,2,4,10,35), LegendSize=0.4, PlotRef=FALSE,
           	      main="", LegendTitle="Travel Time Cost")
 
-	mtext("OHAS Travel Time Cost", cex=1.8)
-	saveGraph(filename="graphics/Cost_Zi", type="pdf")
+  mtext("OHAS Travel Time Cost", cex=1.2)
+	saveGraph(filename="graphics/map_Cost_Zi", type="pdf")
 
 
 # Plot maps of cost by purposes 
@@ -112,11 +109,11 @@ setwd("data/OHASTTime/")
                MapData[is.na(MapData)] <- 0
                if(pr == "hbs") {
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(seq(0, 5, 1),7,10,20,60), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,3,4,55), LegendSize=0.4, PlotRef=FALSE,
                     main="", LegendOffset=c(1.011, 1.02))
                } else {
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(seq(0, 5, 1),7,10,20,60), LegendSize=0, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,3,4,55), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
                mtext(PrNames[pr], side=2, line=0.5)
@@ -143,11 +140,11 @@ setwd("data/OHASTTime/")
                MapData[is.na(MapData)] <- 0
                if(ic == "midInc") {
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(seq(0, 5, 1),7,10,20,70), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,4,7,70), LegendSize=0.4, PlotRef=FALSE,
                     main="", LegendOffset=c(1.011, 1.02))
                } else {
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(seq(0, 5, 1),7,10,20,70), LegendSize=0, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,4,7,70), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
                mtext(IcNames[ic], side=2, line=0.5)
@@ -166,7 +163,7 @@ setwd("data/OHASTTime/")
      # Define breaks and limits for histograms
      Breaks <- seq(0, 14, 1)
      Xlim <- c(0,14)
-     # Set up plot layout, map will go on top and histogram on bottom
+     # Set up plot layout
      nf <- layout(matrix(1:4,nrow=2))
      # Iterate through all purposes and plot histograms
   
@@ -192,7 +189,7 @@ setwd("data/OHASTTime/")
      # Define breaks and limits for histograms
      Breaks <- seq(0, 14, 1)
      Xlim <- c(0,14)
-     # Set up plot layout, map will go on top and histogram on bottom
+     # Set up plot layout
      nf <- layout(matrix(1:4,nrow=2))
      # Iterate through all purposes and plot histograms
   
@@ -221,15 +218,17 @@ setwd("data/OHASTTime/")
      
      # add name index of districts 
      index <- as.character(c(1:20))
-
-
+     
+     # Set up plot layout
+     par(mfrow=c(1,1))
 
      #Barplot of offpeak minimal travel time cost 
      BarCenter <- barplot(Cost.Di[index], xlab="", ylab="Travel Time Cost", col=brewer.pal(8, "Pastel1"),
           main=NULL, axisnames=FALSE)
      mtext("Districts", side=1, line=0.5, cex=1)
      text(as.vector(BarCenter), 0.1, labels=DiNames, srt=90, pos=4, offset=0)
-
+      
+     mtext("OHAS Travel Time Cost by Districts", outer=TRUE, line=0, cex=1.2)
           
      saveGraph(filename="graphics/district_cost",type="pdf")
 

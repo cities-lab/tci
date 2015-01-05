@@ -74,7 +74,7 @@ setwd("data/CenTTime/")
   		if(PlotRef) points(RefZoneCent[1], RefZoneCent[2], pch=1, col=RefColor, cex=2, lwd=2)
   		LegendText <- paste(breaks[1:(length(breaks)-1)], breaks[2:length(breaks)], sep=" - ")
   		if(LegendSize != 0){
-    			legend("bottomleft", legend=LegendText,
+  		  legend(7404637,611959, legend=LegendText,
            		title=LegendTitle, cex=LegendSize, fill=ColorPalette)
   		   }
   		if(PlotRef){
@@ -83,8 +83,7 @@ setwd("data/CenTTime/")
  	 }
 	}
 
-## load vector of zone names 
-     load("CenRdata/Zi.RData")
+
 
 # make names for household incme groups and trip types for plotting 
      
@@ -104,13 +103,15 @@ setwd("data/CenTTime/")
 
   # round minimal travel time cost during offpeak
 	minoffpeakAggCost.Zi <- round(minoffpeakAggCost.Zi,2)
-
+  
+  # Set up plot layout
+  par(mfrow=c(1,1))
 	## map 
 	coropleth(TazPoly, minoffpeakAggCost.Zi, TazIndex, "RdYlBu",
                   breaks=quantile(minoffpeakAggCost.Zi,na.rm=TRUE), LegendSize=0.6, PlotRef=FALSE,
           	      main="", LegendTitle="Travel Time Cost")
 
-	mtext("OffPeak Minimal Travel Time Cost")
+	mtext("OffPeak Minimal Travel Time Cost", cex=1.2)
   saveGraph(filename="graphics/minoffpeakAggCost_Zi", type="pdf")
 
 ## Map minimal travel time cost during peak time
@@ -120,13 +121,16 @@ setwd("data/CenTTime/")
 
 	# round minimal travel time cost during peak
 	minpeakAggCost.Zi <- round(minpeakAggCost.Zi,2)
+  
+  # Set up plot layout
+  par(mfrow=c(1,1))
 
 	## map 
 	coropleth(TazPoly, minpeakAggCost.Zi, TazIndex, "RdYlBu",
           		breaks=quantile(minpeakAggCost.Zi,na.rm=TRUE), LegendSize=0.6, PlotRef=FALSE,
           		main="", LegendTitle="Travel Time Cost")
 
-	mtext("Peak Minimal Travel Time Cost")
+	mtext("Peak Minimal Travel Time Cost", cex=1.2)
  	saveGraph(filename="graphics/minpeakAggCost_Zi", type="pdf")
 
 
@@ -135,15 +139,18 @@ setwd("data/CenTTime/")
 
 #::
 
-    # round weighted travel time cost during offpeak time 
+  # round weighted travel time cost during offpeak time 
 	weightedoffpeakAggCost.Zi <- round(weightedoffpeakAggCost.Zi,2)
+  
+  # Set up plot layout
+  par(mfrow=c(1,1))
 
 	## map 
 	coropleth(TazPoly, weightedoffpeakAggCost.Zi, TazIndex, "RdYlBu",
                   breaks=quantile(weightedoffpeakAggCost.Zi,na.rm=TRUE), LegendSize=0.6, PlotRef=FALSE,
           	      main="", LegendTitle="Travel Time Cost")
 
-	mtext("OffPeak Minimal Travel Time Cost")
+	mtext("OffPeak Minimal Travel Time Cost", cex=1.2)
 	saveGraph(filename="graphics/weightedoffpeakAggCost_Zi", type="pdf")
 
 
@@ -156,12 +163,15 @@ setwd("data/CenTTime/")
 	# round weighted travel time cost during peak
 	weightedpeakAggCost.Zi <- round(weightedpeakAggCost.Zi,2)
 
+  # Set up plot layout
+  par(mfrow=c(1,1))
+
 	## map 
 	coropleth(TazPoly, weightedpeakAggCost.Zi, TazIndex, "RdYlBu",
           		breaks=quantile(weightedpeakAggCost.Zi,na.rm=TRUE), LegendSize=0.6, PlotRef=FALSE,
           		main="", LegendTitle="Travel Time Cost")
 
-	mtext("Peak Minimal Travel Time Cost")
+	mtext("Peak Minimal Travel Time Cost", cex=1.2)
 
  	saveGraph(filename="graphics/weightedpeakAggCost_Zi", type="pdf")
 
@@ -187,15 +197,15 @@ setwd("data/CenTTime/")
               
                if((ic == "lowInc") & (ag == "weightedpeak")){
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,4,6,8,14), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,4,6,14), LegendSize=0.3, PlotRef=FALSE,
                     main="", LegendOffset=c(1.011, 1.02))
                } else {
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,4,6,8,14), LegendSize=0, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,4,6,14), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
-               if(ag == "minoffpeak") mtext(IcNames[ic], side=2, line=1.75)
-               if(ic == "lowInc") mtext(ag, side=3, line=1.75)
+               if(ag == "minoffpeak") mtext(IcNames[ic], side=2, line=0)
+               if(ic == "lowInc") mtext(ag, side=3, line=0)
                }
           }
      par(Opar)
@@ -224,11 +234,11 @@ setwd("data/CenTTime/")
 
                if((pr == "hbw") & (ag == "weightedpeak")){
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,4,6,8,14), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,4,6,14), LegendSize=0.3, PlotRef=FALSE,
                     main="", LegendOffset=c(1.011, 1.02))
                } else {
                     coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,4,6,8,14), LegendSize=0, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,4,6,14), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
                if(ag == "minoffpeak") mtext(PrNames[pr], side=2, line=1.75)
@@ -528,15 +538,15 @@ setwd("data/CenTTime/")
           for(pr in Pr){
                if((ic == "highInc") & (pr == "hbw")){
                     coropleth(TazPoly, minoffpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,3,4,6,9), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,3,4,6,9), LegendSize=0.3, PlotRef=FALSE,
                     main="", LegendOffset=c(1.014, 1.012))
                } else {
                     coropleth(TazPoly, minoffpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                     breaks=c(0,0.001,1,2,3,4,6,9), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
-               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1.75)
-               if(pr == "hbw") mtext(IcNames[ic], side=3, line=1)
+               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=0)
+               if(pr == "hbw") mtext(IcNames[ic], side=3, line=0)
                }
           }
      par(Opar)
@@ -561,15 +571,15 @@ setwd("data/CenTTime/")
           for(pr in Pr){
                if((ic == "highInc") & (pr == "hbw")){
                     coropleth(TazPoly, minpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,3,4,6,11), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,3,4,6,11), LegendSize=0.3, PlotRef=FALSE,
                     main="", LegendOffset=c(1.014, 1.012))
                } else {
                     coropleth(TazPoly, minpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                     breaks=c(0,0.001,1,2,3,4,6,11), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
-               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1.75)
-               if(pr == "hbw") mtext(IcNames[ic], side=3, line=1)
+               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=0)
+               if(pr == "hbw") mtext(IcNames[ic], side=3, line=0)
                }
           }
      par(Opar)
@@ -594,15 +604,15 @@ setwd("data/CenTTime/")
           for(pr in Pr){
                if((ic == "highInc") & (pr == "hbw")){
                     coropleth(TazPoly, weightedoffpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,3,4,6,11), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,3,4,6,11), LegendSize=0.3, PlotRef=FALSE,
                     main="", LegendOffset=c(1.014, 1.012))
                } else {
                     coropleth(TazPoly, weightedoffpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                     breaks=c(0,0.001,1,2,3,4,6,11), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
-               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1.75)
-               if(pr == "hbw") mtext(IcNames[ic], side=3, line=1)
+               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=0)
+               if(pr == "hbw") mtext(IcNames[ic], side=3, line=0)
                }
           }
      par(Opar)
@@ -627,15 +637,15 @@ setwd("data/CenTTime/")
           for(pr in Pr){
                if((ic == "highInc") & (pr == "hbw")){
                     coropleth(TazPoly, weightedpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                    breaks=c(0,0.001,1,2,3,4,6,13), LegendSize=0.6, PlotRef=FALSE,
+                    breaks=c(0,0.001,1,2,3,4,6,13), LegendSize=0.3, PlotRef=FALSE,
                     main="", LegendOffset=c(1.014, 1.012))
                } else {
                     coropleth(TazPoly, weightedpeakAggCost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                     breaks=c(0,0.001,1,2,3,4,6,13), LegendSize=0, PlotRef=FALSE,
                     main="")
                }
-               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1.75)
-               if(pr == "hbw") mtext(IcNames[ic], side=3, line=1)
+               if(ic == "lowInc") mtext(PrNames[pr], side=2, line=0)
+               if(pr == "hbw") mtext(IcNames[ic], side=3, line=0)
                }
           }
      par(Opar)
