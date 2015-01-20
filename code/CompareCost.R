@@ -10,7 +10,7 @@
 # Original TCI cost
   load("data/TCIPortland50/performancemeasures/final_output/tci/AveMarketCost.Zi.RData")
   load("data/TCIPortland50/performancemeasures/final_output/tci/BestMarketCost.Zi.RData")
-  load("data/TCIPortland50/performancemeasures/final_output/tci//CompMarketCost.Zi.RData")
+  load("data/TCIPortland50/performancemeasures/final_output/tci/CompMarketCost.Zi.RData")
 
 # OHAS cost
   load("data/OHASTTime/results/Cost.Zi.RData")

@@ -4,16 +4,15 @@
 # define a constant for converting time to cost 
 cost.conversion <- 24.77/60 
 
+# load taz index of centers 
+if (!all(c("hbwci", "hbsci", "hbrci", "hboci") %in% ls())) 
+  load(file.path(INTERMEDIATE_DIR, "centers.RData"))
+
 #Begin iteration by trip purpose
 #-------------------------------  
 
 #::
 for (pr in Pr) { 
-  # load taz index of centers 
-  CenterFileName <- paste("data/CenTTime/CenRdata/",pr,"ci.RData", sep="")
-  load(CenterFileName);  rm(CenterFileName)
-  CentersObjName <- paste(pr,"ci", sep="")
-  Centers <- get(CentersObjName); rm(CentersObjName)
   
   # Begin iteration by income group
   for (ic in Ic) {
@@ -34,6 +33,7 @@ for (pr in Pr) {
         if ((md == "bike")|(md=="walk")) {
           
           # load travel time for bike and walk 
+          ##TODO: how were these data processed? why bike & walk travel vary by purpose?
           TTimeFileName <- paste("data/CenTTime/CenRdata/", md, "Time",md, pr, ".RData", sep="")
           load(TTimeFileName); rm(TTimeFileName)
           TTimeObjName <- paste(md,"Time", md, pr, sep="")
