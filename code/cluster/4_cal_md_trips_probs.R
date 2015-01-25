@@ -9,6 +9,15 @@ load("data/CommonData/tripDist.RData")
 dimnames(tripDist) <- list(Zi,Zi)
 tripDist.ZiZi <- tripDist[Zi,Zi]
 
+#Load the rhdf5 library
+  library(rhdf5)
+
+# Load functions for OMX files 
+  source("code/omx.r")
+ 
+# Create a OMX file to store 2162 * 2162 
+  createFileOMX("data/CommonData/OMX/ModeTrips.omx", 2162, 2162)
+
 #Begin iteration by trip purpose
 #-------------------------------
 
@@ -22,14 +31,10 @@ for(pr in Pr){
   
   # Begin iteration by income group
   for(ic in Ic){
-    # Load trip distribution matrices for each income group
-
-    DistFileName <- paste("data/CommonData/tripdist/", pr, ic, "Dist.RData", sep="")
-    load(DistFileName); rm(DistFileName)
     
     # Get trip matrix 
     TripsObjName <- paste(pr, ic, "Dist", sep="")
-    Trips.ZiZi <- get(TripsObjName) ; rm(TripsObjName)
+    Trips.ZiZi <- readMatrixOMX("data/CommonData/OMX/TripDistribution.omx", TripsObjName)
     
     
     # Initialize an array to hold all the mode utility data           
@@ -47,13 +52,10 @@ for(pr in Pr){
         ExpUtil.ZiZi <- exp(WalkAccessCoeff.Pr[pr] * 60 * tripDist.ZiZi / 3)
       }
       if((md != "bike") & (md != "walk")) {
-        ModeUtilFileName <- paste("data/TCIPortland50/performancemeasures/intm_output/access/util", md, ic, pr, ".RData", sep="")
-        load(ModeUtilFileName) ; rm(ModeUtilFileName)
-        ModeUtilObjName <- paste("util", md, ic, pr, sep="")
-        ExpUtil.ZiZi <- get(ModeUtilObjName)
-        rm(list=ls()[ls()==ModeUtilObjName]) ; rm(ModeUtilObjName)
-        dimnames(ExpUtil.ZiZi) <- list(Zi, Zi)
         
+        ModeUtilObjName <- paste("util", md, ic, pr, sep="")
+        ExpUtil.ZiZi <- readMatrixOMX("data/CommonData/OMX/ModeUtility.omx", ModeUtilObjName)
+                
       }
       
       # Add the mode matrix to the array
@@ -81,9 +83,19 @@ for(pr in Pr){
       assign(paste(pr, ic, md, "trips", sep=""), TripsMd)
       save(list=paste(pr, ic, md, "trips", sep=""),
            file=paste("data/CenTTime/CenRdata/tripbymode/", pr,ic,md, "trips.RData", sep=""))
+      # Convert trips matrices by mode into omx files
+      
+        # Name of trips matrices
+        TripsMdObjName <- paste(pr, ic, md, "trips", sep="")
+      
+        # Description of trip matrices
+        FileDiscrition <- paste("origin-destination trip disribution matrix of", ic, "household group for", pr, "purpose by", md, sep=" ")
+      
+        # Write the matrices
+        writeMatrixOMX("data/CommonData/OMX/ModeTrips.omx", TripsMd, TripsMdObjName, Description=FileDiscrition)
       
       # combine trips into array 
-            
+      
       TotTrips.ZiMd[,md] <- rowSums(TripsMd[,Centers]) ;rm(TripsMd)
       assign(paste(pr, ic, "TotTrips.ZiMd", sep=""), TotTrips.ZiMd)
       save(list=paste(pr, ic, "TotTrips.ZiMd", sep=""), 

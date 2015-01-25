@@ -28,5 +28,5 @@ modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, 
 load("data/CommonData/Zi.RData")
 
 # Load required functions
-source("code/cluster/CenFunctions.R")
+source("code/cluster/def_functions.R")
 
