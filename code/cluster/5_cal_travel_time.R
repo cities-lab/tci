@@ -8,6 +8,12 @@ cost.conversion <- 24.77/60
 if (!all(c("hbwci", "hbsci", "hbrci", "hboci") %in% ls())) 
   load(file.path(INTERMEDIATE_DIR, "centers.RData"))
 
+# Calculate travel time by bike and walk
+tripDistDF <- read.csv("data/mf202.csv", header=FALSE)
+tripDist <- matrix(tripDistDF[,3], nrow=2162, byrow=TRUE)
+bikeTime <- tripDist*60/10
+walkTime <- tripDist*60/3
+
 #Begin iteration by trip purpose
 #-------------------------------  
 
@@ -36,7 +42,8 @@ for (pr in Pr) {
           ##TODO: how were these data processed? why bike & walk travel vary by purpose?
           TTimeFileName <- paste("data/CenTTime/CenRdata/", md, "Time",md, pr, ".RData", sep="")
           load(TTimeFileName); rm(TTimeFileName)
-          TTimeObjName <- paste(md,"Time", md, pr, sep="")
+          # get travel time for bike and walk      
+          TTimeObjName <- paste(md,"Time", sep="")
           TTime <- get(TTimeObjName); rm(TTimeObjName)
           
           # calculate and save minimal travel time for bike and walk 
