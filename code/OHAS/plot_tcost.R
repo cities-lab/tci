@@ -32,8 +32,8 @@
   rownames(TazCentroids.ZiXy) <- TazIndex
   
   
-  # write a function to plot taz values as a coropleth map
-  coropleth <- function(geo=TazPoly, data, DataIndex=TazIndex, palette="Blues", breaks,
+  # write a function to plot taz values as a choropleth map
+  choropleth <- function(geo=TazPoly, data, DataIndex=TazIndex, palette="Blues", breaks,
                         LegendSize=1, PlotRef=TRUE, LegendOffset=c(1,1),
                         LegendTitle=NULL, RefColor="red", ...){
     DataCut <- cut(data[DataIndex], breaks, include.lowest=TRUE, labels=FALSE)
@@ -87,11 +87,11 @@
   for(ic in Ic){
     for(pr in Pr){
       if((ic == "highInc") & (pr == "hbw")){
-        coropleth(TazPoly, minttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
+        choropleth(TazPoly, minttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,2,3,6,40), LegendSize=0.3, PlotRef=FALSE,
                   main="", LegendOffset=c(1.014, 1.012))
       } else {
-        coropleth(TazPoly, minttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
+        choropleth(TazPoly, minttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,2,3,6,40), LegendSize=0, PlotRef=FALSE,
                   main="")
       }
@@ -121,11 +121,11 @@
   for(ic in Ic){
     for(pr in Pr){
       if((ic == "highInc") & (pr == "hbw")){
-        coropleth(TazPoly, avgttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
+        choropleth(TazPoly, avgttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,2,3,6,40), LegendSize=0.3, PlotRef=FALSE,
                   main="", LegendOffset=c(1.014, 1.012))
       } else {
-        coropleth(TazPoly, avgttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
+        choropleth(TazPoly, avgttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,2,3,6,40), LegendSize=0, PlotRef=FALSE,
                   main="")
       }
@@ -156,11 +156,11 @@
   for(ic in Ic){
     for(pr in Pr){
       if((ic == "highInc") & (pr == "hbw")){
-        coropleth(TazPoly, maxttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
+        choropleth(TazPoly, maxttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,2,3,6,40), LegendSize=0.3, PlotRef=FALSE,
                   main="", LegendOffset=c(1.014, 1.012))
       } else {
-        coropleth(TazPoly, maxttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
+        choropleth(TazPoly, maxttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,2,3,6,40), LegendSize=0, PlotRef=FALSE,
                   main="")
       }
@@ -189,11 +189,11 @@
       MapData[is.na(MapData)] <- 0
       
       if((ic == "lowInc") & (ag == "maxtcost")){
-        coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
+        choropleth(TazPoly, MapData, TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,5,9,14,85), LegendSize=0.3, PlotRef=FALSE,
                   main="", LegendOffset=c(1.011, 1.02))
       } else {
-        coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
+        choropleth(TazPoly, MapData, TazIndex, "RdYlBu",
                   breaks=c(0,0.001,1,5,9,14,85), LegendSize=0, PlotRef=FALSE,
                   main="")
       }
@@ -216,11 +216,11 @@
     MapData <- hhCost.ZiCm[,cm]
     MapData[is.na(MapData)] <- 0
     if(cm == "avg") {
-      coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
+      choropleth(TazPoly, MapData, TazIndex, "RdYlBu",
                 breaks=c(0,0.001,0.5,1,6,10,85), LegendSize=0.3, PlotRef=FALSE,
                 main="", LegendOffset=c(1.011, 1.02))
     } else {
-      coropleth(TazPoly, MapData, TazIndex, "RdYlBu",
+      choropleth(TazPoly, MapData, TazIndex, "RdYlBu",
                 breaks=c(0,0.001,0.5,1,6,10,85), LegendSize=0, PlotRef=FALSE,
                 main="")
     }
