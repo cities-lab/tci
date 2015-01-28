@@ -1,11 +1,12 @@
 # This scripts identify linked trips, not place-based trips, by income groups and trip purposes
 
 # Load required packages
-library(dplyr)
-library(tidyr)
+require(dplyr)
+require(tidyr)
 
 ## read OHAS activity, household, trip table
 load(file.path(INPUT_DIR, "OHAS_PDX.RData"))
+load(file.path(INPUT_DIR, "Zi.RData"))
 
 activity <- activity %>%
   dplyr::select(sampn, perno, plano, thisaggact, tpurp, mode, trpdur) %>%
@@ -62,8 +63,12 @@ if(SAVE.INTERMEDIARIES) {
   save(linked, file=intm_file)
 }
 
+#append value of time by mode
 linked <- left_join(linked, VOT.by.mode, by="mode")
 linked <- mutate(linked, trip.tcost=VOT*trpdur/60)
+          
+#exclude rows with unknown htaz, tpurp.ch, or inc.level  
+linked <- dplyr::filter(linked, !is.na(htaz), !is.na(tpurp.ch), !is.na(inc.level))
 
 # summarize trip-level travel time cost by taz, trip purpose, and income level
 tcost.htaz.tpurp.inc <- linked %>%
@@ -73,7 +78,8 @@ tcost.htaz.tpurp.inc <- linked %>%
             tcost.avg=mean(trip.tcost, na.rm=T),
             tcost.max=max(trip.tcost, na.rm=T),
             tcost.sd=sd(trip.tcost, na.rm=T)
-  )
+  ) 
+
 print(tcost.htaz.tpurp.inc)
 
 # calculate household-level travel time cost
@@ -133,3 +139,20 @@ if(SAVE.INTERMEDIARIES) {
   intm_file = file.path(INTERMEDIATE_DIR, "tcost.RData")
   save(tcost.htaz.tpurp.inc, tcost.hh, tcost.htaz.inc, tcost.htaz, tcost.distr, tcost.all, file=intm_file)
 }
+
+#reshape data frame into arrays for plotting
+require(reshape2)
+#tcost by htaz, inc.level, and tpurp
+mintcost.ZiIcPr <- acast(tcost.htaz.tpurp.inc, htaz~inc.level~tpurp.ch, value.var="tcost.min")
+avgtcost.ZiIcPr <- acast(tcost.htaz.tpurp.inc, htaz~inc.level~tpurp.ch, value.var="tcost.avg")
+maxtcost.ZiIcPr <- acast(tcost.htaz.tpurp.inc, htaz~inc.level~tpurp.ch, value.var="tcost.max")
+
+#tcost by htaz, inc.level
+minhhtcost.ZiIc <- acast(tcost.htaz.inc, htaz~inc.level, value.var="tcost.min")
+avghhtcost.ZiIc <- acast(tcost.htaz.inc, htaz~inc.level, value.var="tcost.avg")
+maxhhtcost.ZiIc <- acast(tcost.htaz.inc, htaz~inc.level, value.var="tcost.max")
+
+#tcost by htaz
+flat.tcost.htaz <- dplyr::select(tcost.htaz, htaz, min=tcost.min, avg=tcost.avg, max=tcost.max) %>%
+                   gather(func, value, -htaz)
+hhCost.ZiCm <- acast(flat.tcost.htaz, htaz~func, value.var="value") #could use spread, but we 

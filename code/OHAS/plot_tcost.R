@@ -1,12 +1,8 @@
 # plot maps and descriptives of travel time cost
-# TODO
 
 # load saveGraph function
  source("code/openGraphSaveGraph.R")
 
-# Load data 
- 
- # load(file.path(INTERMEDIATE_DIR,"newtcost.RData"))
 
 #Load mapping data and functions   
   #===============================
@@ -18,7 +14,7 @@
   library(RColorBrewer)
   
   # read in the taz data shapefile
-  TazFile <- paste("data/shp/", "TAZ.shp", sep="/") 
+  TazFile <- file.path(INPUT_DIR, "shp/", "TAZ.shp") 
   TazPoly <- readShapePoly(TazFile)
   
   # extract the attribute data
