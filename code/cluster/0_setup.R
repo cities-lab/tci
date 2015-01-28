@@ -35,5 +35,6 @@ hourly.wage <- 24.77
 modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, parkAndRideBus=0.35, bike=0.5, walk=0.5)
 
 # Load required functions
+source("code/cluster/def_functions.R")
 source("code/cluster/1_cal_den.R") #this step takes a long time; skip it if its intermediate results have been saved
 

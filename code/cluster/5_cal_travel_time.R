@@ -30,11 +30,10 @@ for (pr in Pr) {
       # Begin iteration by mode 
       for (md in Md ) {
         
-        # load trips matrix
-        TripsMdFileName <- paste("data/CenTTime/CenRdata/tripbymode/", pr, ic, md, "trips.RData", sep="")
-        load(TripsMdFileName); rm(TripsMdFileName)
+        # load trip matrices
+
         TripsMdObjName <- paste(pr, ic, md, "trips", sep="")
-        TripsMd <- get(TripsMdObjName); rm(TripsMdObjName)
+        TripsMd <- readMatrixOMX("data/CommonData/OMX/ModeTrips.omx", TripsMdObjName)
         
         if ((md == "bike")|(md=="walk")) {
           
