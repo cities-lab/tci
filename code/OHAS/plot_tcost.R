@@ -18,7 +18,7 @@
   library(RColorBrewer)
   
   # read in the taz data shapefile
-  TazFile <- paste("data/CommonData/gis/", "TAZ.shp", sep="/") 
+  TazFile <- paste("data/shp/", "TAZ.shp", sep="/") 
   TazPoly <- readShapePoly(TazFile)
   
   # extract the attribute data
@@ -68,110 +68,41 @@
   names(CmNames) <- Cm  
 
  
-
+  for (cm in CmNames) {
+    # Set up plot layout, map will go on top and histogram on bottom
+    nf <- layout(matrix(1:12,nrow=4))
+    Opar <- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
+    breaks=c(0,0.001,1,2,3,6,40)
+    # Iterate through all purposes and incomes and plot histograms
     
-######## map minttcost.ZiIcPr
-  #Plot maps of minimal travel time   costs for all purposes and incomes
-  #----------------------------------------------------------------------------------
-  
-  #::
-  
-  # Set up plot layout, map will go on top and histogram on bottom
-  nf <- layout(matrix(1:12,nrow=4))
-  Opar <- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
-  # Iterate through all purposes and incomes and plot histograms
-  
-  # replace NA with 0
-  minttcost.ZiIcPr[is.na(minttcost.ZiIcPr)] <- 0
-  
-  for(ic in Ic){
-    for(pr in Pr){
-      if((ic == "highInc") & (pr == "hbw")){
-        choropleth(TazPoly, minttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                  breaks=c(0,0.001,1,2,3,6,40), LegendSize=0.3, PlotRef=FALSE,
-                  main="", LegendOffset=c(1.014, 1.012))
-      } else {
-        choropleth(TazPoly, minttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                  breaks=c(0,0.001,1,2,3,6,40), LegendSize=0, PlotRef=FALSE,
-                  main="")
+    obj.name <- paste(cm, ".ZiIcPr", sep="")
+    tcost <- get(obj.name)
+    
+    # replace NA with 0
+    tcost[is.na(tcost)] <- 0
+    
+    for(ic in Ic){
+      for(pr in Pr){
+        if((ic == "highInc") & (pr == "hbw")){
+          choropleth(TazPoly, tcost[,ic,pr], TazIndex, "RdYlBu",
+                     breaks=breaks, LegendSize=0.3, PlotRef=FALSE,
+                     main="", LegendOffset=c(1.014, 1.012))
+        } else {
+          choropleth(TazPoly, tcost[,ic,pr], TazIndex, "RdYlBu",
+                     breaks=breaks, LegendSize=0, PlotRef=FALSE,
+                     main="")
+        }
+        if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1)
+        if(pr == "hbw") mtext(IcNames[ic], side=3, line=0.1)
       }
-      if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1)
-      if(pr == "hbw") mtext(IcNames[ic], side=3, line=0.1)
     }
+    
+    par(Opar)
+    output_name = paste("map_", cm, "_by_income_purpose", sep="")
+    output_file = file.path(OUTPUT_DIR, output_name)
+    saveGraph(filename=output_file, type="pdf")    
   }
-  par(Opar)
 
-  saveGraph(filename="data/OHASTTime/graphics/map_min_tcost_by_income_purpose", type="pdf")  
-  
-  
-######## map avgttcost.ZiIcPr
-  #Plot maps of minimal travel time   costs for all purposes and incomes
-  #----------------------------------------------------------------------------------
-  
-  #::
-  
-  # Set up plot layout, map will go on top and histogram on bottom
-  nf <- layout(matrix(1:12,nrow=4))
-  Opar <- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
-  # Iterate through all purposes and incomes and plot histograms
-  
-  # replace NA with 0
-  avgttcost.ZiIcPr[is.na(avgttcost.ZiIcPr)] <- 0
-  
-  for(ic in Ic){
-    for(pr in Pr){
-      if((ic == "highInc") & (pr == "hbw")){
-        choropleth(TazPoly, avgttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                  breaks=c(0,0.001,1,2,3,6,40), LegendSize=0.3, PlotRef=FALSE,
-                  main="", LegendOffset=c(1.014, 1.012))
-      } else {
-        choropleth(TazPoly, avgttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                  breaks=c(0,0.001,1,2,3,6,40), LegendSize=0, PlotRef=FALSE,
-                  main="")
-      }
-      if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1)
-      if(pr == "hbw") mtext(IcNames[ic], side=3, line=0.1)
-    }
-  }
-  par(Opar)
-  
-  saveGraph(filename="data/OHASTTime/graphics/map_avg_tcost_by_income_purpose", type="pdf")  
-  
-
-  
-  ######## map maxttcost.ZiIcPr
-  #Plot maps of minimal travel time   costs for all purposes and incomes
-  #----------------------------------------------------------------------------------
-  
-  #::
-  
-  # Set up plot layout, map will go on top and histogram on bottom
-  nf <- layout(matrix(1:12,nrow=4))
-  Opar <- par(mar=c(0.5,0.5,0.5,0.5), oma=c(1,2.5,2.5,1))
-  # Iterate through all purposes and incomes and plot histograms
-  
-  # replace NA with 0
-  maxttcost.ZiIcPr[is.na(maxttcost.ZiIcPr)] <- 0
-  
-  for(ic in Ic){
-    for(pr in Pr){
-      if((ic == "highInc") & (pr == "hbw")){
-        choropleth(TazPoly, maxttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                  breaks=c(0,0.001,1,2,3,6,40), LegendSize=0.3, PlotRef=FALSE,
-                  main="", LegendOffset=c(1.014, 1.012))
-      } else {
-        choropleth(TazPoly, maxttcost.ZiIcPr[,ic,pr], TazIndex, "RdYlBu",
-                  breaks=c(0,0.001,1,2,3,6,40), LegendSize=0, PlotRef=FALSE,
-                  main="")
-      }
-      if(ic == "lowInc") mtext(PrNames[pr], side=2, line=1)
-      if(pr == "hbw") mtext(IcNames[ic], side=3, line=0.1)
-    }
-  }
-  par(Opar)
-  
-  saveGraph(filename="data/OHASTTime/graphics/map_max_tcost_by_income_purpose", type="pdf")  
-  
 
 ###### Map minhhtcost.ZiIc,avghhtcost.ZiIc, mazhhtcost.ZiIc
   #------------------------------------------------------
@@ -202,8 +133,8 @@
     }
   }
  
-  
-  saveGraph(filename="data/OHASTTime/graphics/map_hhtcost_by_income_method", type="pdf")
+  output_file = file.path(OUTPUT_DIR, "map_hhtcost_by_income")
+  saveGraph(filename=output_file, type="pdf")  
   
 ###### Map hhcost.ZiCm
   
@@ -228,8 +159,8 @@
   }
   par(Opar)
   
-  
-  saveGraph(filename="data/OHASTTime/graphics/map_hhtcost_by_method", type="pdf")
+  output_file = file.path(OUTPUT_DIR, "map_hhtcost_by_taz")
+  saveGraph(filename=output_file, type="pdf")  
 
   
 ### plot tcost.distr
@@ -262,80 +193,41 @@
   
   mtext("Househodl Level Cost Values by Calculation Method", outer=TRUE, line=0, cex=1)
   
-  saveGraph(filename="data/OHASTTime/graphics/hhtcost_district",type="pdf")
-
+  output_file = file.path(OUTPUT_DIR, "map_hhtcost_by_district")
+  saveGraph(filename=output_file, type="pdf")  
 
   
 ######## plot density line minttcost.ZiIcPr
   #Plot density line of minimal travel time   costs for each calculate method and time period
   #------------------------------------------------------------------------------------
-  
+  for (cm in CmNames) {
   #::
   # Define a vector of data aggregation types
   # Set up plot layout, map will go on top and histogram on bottom
   nf <- layout(matrix(1:12,nrow=4))
   Opar <- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
+  
+  obj.name <- paste(cm, ".ZiIcPr", sep="")
+  tcost <- get(obj.name)
+  # replace NA with 0
+  tcost[is.na(tcost)] <- 0
+  
   # Iterate through all purposes and incomes and plot histograms
   for(ic in Ic){
     for(pr in Pr){
-      DensityData <- minttcost.ZiIcPr[,ic,pr]
-      DensityData[is.na(DensityData)] <- 0
-      plot(density(DensityData),main="")
+      DensityData <- tcost[,ic,pr]
+      plot(density(DensityData), main="")
       if(ic == "lowInc") mtext(PrNames[pr], side=2, line=3)
       if(pr == "hbw") mtext(IcNames[ic], side=3, line=1)
     }
   }
   
   par(Opar)
-  saveGraph(filename="data/OHASTTime/graphics/density_mintcost_by_income_purpose", type="pdf")
-  
-######## plot density line avgttcost.ZiIcPr
-  #Plot density line of minimal travel time   costs for each calculate method and time period
-  #------------------------------------------------------------------------------------
-  
-  #::
-  # Define a vector of data aggregation types
-  # Set up plot layout, map will go on top and histogram on bottom
-  nf <- layout(matrix(1:12,nrow=4))
-  Opar <- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
-  # Iterate through all purposes and incomes and plot histograms
-  for(ic in Ic){
-    for(pr in Pr){
-      DensityData <- avgttcost.ZiIcPr[,ic,pr]
-      DensityData[is.na(DensityData)] <- 0
-      plot(density(DensityData),main="")
-      if(ic == "lowInc") mtext(PrNames[pr], side=2, line=3)
-      if(pr == "hbw") mtext(IcNames[ic], side=3, line=1)
-    }
+  output_name = paste("density_", cm, "_by_income_purpose", sep="")
+  output_file = file.path(OUTPUT_DIR, output_name)
+  saveGraph(filename=output_file, type="pdf")  
   }
-  
-  
-  saveGraph(filename="data/OHASTTime/graphics/density_avgtcost_by_income_purpose", type="pdf")
-  
-  
-######## plot density line maxttcost.ZiIcPr
-  #Plot density line of minimal travel time   costs for each calculate method and time period
-  #------------------------------------------------------------------------------------
-  
-  #::
-  # Define a vector of data aggregation types
-  # Set up plot layout, map will go on top and histogram on bottom
-  nf <- layout(matrix(1:12,nrow=4))
-  Opar <- par(mar=c(2,2,1,1), oma=c(2,3,2,1))
-  # Iterate through all purposes and incomes and plot histograms
-  for(ic in Ic){
-    for(pr in Pr){
-      DensityData <- maxttcost.ZiIcPr[,ic,pr]
-      DensityData[is.na(DensityData)] <- 0
-      plot(density(DensityData),main="")
-      if(ic == "lowInc") mtext(PrNames[pr], side=2, line=3)
-      if(pr == "hbw") mtext(IcNames[ic], side=3, line=1)
-    }
-  }
-  
-  
-  saveGraph(filename="data/OHASTTime/graphics/density_maxtcost_by_income_purpose", type="pdf")
-  
+ 
   
 ##### Plot density line of minhhtcost.ZiIc,avghhtcost.ZiIc, mazhhtcost.ZiIc
   #------------------------------------------------------------------------------------
@@ -360,9 +252,6 @@
     }
   }
   par(Opar)
-  
-  saveGraph(filename="data/OHASTTime/graphics/density_hhtcost_by_income_method", type="pdf")
-  
-  
-# set workplace
-  setwd(WD)
+
+  output_file = file.path(OUTPUT_DIR, "density_hhtcost_by_income")
+  saveGraph(filename=output_file, type="pdf")  
