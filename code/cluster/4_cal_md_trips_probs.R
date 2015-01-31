@@ -26,7 +26,7 @@ for(pr in Pr){
   for(ic in Ic){  
     # Initialize an array to hold all the mode utility data
     ExpUtils.ZiZiMd <- array(0, dim=c(length(Zi), length(Zi), length(Md)), 
-                                  dimnames=list(Zi, Zi, Md))
+                                dimnames=list(Zi, Zi, Md))
     
     # Populate the array with the mode utility data
     for(md in Md){

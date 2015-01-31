@@ -1,103 +1,62 @@
-#Calculate regional averages cost
+#Aggregate costs by geography
 #================================
 
 #Load district designations
 #--------------------------
-
-#:: 
-
-     load("data/CommonData/districts.RData")
-     District.Zo <- districts$ugb
-     names(District.Zo) <- districts$zone
-     District.Zi <- District.Zo[Zi] ; rm(District.Zo)
-     District.Zi <- as.character(District.Zi)
-     Di <- unique(District.Zi)
-
-
+#districts data frame map TAZ (zone) to district id (ugb???)
+load(file.path(INPUT_DIR, "districts.RData"))
+row.names(districts) <- as.character(districts$zone)
+District.Zi <- districts[Zi, 'ugb']
+Di <- unique(District.Zi)
 
 #Calculate intra-district proportions
 #------------------------------------
-
-#::
-
-     TripProd.Di <- tapply(TripProd.Zi, District.Zi, sum)
-     TripProdDi.Zi <-  TripProd.Di[match(District.Zi, names(TripProd.Di))]
-     TripProdDiProp.Zi <- TripProd.Zi / TripProdDi.Zi
+TripProd.Di <- tapply(TripProd.Zi, District.Zi, sum)
+TripProdDi.Zi <-  TripProd.Di[match(District.Zi, names(TripProd.Di))]
+TripProdDiProp.Zi <- TripProd.Zi / TripProdDi.Zi
     
+TripProd.DiIc <- apply(TripProd.ZiIc, 2, function(x) tapply(x, District.Zi, sum))
+TripProdDi.ZiIc <- apply(TripProd.DiIc, 2, function(x) x[match(District.Zi, names(x))])
+TripProdDiProp.ZiIc <- TripProd.ZiIc / TripProdDi.ZiIc
 
-     TripProd.DiIc <- apply(TripProd.ZiIc, 2, function(x) tapply(x, District.Zi, sum))
-     TripProdDi.ZiIc <- apply(TripProd.DiIc, 2, function(x) x[match(District.Zi, names(x))])
-     TripProdDiProp.ZiIc <- TripProd.ZiIc / TripProdDi.ZiIc
+TripProd.DiPr <- apply(TripProd.ZiPr, 2, function(x) tapply(x, District.Zi, sum))
+TripProdDi.ZiPr <- apply(TripProd.DiPr, 2, function(x) x[match(District.Zi, names(x))])
+TripProdDiProp.ZiPr <- TripProd.ZiPr / TripProdDi.ZiPr
 
+Tp = c('peak', 'offpeak')
+Cm = c('min', 'weighted', 'max')
 
-     TripProd.DiPr <- apply(TripProd.ZiPr, 2, function(x) tapply(x, District.Zi, sum))
-     TripProdDi.ZiPr <- apply(TripProd.DiPr, 2, function(x) x[match(District.Zi, names(x))])
-     TripProdDiProp.ZiPr <- TripProd.ZiPr / TripProdDi.ZiPr
+vars.ls <- ls()
 
-     
-#Calculate offpeak mininal travel time cost by district
-#--------------------------------------
+for (cm in Cm) {
+  for (tp in Tp) {
+    zicost.name <- paste(cm, tp, 'AggCost.Zi', sep="")
+    zicost <- get(zicost.name)
+    dscost <- tapply(TripProdDiProp.Zi * zicost, District.Zi, function(x) sum(x, na.rm=TRUE))
+    dicost.name <- paste(cm, tp, 'AggCost.Di', sep="")
+    assign(dicost.name, dscost)
+    
+    #by district & Income
+    zicost.name <- paste(cm, tp, 'AggCost.ZiIc', sep="")
+    zicost <- get(zicost.obj.name)
+    dscost <- apply(TripProdDiProp.ZiIc * zicost, District.Zi, function(x)
+                    tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
+    dicost.name <- paste(cm, tp, 'AggCost.DiIc', sep="")
+    assign(dicost.name, dscost)
 
-#::
+    #by district & trip purpose
+    zicost.name <- paste(cm, tp, 'AggCost.ZiPr', sep="")
+    zicost <- get(zicost.name)
+    dscost <- apply(TripProdDiProp.ZiPr * zicost, District.Zi, function(x)
+                    tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
+    dicost.name <- paste(cm, tp, 'AggCost.DiPr', sep="")
+    assign(dicost.name, dscost)
+  }
+}
 
-minoffpeakAggCost.Di <- tapply(TripProdDiProp.Zi * minoffpeakAggCost.Zi, District.Zi, function(x) sum(x, na.rm=TRUE))
-save(minoffpeakAggCost.Di,file="data/CenTTime/results/aggcostcmtp/minoffpeakAggCost.Di.RData")
+rm(c('zicost.name', 'dicost.name'))
 
-minoffpeakAggCost.DiIc <- apply(TripProdDiProp.ZiIc * minoffpeakAggCost.ZiIC, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(minoffpeakAggCost.DiIc,file="data/CenTTime/results/aggcostcmtp/minoffpeakAggCost.DiIc.RData")
-
-minoffpeakAggCost.DiPr <- apply(TripProdDiProp.ZiPr * minoffpeakAggCost.ZiPr, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(minoffpeakAggCost.DiPr,file="data/CenTTime/results/aggcostcmtp/minoffpeakAggCost.DiPr.RData")
-
-
-#Calculate offpeak weighted travel time cost by district
-#--------------------------------------
-
-#::
-
-weightedoffpeakAggCost.Di <- tapply(TripProdDiProp.Zi * weightedoffpeakAggCost.Zi, District.Zi, function(x) sum(x, na.rm=TRUE))
-save(weightedoffpeakAggCost.Di,file="data/CenTTime/results/aggcostcmtp/weightedoffpeakAggCost.Di.RData")
-
-weightedoffpeakAggCost.DiIc <- apply(TripProdDiProp.ZiIc * weightedoffpeakAggCost.ZiIC, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(weightedoffpeakAggCost.DiIc,file="data/CenTTime/results/aggcostcmtp/weightedoffpeakAggCost.DiIc.RData")
-
-weightedoffpeakAggCost.DiPr <- apply(TripProdDiProp.ZiPr * weightedoffpeakAggCost.ZiPr, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(weightedoffpeakAggCost.DiPr,file="data/CenTTime/results/aggcostcmtp/weightedoffpeakAggCost.DiPr.RData")
-
-#Calculate peak mininal travel time cost by district
-#--------------------------------------
-
-#::
-
-minpeakAggCost.Di <- tapply(TripProdDiProp.Zi * minpeakAggCost.Zi, District.Zi, function(x) sum(x, na.rm=TRUE))
-save(minpeakAggCost.Di,file="data/CenTTime/results/aggcostcmtp/minpeakAggCost.Di.RData")
-
-minpeakAggCost.DiIc <- apply(TripProdDiProp.ZiIc * minpeakAggCost.ZiIC, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(minpeakAggCost.DiIc,file="data/CenTTime/results/aggcostcmtp/minpeakAggCost.DiIc.RData")
-
-minpeakAggCost.DiPr <- apply(TripProdDiProp.ZiPr * minpeakAggCost.ZiPr, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(minpeakAggCost.DiPr,file="data/CenTTime/results/aggcostcmtp/minpeakAggCost.DiPr.RData")
-
-
-#Calculate peak weighted travel time cost by district
-#--------------------------------------
-
-#::
-
-weightedpeakAggCost.Di <- tapply(TripProdDiProp.Zi * weightedpeakAggCost.Zi, District.Zi, function(x) sum(x, na.rm=TRUE))
-save(weightedpeakAggCost.Di,file="data/CenTTime/results/aggcostcmtp/weightedpeakAggCost.Di.RData")
-
-weightedpeakAggCost.DiIc <- apply(TripProdDiProp.ZiIc * weightedpeakAggCost.ZiIC, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(weightedpeakAggCost.DiIc,file="data/CenTTime/results/aggcostcmtp/weightedpeakAggCost.DiIc.RData")
-
-weightedpeakAggCost.DiPr <- apply(TripProdDiProp.ZiPr * weightedpeakAggCost.ZiPr, 2, function(x)
-  tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
-save(weightedpeakAggCost.DiPr,file="data/CenTTime/results/aggcostcmtp/weightedpeakAggCost.DiPr.RData")
-
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, 'AggCost.Di.RData')
+  save(list=setdiff(vars.ls, ls()), file=intm.file)
+}
