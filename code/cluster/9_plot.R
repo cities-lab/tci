@@ -1,7 +1,7 @@
 # This scripts generate a variety of plots and maps of costs 
 
 # Load saveGraph function 
-source("code/openGraphSaveGraph.R")
+source("code/thirdparty/openGraphSaveGraph.R")
 
 WD <- getwd()
 setwd("data/CenTTime/")

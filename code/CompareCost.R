@@ -41,7 +41,7 @@
 
 # Visualization 
   # Load saveGraph function 
-    source("code/openGraphSaveGraph.R")
+    source("code/thirdparty/openGraphSaveGraph.R")
   
 
   # create required data frame
