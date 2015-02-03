@@ -93,7 +93,7 @@ stopifnot(all.equal(testmatrix11[1:10,1:10], busWalkoffpeakTime[1:10,1:10]))
 ## TODO: load from the original source
 INPUT_DIR = "data/TCIPortland50/performancemeasures/intm_output/access"
 # Convert mode utility data into OMX file
-out.file = file.path(OUTPUT_DIR, "TDM/ModeUtilities.omx")
+out.file = file.path(OUTPUT_DIR, "ModeUtilities.omx")
 # Create a OMX file to store 2162 * 2162 
 createFileOMX(out.file, max.taz_id, max.taz_id)
 

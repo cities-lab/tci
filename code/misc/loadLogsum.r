@@ -4,7 +4,7 @@
 # Ln(U(Drive Alone) + U(Drive with Passenger) + U(Auto Passenger) + U(Walk to Transit) + U(Park&Ride) + U(Bike) + U(Walk))
 
 ###
-setwd("/home/workspace/Metro/MetroSkims2010/Liming/logsums/")
+setwd("~/tci/data/TDM/logsums/")
 
 ### load csv files
 # hbw
@@ -30,7 +30,7 @@ hbo_logsum_high <- read.csv("hbo_logsum_high.csv",header=T)
 
 ### connect to the database
 library(RPostgreSQL)
-conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+conn <- dbConnect(PostgreSQL(), host="", user="", password="", dbname="portland")
 
 ### load csv files
 # hbw
