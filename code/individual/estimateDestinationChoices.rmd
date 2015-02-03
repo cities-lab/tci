@@ -31,37 +31,25 @@ Three different data sources are considered.
 * TAZ-to-TAZ logsum variables of multimodal accessibility funstions, provided by Portland Metro
     + one for each combination of 4 trip purposes and 3 income groups
 ```{r,message=FALSE}
-library(RPostgreSQL)
-conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
-# 2011 OTAS
-activity <- dbReadTable(conn, c("ohas_v2", "activity2")) # the activity file from the 2011 OTAS
-person <- dbReadTable(conn, c("ohas_v2", "person")) # the person file from the 2011 OTAS
-household <- dbReadTable(conn, c("ohas_v2", "household")) # the household file from the 2011 OTAS
+setwd("~/tci")
+INPUT_DIR <- 'data/'
+load(file.path(INPUT_DIR, "OHAS_PDX.RData"))
+
 # zonal data
-zonalEmpData <- dbReadTable(conn, c("metro", "zonalEmpData"))
+zonalEmpData <- read.csv(file.path(INPUT_DIR, "2010_totemp.csv"), header=T)
 # skim data
-tdist <- dbReadTable(conn, c("metro", "mf61"))
+tdist <- read.csv(file.path(INPUT_DIR, "mf61.csv"), header=F)
 # logsum data
 # hbw
-hbw_logsum_avg <- dbReadTable(conn, c("metro", "hbw_logsum_avg"))
-hbw_logsum_low <- dbReadTable(conn, c("metro", "hbw_logsum_low"))
-hbw_logsum_med <- dbReadTable(conn, c("metro", "hbw_logsum_med"))
-hbw_logsum_high <-dbReadTable(conn, c("metro", "hbw_logsum_high"))
-# hbs
-hbs_logsum_avg <- dbReadTable(conn, c("metro", "hbs_logsum_avg"))
-hbs_logsum_low <- dbReadTable(conn, c("metro", "hbs_logsum_low"))
-hbs_logsum_med <- dbReadTable(conn, c("metro", "hbs_logsum_med"))
-hbs_logsum_high <- dbReadTable(conn, c("metro", "hbs_logsum_high"))
-# hbr
-hbr_logsum_avg <- dbReadTable(conn, c("metro", "hbr_logsum_avg"))
-hbr_logsum_low <- dbReadTable(conn, c("metro", "hbr_logsum_low"))
-hbr_logsum_med <- dbReadTable(conn, c("metro", "hbr_logsum_med"))
-hbr_logsum_high <- dbReadTable(conn, c("metro", "hbr_logsum_high"))
-# hbo
-hbo_logsum_avg <- dbReadTable(conn, c("metro", "hbo_logsum_avg"))
-hbo_logsum_low <- dbReadTable(conn, c("metro", "hbo_logsum_low"))
-hbo_logsum_med <- dbReadTable(conn, c("metro", "hbo_logsum_med"))
-hbo_logsum_high <- dbReadTable(conn, c("metro", "hbo_logsum_high"))
+logsum.dir <- file.path(INPUT_DIR, 'TDM/logsums')
+
+for (pr in c('hbw', 'hbs', 'hbr', 'hbo')) {
+  for (cm in c('avg', 'low', 'med', 'high')) {
+   obj.name <- paste(pr, 'logsum', cm, sep="_")
+   file.name <- file.path(logsum.dir, paste(obj.name, ".csv", sep=""))
+   assign(obj.name, read.csv(file.name, header=T))
+  }
+}
 ```
 
 ### Create linked trips

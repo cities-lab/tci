@@ -1,17 +1,16 @@
-setwd("/Users/Potenza/Documents/02_Projects/TCI/workspace/") # on my macbook
-setwd("/home/workspace/TCI/SPR357/DestinationChoice/") # on sapporo
+setwd("~/tci/") # on sapporo
 
-library(RPostgreSQL)
 library(mlogit)
 
 ### load data
-conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+conn <- dbConnect(PostgreSQL(), host="", user="", password="", dbname="portland")
 linkedTrip <- dbReadTable(conn, c("ohas_v2", "trip")) # linked-trip file from the 2011 OTAS
 person <- dbReadTable(conn, c("ohas_v2", "person")) # person file from the 2011 OTAS
 household <- dbReadTable(conn, c("ohas_v2", "household")) # household file from the 2011 OTAS
 zonalData <- dbReadTable(conn, c("lehd", "taz2161"))  # employment data at the zonal level
 zonalVars <- c("newtaz","f_area","retemp","svcemp","finemp","totemp")
 zonalData <- zonalData[, zonalVars] # 71 TAZs do not have infomation on employment, why?
+
 tdist <- dbReadTable(conn, c("metroskims2010", "mf61")) # TAZ-to-TAZ shortes path trip distance from the 2010 Metro skims
 
 ### segment by trip purpose

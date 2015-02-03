@@ -36,7 +36,7 @@ Two different data sources are considered
 library(RPostgreSQL)
 library(pscl)
 library(memisc)
-conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+conn <- dbConnect(PostgreSQL(), host="", user="", password="", dbname="")
 hh <- dbReadTable(conn, c("ohas_v2", "household")) # household file from the 2011 OTAS
 per <- dbReadTable(conn, c("ohas_v2", "person")) # person file from the 2011 OTAS
 #sld <- dbReadTable(conn, c("ohas_v2", "sld_metro")) # EPA's Smart Location Database

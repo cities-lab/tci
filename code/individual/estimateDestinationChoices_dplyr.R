@@ -1,8 +1,8 @@
 
 require(dplyr)
-db_src <- src_postgres(host="sapporo.usp.pdx.edu", 
-                       user="smartdata", 
-                       password="Smartaa00", 
+db_src <- src_postgres(host="", 
+                       user="", 
+                       password="", 
                        dbname="portland",
                        options="-c search_path=ohas_v2, metro")
 
@@ -12,7 +12,7 @@ household <- tbl(conn, "household") # the household file from the 2011 OTAS
 household <- tbl(conn, "vehicle") 
 
 
-conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+conn <- dbConnect(PostgreSQL(), host="", user="", password="", dbname="portland")
 # 2011 OTAS
 activity <- dbReadTable(conn, c("ohas_v2", "activity2")) # the activity file from the 2011 OTAS
 person <- dbReadTable(conn, c("ohas_v2", "person")) # the person file from the 2011 OTAS

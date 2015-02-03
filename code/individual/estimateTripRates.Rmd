@@ -23,7 +23,7 @@ setwd("/Users/Potenza/Documents/02_Projects/TCI")
 library(RPostgreSQL)
 library(pscl)
 library(memisc)
-conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+conn <- dbConnect(PostgreSQL(), host="", user="", password="", dbname="portland")
 hh <- dbReadTable(conn, c("ohas_v2", "household")) # household file from the 2011 OTAS
 sld <- dbReadTable(conn, c("ohas_v2", "sld_metro")) # EPA's Smart Location Database
 hh_sld <- dbReadTable(conn, c("ohas_v2","hh_sld")) # a spatially joined table of household and Smart Location database 

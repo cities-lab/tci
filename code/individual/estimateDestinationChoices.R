@@ -1,15 +1,15 @@
-setwd("/Users/Potenza/Documents/02_Projects/TCI/Workspace/") # on my macbook
-setwd("../data/") # on sapporo
+setwd("~/tci/")
 
-library(RPostgreSQL)
 library(mlogit)
 
 ### load data
-conn <- dbConnect(PostgreSQL(), host="sapporo.usp.pdx.edu", user="smartdata", password="Smartaa00", dbname="portland")
+conn <- dbConnect(PostgreSQL(), host="", user="", password="", dbname="portland")
 activity <- dbReadTable(conn, c("ohas_v2", "activity2")) # the activity file from the 2011 OTAS
 #trip <- dbReadTable(conn, c("ohas_v2", "trip")) # the linked-trip file from the 2011 OTAS
 person <- dbReadTable(conn, c("ohas_v2", "person")) # the person file from the 2011 OTAS
 household <- dbReadTable(conn, c("ohas_v2", "household")) # the household file from the 2011 OTAS
+load()
+
 zonalEmpData <- dbReadTable(conn, c("metro", "zonalEmpData"))  # zonal employment data at the TAZ level
 tdist <- dbReadTable(conn, c("metro", "mf61")) # TAZ-to-TAZ shortes path trip distance from the 2010 Metro skims
 
