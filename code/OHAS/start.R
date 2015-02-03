@@ -32,7 +32,7 @@ VOT <- c(0.5,0.5,0.5,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.5) * hourly.wage
 VOT.by.mode <- data.frame(mode, VOT)
 
 ##start scripts
-source("code/OHAS/summarize_tcost.R")
+source("code/OHAS/compute_tcost.R")
 source("code/OHAS/plot_tcost.R")
 var_list.1 <- ls()
 rm(list=var_list.1[!(var_list.1 %in% var_list.0)])

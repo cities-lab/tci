@@ -4,15 +4,15 @@
 ## density above D, that together with at least E total employment or sizeterms 
 
  # load required libraries
-  require(maptools)
-  require(rgeos)
-  require(rgdal)
-  require(dplyr)
-  require(lazyeval)
+require(maptools)
+require(rgeos)
+require(rgdal)
+require(dplyr)
+require(lazyeval)
 
- # define a functon to identify clusters 
 
-  identify_clusters <- function(map.df, filter=NULL, dist=NULL) {
+# define a functon to identify clusters 
+identify_clusters <- function(map.df, filter=NULL, dist=NULL) {
     #map.df has to be a SpatialPolygonsDataFrame 
     #e.g. a shp file loaded with maptools::readShapePoly
      data.df <- map.df@data
@@ -49,7 +49,7 @@
  #writeOGR(map.df2[filter, ],"./","test_map",driver="ESRI Shapefile")
 
 
- identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, sum.cutoff=0){
+identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, sum.cutoff=0){
    data.df <- map.df@data
    filter <- data.df[,colname] >= cutoff
    clusters.shp <- identify_clusters(map.df, filter=filter, dist=dist)
@@ -66,32 +66,32 @@
    cluster.df
  }
 
- 
   
 # Define a function that calculates minimal travel time
-  min_tt <- function(centers, tt) {
+min_tt <- function(centers, tt) {
     min_tt <- NULL
     for (zi in 1:dim(tt)[1]) {
-      if (all(is.na(tt[zi,centers]))) {
-        print(zi) #there are zones without certain access to centers, eg. busWalk
-      }
-      
-      min_tt[zi] <- min(tt[zi,centers], na.rm=TRUE)
-      min_tt[zi] <- ifelse(is.infinite(min_tt[zi]), NA, min_tt[zi])
-      
+       if (all(is.na(tt[zi,centers]))) {
+           print(zi) #there are zones without certain access to centers, eg. busWalk
     }
-    min_tt
+    
+    min_tt[zi] <- min(tt[zi,centers], na.rm=TRUE)
+    min_tt[zi] <- ifelse(is.infinite(min_tt[zi]), NA, min_tt[zi])
+    
   }
-  
+  min_tt
+}
 
 
 # Define a function that calculates weighted average travel time 
-  weighted_avg_tt <- function(centers, tt, trips) {
+weighted_avg_tt <- function(centers, tt, trips) {
     weighted_avg_tt <- NULL
     for (zi in 1:dim(tt)[1]) {
       trip.sum <- sum(trips[zi, centers])
       weighted_avg_tt[zi] <- sum(tt[zi,centers]*trips[zi,centers], na.rm=TRUE)/trip.sum
     }
     weighted_avg_tt
-  }
-  
+}
+
+in.memory <- function(obj.names)
+  all(obj.names %in% ls())

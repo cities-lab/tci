@@ -1,10 +1,3 @@
-# This script prepares the workspace and file directories for calculating travel time 
-# and travel cost with employment centres methods 
-
-# Set workspace
-setwd("~/tci")
-var_list.0 <- ls()
-
 INPUT_DIR <- 'data/'
 OUTPUT_DIR <- 'output/cluster'
 dir.create(file.path(OUTPUT_DIR), showWarnings = FALSE)
@@ -12,6 +5,11 @@ dir.create(file.path(OUTPUT_DIR), showWarnings = FALSE)
 SAVE.INTERMEDIARIES <- TRUE
 INTERMEDIATE_DIR <- "output/intermediate/cluster"
 dir.create(file.path(INTERMEDIATE_DIR), showWarnings = FALSE)
+max.taz_id <- 2162
+
+# Define bike and walk access utility coefficients for travel time (##TODO: no alt specific constants?)
+#from 2013 Trip-Based Travel Demand Model Methodology Report
+
 
 # Define income group abbreviation
 Ic <- c("lowInc", "midInc", "highInc")
@@ -27,14 +25,16 @@ Md <- c("driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus", "bike", 
 # Define time period 
 Tp <- c("peak", "offpeak")  
 
+#from 2013 Trip-Based Travel Demand Model Methodology Report
+Tp.factors <- data.frame(pr=c(),
+                         md=c(),
+                         tp=c(),
+                         factor=c()
+                         )
+
 # Define calculate method 
-Cm <- c("min", "weighted")
+Cm <- c("min", "weighted", "max")
 
 # define mode cost transformation coefficient (% of hourly wage)
 hourly.wage <- 24.77
 modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, parkAndRideBus=0.35, bike=0.5, walk=0.5)
-
-# Load required functions
-source("code/cluster/def_functions.R")
-source("code/cluster/1_cal_den.R") #this step takes a long time; skip it if its intermediate results have been saved
-

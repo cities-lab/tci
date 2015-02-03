@@ -27,12 +27,12 @@ source("code/cluster/settings.R")
 # Bike
 bikeUtil.c  <- read.csv(file.path(INPUT_DIR, 'TDM/mf201.csv'), header=F)  #Utils for commuting trips (HBWork, HBCollege)
 bikeUtil.nc <- read.csv(file.path(INPUT_DIR, 'TDM/mf203.csv'), header=F)  #Utils for non-commuting trips
-utilbikehbw <- matrix(bikeUtil.c[, 3], nrow=max.taz_id, byrow=TRUE,
-                      dimnames=list(Zi, Zi))
+utilbikehbw <- exp( matrix(bikeUtil.c[, 3], nrow=max.taz_id, byrow=TRUE,
+                      dimnames=list(Zi, Zi)) )
 # utilbikehbw <- acast(bikeUtil.c, V1~V2, value.var="V3") ##safer but slower, can handle non-continous/missing zone ids
 dimnames(utilbikehbw) <- list(Zi, Zi)
-utilbikehbs <- utilbikehbr <- utilbikehbo <- matrix(bikeUtil.nc[, 3], nrow=max.taz_id, 
-                                                    byrow=TRUE, dimnames=list(Zi, Zi))
+utilbikehbs <- utilbikehbr <- utilbikehbo <- exp( matrix(bikeUtil.nc[, 3], nrow=max.taz_id, 
+                                                    byrow=TRUE, dimnames=list(Zi, Zi)) )
 # utilbikehbs <- utilbikehbr <- utilbikehbo <- acast(bikeUtil.nc, V1~V2, value.var="V3") ##safer but slower, can handle non-continous/missing zone ids
 
 # bike travel time

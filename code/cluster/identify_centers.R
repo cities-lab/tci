@@ -1,7 +1,7 @@
 ## This script aggregates LEHD employment from block level into TAZ level,
-## calculates employment and sizeterms density for each TAZ.
-## The calculation results are added to a shapefile, then centers are identified
-## based on clusters
+## calculates employment and sizeterms density for each TAZ. The calculation 
+## results are appended to taz shapefile, then centers are identified
+## based on clustering
 
 my.dir <- dirname(sys.frame(1)$ofile)
 source(file.path(my.dir,'def_functions.R'))
