@@ -36,7 +36,7 @@ INPUT_DIR <- 'data/'
 load(file.path(INPUT_DIR, "OHAS_PDX.RData"))
 
 # zonal data
-zonalEmpData <- read.csv(file.path(INPUT_DIR, "2010_totemp.csv"), header=T)
+zonalEmpData <- read.csv(file.path(INPUT_DIR, "totemp_2010.csv"), header=T)
 # skim data
 tdist <- read.csv(file.path(INPUT_DIR, "mf61.csv"), header=F)
 # logsum data
