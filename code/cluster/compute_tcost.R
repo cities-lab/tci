@@ -29,7 +29,7 @@ for (pr in Pr) {
         # load trip matrices
         TripsMdObjName <- paste(pr, ic, md, "trips", sep="")
         if (! in.memory(TripsMdObjName)) {
-          TripsMd <- readMatrixOMX(file.path(INPUT_DIR, "TDM/ModeTrips.omx"), TripsMdObjName)
+          TripsMd <- readMatrixOMX(file.path(INTERMEDIATE_DIR, "ModeTrips.omx"), TripsMdObjName)
           assign(TripsMdObjName, TripMd)
         }
         

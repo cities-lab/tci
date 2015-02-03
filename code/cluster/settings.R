@@ -33,7 +33,7 @@ Tp.factors <- data.frame(pr=c(),
                          )
 
 # Define calculate method 
-Cm <- c("min", "weighted", "max")
+Cm <- c("min", "weighted")
 
 # define mode cost transformation coefficient (% of hourly wage)
 hourly.wage <- 24.77
