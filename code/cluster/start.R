@@ -16,3 +16,7 @@ source("code/cluster/compute_tcost.R")
 source("code/cluster/aggregate_tcost.R")
 source("code/cluster/aggregate_by_geo.R")
 source("code/cluster/plot.R")
+
+var_list.1 <- ls()
+rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
+rm(var_list.1)

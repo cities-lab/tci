@@ -33,16 +33,16 @@ for (cm in Cm) {
         #get trips array 
         TotTripsArray.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
         if (!in.memory(c(TotTripsArray.name)))
-          load(file.path(INTERMEDIATE_DIR, paste("tripsarray/", TotTripsArray.name, ".RData", sep="")))
+          load(file.path(INTERMEDIATE_DIR, paste("trips/", TotTripsArray.name, ".RData", sep="")))
         TotTripsArray <- get(TotTripsArray.name)
         
         # calculate row sum of trips trip array 
         #TotTripsArraySum <- rowSums(TotTripsArray, na.rm=TRUE)
         
         #get travel time cost attay
-        TimeCostArray.name <- paste(pr,ic,tp, "TimeCost.ZiMdCm", sep="")
+        TimeCostArray.name <- paste(pr, ic, tp, "TimeCost.ZiMdCm", sep="")
         if (!in.memory(c(TimeCostArray.name)))
-          load(file.path(INTERMEDIATE_DIR, paste("costarray/", TimeCostArray.name, ".RData", sep="")))
+          load(file.path(INTERMEDIATE_DIR, paste("costs/", TimeCostArray.name, ".RData", sep="")))
         TimeCostArray<- get(TimeCostArray.name)
         
         # aggregate cost weighted by trips
@@ -57,38 +57,41 @@ for (cm in Cm) {
         # combine cost into array
         AggCost.ZiIcPr[,ic,pr] <- AggCost.Zi;
         
-        rm(AggCost.Zi, TotTripsArray, TimeCostArray, TotTripsArraySum)
+        rm(AggCost.Zi, TotTripsArray, TimeCostArray)
         
-        # End loop by income group 
-      }
+        
+      } # End loop by income group 
       
-      # End loop through purpose
-    }
+    } # End loop through purpose
     
-    AggCost.ZiIcPr.name <- paste(cm, tp,"AggCost.ZiIcPr", sep="")
+    AggCost.ZiIcPr.name <- paste(cm, tp, "AggCost.ZiIcPr", sep="")
     assign(AggCost.ZiIcPr.name, AggCost.ZiIcPr)
-    if (SAVE.INTERMEDIARIES) {
-      intm.file <- file.path(INTERMEDIATE_DIR, 'aggcostCmTp/', paste(AggCost.ZiIcPr.name, ".RData"))
-      save(list=AggCost.ZiIcPr.name, file=intm.file)
-    }
+    
+    output.path <- file.path(OUTPUT_DIR, 'aggcostCmTp/')
+    dir.create(output.path, showWarnings = FALSE)
+    output.file <- file.path(output.path, paste(AggCost.ZiIcPr.name, ".RData", sep=""))
+    save(list=AggCost.ZiIcPr.name, file=output.file)
+    
     
     #rm(AggCost.ZiIcPr)
     
-    AggCost.ZiIc.name <- paste(cm, tp, 'AggCost.ZiIc')
+    AggCost.ZiIc.name <- paste(cm, tp, 'AggCost.ZiIc', sep="")
     AggCost.ZiIc <- apply(AggCost.ZiIcPr * TripProd.ZiIcPr, c(1,2), function(x) sum(x, na.rm=TRUE)) / TripProd.ZiIc
     assign(AggCost.ZiIc.name, AggCost.ZiIc)
     
-    AggCost.ZiPr.name <- paste(cm, tp, 'AggCost.ZiPr')
+    AggCost.ZiPr.name <- paste(cm, tp, 'AggCost.ZiPr', sep="")
     AggCost.ZiPr <- apply(AggCost.ZiIcPr * TripProd.ZiIcPr, c(1,3), function(x) sum(x, na.rm=TRUE)) / TripProd.ZiPr
     assign(AggCost.ZiPr.name, AggCost.ZiPr)
     
-    AggCost.Zi.name <- paste(cm, tp, 'AggCost.Zi')
+    AggCost.Zi.name <- paste(cm, tp, 'AggCost.Zi', sep="")
     AggCost.Zi <- apply(AggCost.ZiIcPr * TripProd.ZiIcPr, 1, function(x) sum(x, na.rm=TRUE)) / TripProd.Zi
-    assign(AggCost.Zi, AggCost.Zi.name)
+    assign(AggCost.Zi.name, AggCost.Zi)
     
-    if (SAVE.INTERMEDIARIES) {
-      intm.file <- file.path(INTERMEDIATE_DIR, 'aggcostCmTp/', paste(AggCost.Zi.name, ".RData"))
-      save(list=c(AggCost.ZiIc.name, AggCost.ZiPr.name, AggCost.Zi.name), file=intm.file)
-    }
+    #save output
+    output.path <- file.path(OUTPUT_DIR, 'aggcostCmTp/')
+    dir.create(output.path, showWarnings = FALSE)
+    output.file <- file.path(output.path, paste(AggCost.Zi.name, ".RData", sep=""))
+    save(list=c(AggCost.ZiIc.name, AggCost.ZiPr.name, AggCost.Zi.name), file=output.file)
+    
   } # End loop by time period
 } # End loop by calculate method 

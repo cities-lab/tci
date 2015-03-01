@@ -5,7 +5,7 @@
 cost.conversion <- hourly.wage/60 
 
 # load taz index of centers 
-if (!in.memory(c("hbwci", "hbsci", "hbrci", "hboci")))
+if (!in.memory(paste(Pr, "ci", sep="")))
   load(file.path(INTERMEDIATE_DIR, "centers.RData"))
 
 # loaded in 4_cal_md_trips_probs.R
@@ -22,7 +22,8 @@ for (pr in Pr) {
   for (ic in Ic) {
     # Begin iteration by time period
     for ( tp in Tp){
-      TTimecost.ZiMdCm <- array(0, dim=(c(length(Zi), length(Md), length(Cm))), dimnames=list(Zi,Md,Cm))
+      TTimecost.ZiMdCm <- array(0, dim=(c(length(Zi), length(Md), length(Cm))), 
+                                   dimnames=list(Zi,Md,Cm))
       
       # Begin iteration by mode 
       for (md in Md ) {
@@ -30,13 +31,13 @@ for (pr in Pr) {
         TripsMdObjName <- paste(pr, ic, md, "trips", sep="")
         if (! in.memory(TripsMdObjName)) {
           TripsMd <- readMatrixOMX(file.path(INTERMEDIATE_DIR, "ModeTrips.omx"), TripsMdObjName)
-          assign(TripsMdObjName, TripMd)
+          assign(TripsMdObjName, TripsMd)
         }
         
         if ((md == "bike")|(md=="walk")) {
           # load travel time for bike and walk 
           ##TODO: how were these data processed? why bike & walk travel vary by purpose?
-          TTimeObjName <- paste(md,"Time", sep="")
+          TTimeObjName <- paste(md, "Time", sep="")
           # End calculate travel time for walk and bike 
         } else {          
           # load travel time for md: driveAlone, drivePass, pass, busWalk, parkAndRideBus
@@ -50,7 +51,7 @@ for (pr in Pr) {
                 
         for (cm in Cm) {
           func <- get(paste(cm, '_tt', sep=""))
-          TTime <- func(Centers, TTime.mx)
+          TTime <- func(Centers$TAZ, TTime.mx, TripsMd)
           TCost <- TTime * modecosttrans.Md[md] * cost.conversion
           paste("min", pr, ic, md, "time", sep="")
           
@@ -60,9 +61,12 @@ for (pr in Pr) {
       } # End loop through mode
       
       if (SAVE.INTERMEDIARIES) {
-        intm.file <- file.path(INTERMEDIATE_DIR, 'costarray')
-        intm.file <- file.path(intm.file, paste(paste(pr, ic, tp,"TimeCost.ZiMdCm", sep="")))
-        save(TTimecost.ZiMdCm, file=intm.file)
+        intm.path <- file.path(INTERMEDIATE_DIR, 'costs')
+        dir.create(intm.path, showWarnings = FALSE)
+        obj.name <- paste(pr, ic, tp, "TimeCost.ZiMdCm", sep="")
+        assign(obj.name, TTimecost.ZiMdCm)
+        intm.file <- file.path(intm.path, paste(obj.name, ".RData", sep=""))
+        save(list=c(obj.name), file=intm.file)
       }
       
     } # End loop through time period

@@ -5,25 +5,22 @@ library(rhdf5)
 
 # Load functions for OMX files 
 source("code/thirdparty/omx.r")
+H5close() # close any hdf5 file handle that may still be open
 
 in.file_tripdistribution <- file.path(INPUT_DIR, 'TDM/TripDistribution.omx')
 in.file_modeutils <- file.path(INPUT_DIR, "TDM/ModeUtilities.omx")
-
-# Create a OMX file to store 2162 * 2162
+# Create a OMX file to store 2162 * 2162 matrices of trips by mode
 if (SAVE.INTERMEDIARIES) {
   intm.file_modetrips = file.path(INTERMEDIATE_DIR, "ModeTrips.omx")
   createFileOMX(intm.file_modetrips, max.taz_id, max.taz_id, Replace=TRUE)
 }
 
 load(file.path(INPUT_DIR, 'Zi.RData'))
-if (!in.memory(c("hbwci", "hbsci", "hbrci", "hboci")))
+if (!in.memory(paste(Pr, "ci", sep="")))
   load(file.path(INTERMEDIATE_DIR, "centers.RData"))
 
 # Calculate travel time by bike and walk from bike/walk trip distance
-#td_bw.df <- read.csv(file.path(INPUT_DIR, 'TDM/mf202.csv'), header=FALSE)
-#td_bw.mx <- matrix(td_bw.df[, 3], nrow=max.taz_id, byrow=TRUE)
-#bikeTime <- td_bw.mx*60/bike.speed
-#walkTime <- td_bw.mx*60/walk.speed
+# This is now done in a separate script misc/calculate_bike_walk_utils_time.R
 
 #Begin iteration by trip purpose
 #-------------------------------
@@ -34,12 +31,14 @@ for(pr in Pr){
   # Begin iteration by income group
   for(ic in Ic){
     # Initialize an array to hold all the mode utility data           
-    ExpUtils.ZiZiMd <- array(0, dim=c(length(Zi), length(Zi), length(Md)), dimnames=list(Zi, Zi, Md))
+    ExpUtils.ZiZiMd <- array(0, dim=c(length(Zi), length(Zi), length(Md)), 
+                             dimnames=list(Zi, Zi, Md))
     
     # Populate the array with the mode utility data
     for(md in Md){
       # Load the array of zone to zone utilities and assign to Util.ZiZi
-      if ((md == "bike")|(md=="walk")) {
+      if ((md == "bike") | (md=="walk")) {
+        #
         UtilObjName <- paste("util", md, pr, sep="")
       } else {
         #
@@ -66,10 +65,10 @@ for(pr in Pr){
     obj.name <- paste(pr, ic, "ModeProbs.ZiZiMd", sep="")
     assign(obj.name, ModeProbs.ZiZiMd)
     if (SAVE.INTERMEDIARIES) {
-      out.dir = file.path(INTERMEDIATE_DIR, 'modeprobs')
-      dir.create(out.dir, showWarnings = FALSE)
-      out.file = file.path(out.dir, paste(obj.name, ".RData", sep=""))
-      save(list=obj.name, file=out.file)
+      intm.path = file.path(INTERMEDIATE_DIR, 'modeprobs')
+      dir.create(intm.path, showWarnings = FALSE)
+      intm.file = file.path(intm.path, paste(obj.name, ".RData", sep=""))
+      save(list=obj.name, file=intm.file)
     }
     
     # Load trip distribution matrices for each trip purpose and income group
@@ -88,6 +87,10 @@ for(pr in Pr){
       
       obj.name <- paste(pr, ic, md, "trips", sep="")
       assign(obj.name, TripsMd)
+            
+      # combine trips into array
+      Trips.ZiZiMd[,,md] <- TripsMd
+      TotTrips.ZiMd[,md] <- rowSums(TripsMd[,Centers$TAZ])
       
       if (SAVE.INTERMEDIARIES) {
         # Description of trip matrices
@@ -96,21 +99,17 @@ for(pr in Pr){
         writeMatrixOMX(intm.file_modetrips, TripsMd, obj.name, Description=MatrixDiscription)
       }
       
-      # combine trips into array
-      Trips.ZiZiMd[,,md] <- TripsMd
-      TotTrips.ZiMd[,md] <- rowSums(TripsMd[,Centers$TAZ])
       rm(TripsMd)
+    } # End loop through modes
+    
+    obj.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
+    assign(obj.name, TotTrips.ZiMd) 
+    if (SAVE.INTERMEDIARIES) {
+      intm.path = file.path(INTERMEDIATE_DIR, 'trips')
+      dir.create(intm.path, showWarnings = FALSE)
+      intm.file = file.path(intm.path, paste(obj.name, ".RData", sep=""))
+      save(list=obj.name, file = intm.file)
     }
     
-    #obj.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
-    #assign(obj.name, TotTrips.ZiMd) 
-    #if (SAVE.INTERMEDIARIES) {
-    #  out.dir = file.path(INTERMEDIATE_DIR, 'trips')
-    #  dir.create(out.dir, showWarnings = FALSE)
-    #  out.file = file.path(out.dir, paste(obj.name, ".RData", sep=""))
-    #  save(list=obj.name, file = out.file)
-    #}    
-    # End loop through income groups
-  }
-  # End loop through purposes
-}
+  } # End loop through income groups
+} # End loop through purposes

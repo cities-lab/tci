@@ -102,6 +102,6 @@ hboci <- identify_centers(TAZPloyNoNA, "st.hbo.den", 495, dist=1.0, sum.col="st.
 hboci <- hboci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 if (SAVE.INTERMEDIARIES) {
-  out.file <- file.path(INTERMEDIATE_DIR, "centers.RData")
-  save(hbwci, hbsci, hbrci, hboci, file=out.file)
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers.RData")
+  save(hbwci, hbsci, hbrci, hboci, file=intm.file)
 }

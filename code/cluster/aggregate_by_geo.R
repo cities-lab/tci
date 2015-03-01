@@ -10,6 +10,9 @@ aggregate_by_geo <- function(costs.df, weights.df, mapping.df) {
   stopifnot(all(weights.df$weights>=0))
   merged.df <- left_join(costs.df, mapping.df) #join by common column(s)
   merged.df <- left_join(merged.df, weights.df)
+  #costs <- with(merged.df, aggregated.weighted.mean(costs, weights, geo.id))
+  #costs
+  
   geocosts.df <- merged.df %>%
     na.omit() %>%
     group_by(geo.id) %>%
@@ -18,12 +21,13 @@ aggregate_by_geo <- function(costs.df, weights.df, mapping.df) {
 }
 
 aggregated.weighted.mean <- function(values, weights, group.id) {
-  df <- data.frame(values=values, weights=weights, group.id=group.id)
+  df <- data.frame(values=values, weights=weights, id=group.id)
   results.df <- df %>%
     na.omit() %>%
-    group_by(group.id) %>%
+    group_by(id) %>%
     summarise(results=weighted.mean(values, weights))
-  results.df$results
+  results.arr <- array(results.df$results, dimnames=list(results.df$id))
+  results.arr
 }
 
 ## begin test
@@ -47,25 +51,6 @@ results.ret <- as.data.frame(results.ret)
 stopifnot(all.equal(results.ret, results.exp))
 ## end test
 
-
-## 
-load(file.path(INPUT_DIR, "districts.RData"))
-row.names(districts) <- as.character(districts$zone)
-District.Zi <- districts[Zi, 'ugb']
-Di <- unique(District.Zi)
-
-load(file.path(INPUT_DIR, "districts.RData"))
-row.names(districts) <- as.character(districts$zone)
-District.Zi <- districts[Zi, 'ugb']
-
-#for (cm in Cm) {
-#  for (tp in Tp) {
-#    zicost.name <- paste(cm, tp, 'AggCost.Zi', sep="")
-#    zicost <- get(zicost.name)
-#    dicost <- aggregated.weighted.mean(zicost, TripProd.Zi, District.Zi) #how are the results ordered?
-#  }
-#}
-
 #Aggregate costs by geography
 #================================
 
@@ -76,20 +61,8 @@ load(file.path(INPUT_DIR, "districts.RData"))
 row.names(districts) <- as.character(districts$zone)
 District.Zi <- districts[Zi, 'ugb']
 Di <- unique(District.Zi)
-
-#Calculate intra-district proportions
-#------------------------------------
-TripProd.Di <- tapply(TripProd.Zi, District.Zi, sum)
-TripProdDi.Zi <-  TripProd.Di[match(District.Zi, names(TripProd.Di))]
-TripProdDiProp.Zi <- TripProd.Zi / TripProdDi.Zi
-    
-TripProd.DiIc <- apply(TripProd.ZiIc, 2, function(x) tapply(x, District.Zi, sum))
-TripProdDi.ZiIc <- apply(TripProd.DiIc, 2, function(x) x[match(District.Zi, names(x))])
-TripProdDiProp.ZiIc <- TripProd.ZiIc / TripProdDi.ZiIc
-
-TripProd.DiPr <- apply(TripProd.ZiPr, 2, function(x) tapply(x, District.Zi, sum))
-TripProdDi.ZiPr <- apply(TripProd.DiPr, 2, function(x) x[match(District.Zi, names(x))])
-TripProdDiProp.ZiPr <- TripProd.ZiPr / TripProdDi.ZiPr
+Di <- Di[!is.na(Di)]
+Di <- Di[order(Di)]
 
 vars.ls <- ls()
 
@@ -97,31 +70,34 @@ for (cm in Cm) {
   for (tp in Tp) {
     zicost.name <- paste(cm, tp, 'AggCost.Zi', sep="")
     zicost <- get(zicost.name)
-    dscost <- tapply(TripProdDiProp.Zi * zicost, District.Zi, function(x) sum(x, na.rm=TRUE))
+    AggCost.Di <- aggregated.weighted.mean(zicost, TripProd.Zi, District.Zi)
     dicost.name <- paste(cm, tp, 'AggCost.Di', sep="")
-    assign(dicost.name, dscost)
+    assign(dicost.name, AggCost.Di)
     
     #by district & Income
-    zicost.name <- paste(cm, tp, 'AggCost.ZiIc', sep="")
-    zicost <- get(zicost.obj.name)
-    dscost <- apply(TripProdDiProp.ZiIc * zicost, District.Zi, function(x)
-                    tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
+    ZiIccost.name <- paste(cm, tp, 'AggCost.ZiIc', sep="")
+    ZiIccost <- get(ZiIccost.name)
+    AggCost.DiIc <- array(0, dim=c(length(Di), length(Ic)), dimnames=c(list(Di), list(Ic)))
+    for (ic in Ic) {
+      AggCost.DiIc[, ic] <- aggregated.weighted.mean(ZiIccost[, ic], TripProd.ZiIc[, ic], District.Zi)
+    }
     dicost.name <- paste(cm, tp, 'AggCost.DiIc', sep="")
-    assign(dicost.name, dscost)
+    assign(dicost.name, AggCost.DiIc)
 
     #by district & trip purpose
-    zicost.name <- paste(cm, tp, 'AggCost.ZiPr', sep="")
-    zicost <- get(zicost.name)
-    dscost <- apply(TripProdDiProp.ZiPr * zicost, District.Zi, function(x)
-                    tapply(x, District.Zi, function(x) sum(x, na.rm=TRUE)))
+    ZiPrcost.name <- paste(cm, tp, 'AggCost.ZiPr', sep="")
+    ZiPrcost <- get(ZiPrcost.name)
+    AggCost.DiPr <- array(0, dim=c(length(Di), length(Ic)), dimnames=c(list(Di), list(Ic)))
+    for (pr in Pr) {
+      AggCost.DiPr[, ic] <- aggregated.weighted.mean(ZiPrcost[, pr], TripProd.ZiPr[, pr], District.Zi)
+    }
     dicost.name <- paste(cm, tp, 'AggCost.DiPr', sep="")
-    assign(dicost.name, dscost)
+    assign(dicost.name, AggCost.DiPr)
   }
 }
 
-rm(c('zicost.name', 'dicost.name'))
+rm(list=c('zicost.name', 'dicost.name'))
 
-if (SAVE.INTERMEDIARIES) {
-  intm.file <- file.path(INTERMEDIATE_DIR, 'AggCost.Di.RData')
-  save(list=setdiff(vars.ls, ls()), file=intm.file)
-}
+
+output.file <- file.path(OUTPUT_DIR, 'AggCost.Di.RData')
+save(list=setdiff(vars.ls, ls()), file=output.file)

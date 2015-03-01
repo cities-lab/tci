@@ -51,7 +51,7 @@ linked <- linked %>% gather(tpurp.ch, flag, hbw:hbo) %>% filter(flag==1) %>% dpl
 # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
 household$inc.level = cut(household$income,
                           breaks=c(1, 3, 5, 9),
-                          labels=c("lowInc", "midInc", "highInc"),
+                          labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
                           include.lowest=T, right=F)
 #low <- (1,2); median <- (3,4); high <- 5:8
 hh <- dplyr::select(household, sampn, inc.level, htaz)
@@ -68,7 +68,8 @@ linked <- left_join(linked, VOT.by.mode, by="mode")
 linked <- mutate(linked, trip.tcost=VOT*trpdur/60)
           
 #exclude rows with unknown htaz, tpurp.ch, or inc.level  
-linked <- dplyr::filter(linked, !is.na(htaz), !is.na(tpurp.ch), !is.na(inc.level))
+#linked <- dplyr::filter(linked, !is.na(htaz), !is.na(tpurp.ch), !is.na(inc.level))
+linked <- na.omit(linked)
 
 # summarize trip-level travel time cost by taz, trip purpose, and income level
 tcost.htaz.tpurp.inc <- linked %>%
@@ -155,4 +156,4 @@ maxhhtcost.ZiIc <- acast(tcost.htaz.inc, htaz~inc.level, value.var="tcost.max")
 #tcost by htaz
 flat.tcost.htaz <- dplyr::select(tcost.htaz, htaz, min=tcost.min, avg=tcost.avg, max=tcost.max) %>%
                    gather(func, value, -htaz)
-hhCost.ZiCm <- acast(flat.tcost.htaz, htaz~func, value.var="value") #could use spread, but we 
+hhCost.ZiCm <- acast(flat.tcost.htaz, htaz~func, value.var="value") #could use spread

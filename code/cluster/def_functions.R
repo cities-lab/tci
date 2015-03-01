@@ -68,27 +68,28 @@ identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, s
 
   
 # Define a function that calculates minimal travel time
-min_tt <- function(centers, tt) {
+min_tt <- function(centers, tt, trips) {
+  # trips is unused in min_tt function
     min_tt <- NULL
+    #loop because we need to handle NAs, otherwise tt[, centers] would work
     for (zi in 1:dim(tt)[1]) {
-       if (all(is.na(tt[zi,centers]))) {
-           print(zi) #there are zones without certain access to centers, eg. busWalk
+       if (all(is.na(tt[zi, centers]))) {
+           print(paste("TAZ", zi, "has no access to the centers", sep=" ")) #there are zones without certain access to centers, eg. busWalk
+       }
+    
+      min_tt[zi] <- min(tt[zi, centers], na.rm=TRUE)
+      min_tt[zi] <- ifelse(is.infinite(min_tt[zi]), NA, min_tt[zi])
     }
-    
-    min_tt[zi] <- min(tt[zi,centers], na.rm=TRUE)
-    min_tt[zi] <- ifelse(is.infinite(min_tt[zi]), NA, min_tt[zi])
-    
-  }
   min_tt
 }
 
 
 # Define a function that calculates weighted average travel time 
-weighted_avg_tt <- function(centers, tt, trips) {
+weighted_tt <- function(centers, tt, trips) {
     weighted_avg_tt <- NULL
     for (zi in 1:dim(tt)[1]) {
-      trip.sum <- sum(trips[zi, centers])
-      weighted_avg_tt[zi] <- sum(tt[zi,centers]*trips[zi,centers], na.rm=TRUE)/trip.sum
+      trip.sum <- sum(trips[zi, centers], na.rm=TRUE)
+      weighted_avg_tt[zi] <- sum(tt[zi, centers]*trips[zi, centers], na.rm=TRUE)/trip.sum
     }
     weighted_avg_tt
 }
