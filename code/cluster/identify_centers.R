@@ -65,12 +65,16 @@ AllData <- AllData %>%
          totemp.den = tot.emp / (Area * SQFT.KM2),
          st.hbs.den = st.hbs / (Area * SQFT.KM2),
          st.hbr.den = st.hbr / (Area * SQFT.KM2),
-         st.hbo.den = st.hbo / (Area * SQFT.KM2))
+         st.hbo.den = st.hbo / (Area * SQFT.KM2),
+         lq.hbw = (tot.emp/(tot.emp + st.hbs + st.hbr + st.hbo))/(sum(tot.emp,na.rm=TRUE)/(sum(tot.emp,na.rm=TRUE)+sum(st.hbs,na.rm=TRUE)+sum(st.hbr,na.rm=TRUE)+sum(st.hbo,na.rm=TRUE))),
+         lq.hbs = (st.hbs/(tot.emp + st.hbs + st.hbr + st.hbo))/(sum(st.hbs,na.rm=TRUE)/(sum(tot.emp,na.rm=TRUE)+sum(st.hbs,na.rm=TRUE)+sum(st.hbr,na.rm=TRUE)+sum(st.hbo,na.rm=TRUE))),
+         lq.hbr = (st.hbr/(tot.emp + st.hbs + st.hbr + st.hbo))/(sum(st.hbr,na.rm=TRUE)/(sum(tot.emp,na.rm=TRUE)+sum(st.hbs,na.rm=TRUE)+sum(st.hbr,na.rm=TRUE)+sum(st.hbo,na.rm=TRUE))),
+         lq.hbo = (st.hbo/(tot.emp + st.hbs + st.hbr + st.hbo))/(sum(st.hbo,na.rm=TRUE)/(sum(tot.emp,na.rm=TRUE)+sum(st.hbs,na.rm=TRUE)+sum(st.hbr,na.rm=TRUE)+sum(st.hbo,na.rm=TRUE))))
 
 # re-order by the original row order (seq), as shp file depends on the order
 AllData <- AllData %>% 
   arrange(seq) %>% 
-  dplyr::select(TAZ, Area, tot.emp, totemp.den, st.hbs, st.hbs.den, st.hbr,st.hbr.den, st.hbo, st.hbo.den)
+  dplyr::select(TAZ, Area, tot.emp, totemp.den, st.hbs, st.hbs.den, st.hbr,st.hbr.den, st.hbo, st.hbo.den,lq.hbw,lq.hbs,lq.hbr,lq.hbo)
 
 TAZPoly@data <- AllData
 
@@ -105,3 +109,29 @@ if (SAVE.INTERMEDIARIES) {
   intm.file <- file.path(INTERMEDIATE_DIR, "centers.RData")
   save(hbwci, hbsci, hbrci, hboci, file=intm.file)
 }
+
+
+# Explore LQ for use in determining center identification threshold 
+
+  # identify hbw tazs of centers based on LQ
+  lq.hbwci <- identify_centers(TAZPloyNoNA, "lq.hbw", 1, dist=1.0, sum.col="tot.emp", sum.cutoff=0.1)
+  lq.hbwci <- lq.hbwci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+  # identify hbs tazs of centers based on LQ
+  lq.hbsci <- identify_centers(TAZPloyNoNA, "lq.hbs", 1, dist=1.0, sum.col="st.hbs", sum.cutoff=0.1)
+  lq.hbsci <- lq.hbsci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+  # identify hbr tazs of centers based on LQ
+  lq.hbrci <- identify_centers(TAZPloyNoNA, "lq.hbr", 1, dist=1.0, sum.col="st.hbr", sum.cutoff=0.1)
+  lq.hbrci <- lq.hbrci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+  # identify hbo tazs of centers based on LQ
+  lq.hboci <- identify_centers(TAZPloyNoNA, "lq.hbo", 1, dist=1.0, sum.col="st.hbo", sum.cutoff=0.1)
+  lq.hboci <- lq.hboci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+  if (SAVE.INTERMEDIARIES) {
+    intm.file <- file.path(INTERMEDIATE_DIR, "lq.centers.RData")
+    save(lq.hbwci, lq.hbsci, lq.hbrci, lq.hboci, file=intm.file)
+  }
+
+
