@@ -95,3 +95,56 @@ for (cm in Cm) {
     
   } # End loop by time period
 } # End loop by calculate method 
+
+
+# Weigh travel costs by time of day factors
+
+# Begin iteration by calculation method 
+for (cm in Cm) {
+  
+  AggTpCost.ZiIcPr <- array(0, dim=c(length(Zi), length(Ic), length(Pr)), dimnames=list(Zi,Ic,Pr))
+  
+  # Begin iteration by trip purposes
+  for (pr in Pr) {
+    
+    peakAggCost.ZiIcPr.name <- paste(cm, "peak", "AggCost.ZiIcPr", sep="")
+    load(file.path(OUTPUT_DIR, paste("aggcostCmTp/",peakAggCost.ZiIcPr.name, ".RData", sep="" )))
+    peakAggCost.ZiIcPr <- get(peakAggCost.ZiIcPr.name)
+    
+    offpeakAggCost.ZiIcPr.name <- paste(cm, "offpeak", "AggCost.ZiIcPr", sep="")
+    load(file.path(OUTPUT_DIR, paste("aggcostCmTp/",offpeakAggCost.ZiIcPr.name, ".RData", sep="" )))
+    offpeakAggCost.ZiIcPr <- get(offpeakAggCost.ZiIcPr.name)
+    
+    AggTpCost.ZiIc <- peakAggCost.ZiIcPr[ , , pr]*PeakFactor.Pr[pr] + offpeakAggCost.ZiIcPr[ , , pr]*(1-PeakFactor.Pr[pr] )
+    AggTpCost.ZiIcPr[, , pr] <- AggTpCost.ZiIc
+    
+  } # End loop by calculation method
+  
+  AggTpCost.ZiIcPr.name <- paste(cm, "AggCost.ZiIcPr", sep="")
+  assign(AggTpCost.ZiIcPr.name, AggTpCost.ZiIcPr)
+  
+  output.path <- file.path(OUTPUT_DIR, 'aggcostCm/')
+  dir.create(output.path, showWarnings = FALSE)
+  output.file <- file.path(output.path, paste(AggTpCost.ZiIcPr.name, ".RData", sep=""))
+  save(list=AggTpCost.ZiIcPr.name, file=output.file)
+  
+  
+  AggTpCost.ZiIc.name <- paste(cm, 'AggTpCost.ZiIc', sep="")
+  AggTpCost.ZiIc <- apply(AggTpCost.ZiIcPr * TripProd.ZiIcPr, c(1,2), function(x) sum(x, na.rm=TRUE)) / TripProd.ZiIc
+  assign(AggTpCost.ZiIc.name, AggTpCost.ZiIc)
+  
+  AggTpCost.ZiPr.name <- paste(cm, 'AggTpCost.ZiPr', sep="")
+  AggTpCost.ZiPr <- apply(AggTpCost.ZiIcPr * TripProd.ZiIcPr, c(1,3), function(x) sum(x, na.rm=TRUE)) / TripProd.ZiPr
+  assign(AggTpCost.ZiPr.name, AggTpCost.ZiPr)
+  
+  AggTpCost.Zi.name <- paste(cm, 'AggTpCost.Zi', sep="")
+  AggTpCost.Zi <- apply(AggTpCost.ZiIcPr * TripProd.ZiIcPr, 1, function(x) sum(x, na.rm=TRUE)) / TripProd.Zi
+  assign(AggTpCost.Zi.name, AggTpCost.Zi)
+  
+  #save output
+  output.path <- file.path(OUTPUT_DIR, 'aggcostCm/')
+  dir.create(output.path, showWarnings = FALSE)
+  output.file <- file.path(output.path, paste(AggTpCost.Zi.name, ".RData", sep=""))
+  save(list=c(AggTpCost.ZiIc.name, AggTpCost.ZiPr.name, AggTpCost.Zi.name), file=output.file)
+  
+} # End loop by trip purpose 
