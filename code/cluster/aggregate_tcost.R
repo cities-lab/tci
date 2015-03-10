@@ -99,6 +99,9 @@ for (cm in Cm) {
 
 # Weigh travel costs by time of day factors
 
+# Define time of day factors 
+PeakFactor.Pr <- c(hbw = 0.2456, hbs = 0.0760, hbr = 0.0760, hbo = 0.0760)
+
 # Begin iteration by calculation method 
 for (cm in Cm) {
   
