@@ -1,7 +1,7 @@
 ---
 title: "Estimation of Person Trip Rates"
 author: "Kihong Kim and Liming Wang, Ph.D."
-date: "12/23/2014"
+date: "3/23/2015"
 output: html_document
 ---
 
@@ -32,28 +32,19 @@ Two different data sources are considered
     + for a full description of all variablels, please refer to [its Users' Guide](http://www.epa.gov/smartgrowth/pdf/sld_userguide.pdf)
     + the household file and the Smart Location Database were spatially joined based on households' home census block groups, which is hh_sld
 
-```{r, message=FALSE}
-library(RPostgreSQL)
-library(pscl) # to call a function for Zero-Inflated Negative Binomial model estimation
+```{r}
 library(dplyr)
 library(stargazer)
+library(pscl) # to call a function for Zero-Inflated Negative Binomial model estimation
 
 setwd("~/tci")
 INPUT_DIR <- 'data/'
 load(file.path(INPUT_DIR, "OHAS_PDX.RData"))
+load(file.path(INPUT_DIR, "sld.RData")) # EPA's Smart Location Database spatially joined with household
 
-conn <- dbConnect(PostgreSQL(), host="", user="", password="", dbname="portland")
-
-
-hh <- dbReadTable(conn, c("ohas_v2", "household")) # household file from the 2011 OTAS
-per <- dbReadTable(conn, c("ohas_v2", "person")) # person file from the 2011 OTAS
-#load sld_metro as a csv or RData file
-#sld <- dbReadTable(conn, c("ohas_v2", "sld_metro")) # EPA's Smart Location Database
-hh_sld <- dbReadTable(conn, c("ohas_v2","hh_sld")) # a spatially joined table of household and Smart Location database 
-act <- dbReadTable(conn, c("ohas_v2", "activity")) # activity file from the 2011 OTAS
-act <- with(act, act[order(sampn,perno,plano),])
-act$actNo <- with(act, ave(plano, sampn,perno, FUN=seq))
-act$maxAct <- with(act, ave(actNo, sampn,perno, FUN=length))
+activity <- with(activity, activity[order(sampn,perno,plano),])
+activity$actNo <- with(activity, ave(plano, sampn,perno, FUN=seq))
+activity$maxAct <- with(activity, ave(actNo, sampn,perno, FUN=length))
 ```
 
 ### Create a dependent variable for each home-based trip purpose : number of linked trips per person
@@ -63,7 +54,7 @@ act$maxAct <- with(act, ave(actNo, sampn,perno, FUN=length))
 * hbo (home-based other); other home-based trips, not including school activities but including all other activities at school
 ```{r}
 # create a new data set without the Change-of-Mode activities in the middle of the day to use only linked trips
-linked <- subset(act, !(tpurp==7 & actNo!=1 & actNo!=maxAct))
+linked <- subset(activity, !(tpurp==7 & actNo!=1 & actNo!=maxAct))
 # update actNo and maxAct
 linked$actNo <- with(linked, ave(plano, sampn,perno, FUN=seq))
 linked$maxAct <- with(linked, ave(actNo, sampn,perno, FUN=length))
@@ -99,32 +90,32 @@ hbo <- linked %>% group_by(perid) %>% summarise(numtrips=sum(hbo))
 
 
 ### Add independent variables
-```{r, echo=FALSE}
+```{r}
 # create independent variables
 # person
-per$perid <- with(per, sampn*10 + perno)
-per$female <- with(per, ifelse(gend==2,1,0))
-per$female[(per$gend==9)] <- NA
-per$age[(per$age==99)] <- NA
-per$licensed <- with(per, ifelse(lic==2|is.na(lic),0,1))
-per$licensed[(per$lic==9)] <- NA
-per$transit <- with(per, ifelse(trans==2|is.na(trans),0,1))
-per$transit[(per$trans==8|per$trans==9)] <- NA
-per$biker <- with(per, ifelse(pbike==2|is.na(pbike),0,1))
-per$biker[(per$pbike==8|per$pbike==9)] <- NA
-per$worker <- with(per, ifelse(works==2|is.na(works),0,1))
-per$retiree <- with(per, ifelse(wkstat!=1|is.na(wkstat),0,1))
-per$homemaker <- with(per, ifelse(wkstat!=3|is.na(wkstat),0,1))
-per$student <- with(per, ifelse(wkstat!=6|is.na(wkstat),0,1))
+person$perid <- with(person, sampn*10 + perno)
+person$female <- with(person, ifelse(gend==2,1,0))
+person$female[(person$gend==9)] <- NA
+person$age[(person$age==99)] <- NA
+person$licensed <- with(person, ifelse(lic==2|is.na(lic),0,1))
+person$licensed[(person$lic==9)] <- NA
+person$transit <- with(person, ifelse(trans==2|is.na(trans),0,1))
+person$transit[(person$trans==8|person$trans==9)] <- NA
+person$biker <- with(person, ifelse(pbike==2|is.na(pbike),0,1))
+person$biker[(person$pbike==8|person$pbike==9)] <- NA
+person$worker <- with(person, ifelse(works==2|is.na(works),0,1))
+person$retiree <- with(person, ifelse(wkstat!=1|is.na(wkstat),0,1))
+person$homemaker <- with(person, ifelse(wkstat!=3|is.na(wkstat),0,1))
+person$student <- with(person, ifelse(wkstat!=6|is.na(wkstat),0,1))
 # merge dependent variables with independent variables
-hbw <- merge(hbw, per, by="perid"); hbw <- merge(hbw, hh_sld, by="sampn")
-hbs <- merge(hbs, per, by="perid"); hbs <- merge(hbs, hh_sld, by="sampn")
-hbr <- merge(hbr, per, by="perid"); hbr <- merge(hbr, hh_sld, by="sampn")
-hbo <- merge(hbo, per, by="perid"); hbo <- merge(hbo, hh_sld, by="sampn")
+hbw <- merge(hbw, person, by="perid"); hbw <- merge(hbw, sld, by="sampn")
+hbs <- merge(hbs, person, by="perid"); hbs <- merge(hbs, sld, by="sampn")
+hbr <- merge(hbr, person, by="perid"); hbr <- merge(hbr, sld, by="sampn")
+hbo <- merge(hbo, person, by="perid"); hbo <- merge(hbo, sld, by="sampn")
 ```
 
 ### Develop linear regression models to estimate person trip rates
-```{r, echo=FALSE}
+```{r}
 # with person characteristics (f1)
 f1 <- as.formula(numtrips ~ female+age+licensed+transit+biker+worker+retiree+homemaker+student)
 f1.hbw <- lm(f1, data=hbw)
@@ -183,8 +174,8 @@ stargazer(zinb.hbw,zinb.hbs,zinb.hbr,zinb.hbo, type="text", title="Table 4. Zero
 ### create a new data set
 set.seed(1234)
 randomSample <- linked %>% group_by(perid)  %>% tally %>% sample_n(1000)
-newPersons <- left_join(randomSample, per, by="perid") %>%
-  left_join(hh_sld, by="sampn") %>% arrange(perid)
+newPersons <- left_join(randomSample, person, by="perid") %>%
+  left_join(sld, by="sampn") %>% arrange(perid)
 ### predict the number of trips for each person by trip purpose
 # based on linear regression models (lm)
 numHBW.lm <- predict(f3.hbw, newdata=newPersons)
