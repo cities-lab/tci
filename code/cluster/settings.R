@@ -1,10 +1,10 @@
 INPUT_DIR <- 'data/'
 OUTPUT_DIR <- 'output/cluster'
-dir.create(file.path(OUTPUT_DIR), showWarnings = FALSE)
+dir.create(file.path(OUTPUT_DIR), recursive = TRUE, showWarnings = FALSE)
 # whether to save intermediate results
 SAVE.INTERMEDIARIES <- TRUE
 INTERMEDIATE_DIR <- "output/intermediate/cluster"
-dir.create(file.path(INTERMEDIATE_DIR), showWarnings = FALSE)
+dir.create(file.path(INTERMEDIATE_DIR), recursive = TRUE, showWarnings = FALSE)
 max.taz_id <- 2162
 
 # Define bike and walk access utility coefficients for travel time (##TODO: no alt specific constants?)

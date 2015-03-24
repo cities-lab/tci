@@ -66,7 +66,7 @@ for(pr in Pr){
     assign(obj.name, ModeProbs.ZiZiMd)
     if (SAVE.INTERMEDIARIES) {
       intm.path = file.path(INTERMEDIATE_DIR, 'modeprobs')
-      dir.create(intm.path, showWarnings = FALSE)
+      dir.create(intm.path, recursive = TRUE, showWarnings = FALSE)
       intm.file = file.path(intm.path, paste(obj.name, ".RData", sep=""))
       save(list=obj.name, file=intm.file)
     }
@@ -106,7 +106,7 @@ for(pr in Pr){
     assign(obj.name, TotTrips.ZiMd) 
     if (SAVE.INTERMEDIARIES) {
       intm.path = file.path(INTERMEDIATE_DIR, 'trips')
-      dir.create(intm.path, showWarnings = FALSE)
+      dir.create(intm.path, recursive = TRUE, showWarnings = FALSE)
       intm.file = file.path(intm.path, paste(obj.name, ".RData", sep=""))
       save(list=obj.name, file = intm.file)
     }

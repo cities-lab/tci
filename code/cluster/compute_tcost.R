@@ -62,7 +62,7 @@ for (pr in Pr) {
       
       if (SAVE.INTERMEDIARIES) {
         intm.path <- file.path(INTERMEDIATE_DIR, 'costs')
-        dir.create(intm.path, showWarnings = FALSE)
+        dir.create(intm.path, recursive = TRUE, showWarnings = FALSE)
         obj.name <- paste(pr, ic, tp, "TimeCost.ZiMdCm", sep="")
         assign(obj.name, TTimecost.ZiMdCm)
         intm.file <- file.path(intm.path, paste(obj.name, ".RData", sep=""))

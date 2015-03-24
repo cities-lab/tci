@@ -8,11 +8,11 @@ var_list.0 <- ls()
 
 INPUT_DIR <- 'data/'
 OUTPUT_DIR <- 'output/OHAS'
-dir.create(file.path(OUTPUT_DIR), showWarnings = FALSE)
+dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
 # whether to save intermediate results
 SAVE.INTERMEDIARIES <- TRUE
 INTERMEDIATE_DIR <- "output/intermediate/OHAS"
-dir.create(file.path(INTERMEDIATE_DIR), showWarnings = FALSE)
+dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
 
 # mode specific VOT
 hourly.wage <- 24.77

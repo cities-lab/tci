@@ -68,7 +68,7 @@ for (cm in Cm) {
     assign(AggCost.ZiIcPr.name, AggCost.ZiIcPr)
     
     output.path <- file.path(OUTPUT_DIR, 'aggcostCmTp/')
-    dir.create(output.path, showWarnings = FALSE)
+    dir.create(output.path, recursive = TRUE, showWarnings = FALSE)
     output.file <- file.path(output.path, paste(AggCost.ZiIcPr.name, ".RData", sep=""))
     save(list=AggCost.ZiIcPr.name, file=output.file)
     
@@ -89,7 +89,7 @@ for (cm in Cm) {
     
     #save output
     output.path <- file.path(OUTPUT_DIR, 'aggcostCmTp/')
-    dir.create(output.path, showWarnings = FALSE)
+    dir.create(output.path, recursive = TRUE, showWarnings = FALSE)
     output.file <- file.path(output.path, paste(AggCost.Zi.name, ".RData", sep=""))
     save(list=c(AggCost.ZiIc.name, AggCost.ZiPr.name, AggCost.Zi.name), file=output.file)
     
@@ -127,7 +127,7 @@ for (cm in Cm) {
   assign(AggTpCost.ZiIcPr.name, AggTpCost.ZiIcPr)
   
   output.path <- file.path(OUTPUT_DIR, 'aggcostCm/')
-  dir.create(output.path, showWarnings = FALSE)
+  dir.create(output.path, recursive=TRUE, showWarnings = FALSE)
   output.file <- file.path(output.path, paste(AggTpCost.ZiIcPr.name, ".RData", sep=""))
   save(list=AggTpCost.ZiIcPr.name, file=output.file)
   
