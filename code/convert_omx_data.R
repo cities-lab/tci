@@ -3,6 +3,10 @@
 setwd("~/tci")
 
 source("code/cluster/settings.R")
+
+# Load TAZ names
+load(file.path(INPUT_DIR, 'Zi.RData'))
+
 # Load functions
 source("code/thirdparty/omx.r")
 require(rhdf5)

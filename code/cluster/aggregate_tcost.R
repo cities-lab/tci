@@ -46,7 +46,15 @@ for (cm in Cm) {
         TimeCostArray<- get(TimeCostArray.name)
         
         # aggregate cost weighted by trips
-        AggCost.Zi <- weighted.mean(TimeCostArray[, , cm], TotTripsArray)
+        AggCost.Zi <- matrix(0, length(Zi), 1, dimnames=list(Zi, "cost"))
+        
+        for (zi in Zi) {
+          
+          AggCost.Zi[zi,] <- weighted.mean(TimeCostArray[zi, , cm], TotTripsArray[zi,])
+          
+        }
+        
+        # AggCost.Zi <- weighted.mean(TimeCostArray[, , cm], TotTripsArray)
         #AggCost.name <- paste(cm, pr, ic, tp,"AggCost.Zi", sep="")
         #assign(AggCost.name, AggCost.Zi)
         #if (SAVE.INTERMEDIARIES) {

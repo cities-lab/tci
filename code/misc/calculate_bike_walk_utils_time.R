@@ -24,6 +24,10 @@ source("code/cluster/settings.R")
 #MixRetP	=  Retail employment access within ½ mile of production zone (see Section A.1.b)
 #LrgHH  =  1 if large household (3+ persons)
 
+#Define bike and walk speed
+bike.speed <- 10
+walk.speed <-3
+
 # Bike
 bikeUtil.c  <- read.csv(file.path(INPUT_DIR, 'TDM/mf201.csv'), header=F)  #Utils for commuting trips (HBWork, HBCollege)
 bikeUtil.nc <- read.csv(file.path(INPUT_DIR, 'TDM/mf203.csv'), header=F)  #Utils for non-commuting trips
@@ -42,16 +46,16 @@ bikeDist.c <- read.csv(file.path(INPUT_DIR, 'TDM/mf202.csv'), header=FALSE)
 bikeDist.nc <- read.csv(file.path(INPUT_DIR, 'TDM/mf204.csv'), header=FALSE)
 
 all.equal(bikeDist.c, bikeDist.nc)  # Commute and noncommute distance are the same
-bikeTime <- matrix(bikeDist.c[, 3], nrow=max.taz_id, byrow=TRUE,
+bdist.mx <- matrix(bikeDist.c[, 3], nrow=max.taz_id, byrow=TRUE,
                    dimnames=list(Zi, Zi))
-
+bikeTime <- bdist.mx*60/bike.speed
 
 # Walk  
 wdist.df <- read.table(file.path(INPUT_DIR, 'TDM/2010_wdist.csv'), sep=",", row.names=1, skip=1) #distance matrix used for calculating walk time
 wdist.mx <- as.matrix(wdist.df, dimnames=list(Zi, Zi))
-utilwalkhbw <- -5.07 - 4.307 * log(wdist.mx) # + 0.3345 * log(MixRetP) 
-utilwalkhbs <- -2.82 - 2.466 * log(wdist.mx) #+ 0.1248*ln(MixRetP) + 0.5997*LrgHH)
-utilwalkhbr <- -1.80 - 2.466 * log(wdist.mx) #+ 0.1248*ln(MixRetP) + 0.5997*LrgHH)
-utilwalkhbo <- -2.76 - 2.466 * log(wdist.mx) #+ 0.1248*ln(MixRetP) + 0.5997*LrgHH)
-walkTime <- wdist.mx / walk.speed
+utilwalkhbw <- exp(-5.07 - 4.307 * log(wdist.mx)) # + 0.3345 * log(MixRetP) 
+utilwalkhbs <- exp(-2.82 - 2.466 * log(wdist.mx)) #+ 0.1248*ln(MixRetP) + 0.5997*LrgHH)
+utilwalkhbr <- exp(-1.80 - 2.466 * log(wdist.mx)) #+ 0.1248*ln(MixRetP) + 0.5997*LrgHH)
+utilwalkhbo <- exp(-2.76 - 2.466 * log(wdist.mx)) #+ 0.1248*ln(MixRetP) + 0.5997*LrgHH)
+walkTime <- wdist.mx *60/ walk.speed
 
