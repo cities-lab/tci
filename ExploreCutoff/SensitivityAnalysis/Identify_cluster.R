@@ -24,7 +24,7 @@ hbwcluster4138 <- identify_clusters(TAZPloyNoNA, filter=hbwfilter4138, dist=1.0)
 
 if (SAVE.INTERMEDIARIES) {
   intm.file <- file.path(INTERMEDIATE_DIR, "hbwclusters.RData")
-  save(hbwcluster170, hbwcluster316, hbwcluster1010, hbwcluster529, hbwfilter2249, hbwcluster4138, file=intm.file)
+  save(hbwcluster170, hbwcluster316, hbwcluster1010, hbwcluster529, hbwcluster2249, hbwcluster4138, file=intm.file)
 }
 
 # IDentify clusters for HBS

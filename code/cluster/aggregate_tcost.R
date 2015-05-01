@@ -45,8 +45,8 @@ for (cm in Cm) {
           load(file.path(INTERMEDIATE_DIR, paste("costs/", TimeCostArray.name, ".RData", sep="")))
         TimeCostArray<- get(TimeCostArray.name)
         
-        # aggregate cost weighted by trips
-        AggCost.Zi <- matrix(0, length(Zi), 1, dimnames=list(Zi, "cost"))
+        # aggregate cost weighted by modes
+        AggCost.Zi <- array(0, dim = c(length(Zi), 1), dimnames=list(Zi, "cost"))
         
         for (zi in Zi) {
           
@@ -145,7 +145,7 @@ for (cm in Cm) {
     # Begin iteration by income group
     for (ic in Ic) {
       
-      TimeCostArray.ZiMdCm <- array(0, dim = c(length(Zi), length(Md), length(Cm)), dimnames=list(Zi,Md,Cm))
+      TimeCostBothTp.ZiMdCm <- array(0, dim = c(length(Zi), length(Md), length(Cm)), dimnames=list(Zi,Md,Cm))
       
       #get trips array 
       TotTripsArray.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
@@ -171,14 +171,16 @@ for (cm in Cm) {
       # Begin iteration by mode
       for (md in Md) {
         
-        TimeCostArray.ZiMdCm[,md,] <- peakTimeCostArray[,md,]*PeakFactor.PrMd[pr,md] + offpeakTimeCostArray[,md,]*(1-PeakFactor.PrMd[pr,md])
+        TimeCostBothTp.ZiMdCm[,md,] <- peakTimeCostArray[,md,]*PeakFactor.PrMd[pr,md] + offpeakTimeCostArray[,md,]*(1-PeakFactor.PrMd[pr,md])
         
         # End iteration by mode
       }
       
-      # save teavel time cost weighted by time of day 
+
+      
+      # save travel time cost weighted by time of day 
       TimeCost.ZiMdCm.name <- paste(pr, ic, "TimeCost.ZiMdCm", sep="")
-      assign(TimeCost.ZiMdCm.name, TimeCostArray.ZiMdCm)
+      assign(TimeCost.ZiMdCm.name, TimeCostBothTp.ZiMdCm)
       
       if (SAVE.INTERMEDIARIES) {
         intm.path <- file.path(INTERMEDIATE_DIR, 'costs/')
@@ -188,8 +190,16 @@ for (cm in Cm) {
       }
       
       
-      # aggregate cost weighted by trips
-      AggCost.Zi <- weighted.mean(TimeCostArray.ZiMdCm[, , cm], TotTripsArray)
+      # aggregate cost weighted by modes
+      #AggCost.Zi <- weighted.mean(TimeCostArray.ZiMdCm[, , cm], TotTripsArray)
+      AggCost.Zi <- array(0, dim = c(length(Zi), 1), dimnames=list(Zi, "cost"))
+      
+      for (zi in Zi) {
+        
+        AggCost.Zi[zi,] <- weighted.mean(TimeCostBothTp.ZiMdCm[zi, , cm], TotTripsArray[zi,])
+        
+      }
+      
       #AggCost.name <- paste(cm, pr, ic, tp,"AggCost.Zi", sep="")
       #assign(AggCost.name, AggCost.Zi)
       #if (SAVE.INTERMEDIARIES) {
@@ -200,7 +210,7 @@ for (cm in Cm) {
       # combine cost into array
       AggCost.ZiIcPr[,ic,pr] <- AggCost.Zi;
       
-      rm(AggCost.Zi, TotTripsArray, TimeCostArray)
+      rm(AggCost.Zi, TotTripsArray)
       
       
     } # End loop by income group 

@@ -1,4 +1,7 @@
 ## hbs
+##
+load(file.path(INTERMEDIATE_DIR, "hbsclusters.RData"))
+
 # hbs.den 50% (30) percentile 30
 # Get distribution of sum of sizeterms and calculate percentiles of sum of sizeterms 
 hbscluster30data <- hbscluster30@data
@@ -39,6 +42,7 @@ hbscenters30_600 <- inner_join(hbscluster30data, hbscluster30_600valid.cluster)
 hbsci30_600 <- hbscenters30_600 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci30_600)
+hbsci50_25 <- hbsci30_600
 
 # 0.5 unweighted percentile 
 hbscluster30_1100valid.cluster <- hbscluster30data %>% 
@@ -52,6 +56,7 @@ hbscenters30_1100 <- inner_join(hbscluster30data, hbscluster30_1100valid.cluster
 hbsci30_1100 <- hbscenters30_1100 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci30_1100)
+hbsci50_50 <- hbsci30_1100
 
 # 0.75 unweighted percentile 
 
@@ -66,7 +71,7 @@ hbscenters30_1594 <- inner_join(hbscluster30data, hbscluster30_1594valid.cluster
 hbsci30_1594 <- hbscenters30_1594 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci30_1594)
-
+hbsci50_75 <- hbsci30_1594
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -149,6 +154,7 @@ hbscenters54_322 <- inner_join(hbscluster54data, hbscluster54_322valid.cluster)
 hbsci54_322 <- hbscenters54_322 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci54_322)
+hbsci60_25 <- hbsci54_322
 
 # 0.5 unweighted percentile 
 hbscluster54_815valid.cluster <- hbscluster54data %>% 
@@ -162,6 +168,7 @@ hbscenters54_815 <- inner_join(hbscluster54data, hbscluster54_815valid.cluster)
 hbsci54_815 <- hbscenters54_815 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci54_815)
+hbsci60_50 <- hbsci54_815
 
 # 0.75 unweighted percentile 
 
@@ -176,7 +183,7 @@ hbscenters54_1660 <- inner_join(hbscluster54data, hbscluster54_1660valid.cluster
 hbsci54_1660 <- hbscenters54_1660 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci54_1660)
-
+hbsci60_75 <- hbsci54_1660
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -265,6 +272,7 @@ hbscenters102_458 <- inner_join(hbscluster102data, hbscluster102_458valid.cluste
 hbsci102_458 <- hbscenters102_458 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci102_458)
+hbsci70_25 <- hbsci102_458
 
 # 0.5 unweighted percentile 
 hbscluster102_1134valid.cluster <- hbscluster102data %>% 
@@ -278,6 +286,7 @@ hbscenters102_1134 <- inner_join(hbscluster102data, hbscluster102_1134valid.clus
 hbsci102_1134 <- hbscenters102_1134 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci102_1134)
+hbsci70_50 <- hbsci102_1134
 
 # 0.75 unweighted percentile 
 
@@ -292,7 +301,7 @@ hbscenters102_3240 <- inner_join(hbscluster102data, hbscluster102_3240valid.clus
 hbsci102_3240 <- hbscenters102_3240 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci102_3240)
-
+hbsci70_75 <- hbsci102_3240
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -375,6 +384,7 @@ hbscenters218_593 <- inner_join(hbscluster218data, hbscluster218_593valid.cluste
 hbsci218_593 <- hbscenters218_593 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci218_593)
+hbsci80_25 <- hbsci218_593 
 
 # 0.5 unweighted percentile 
 hbscluster218_1030valid.cluster <- hbscluster218data %>% 
@@ -388,6 +398,7 @@ hbscenters218_1030 <- inner_join(hbscluster218data, hbscluster218_1030valid.clus
 hbsci218_1030 <- hbscenters218_1030 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci218_1030)
+hbsci80_50 <- hbsci218_1030
 
 # 0.75 unweighted percentile 
 
@@ -402,7 +413,7 @@ hbscenters218_2616 <- inner_join(hbscluster218data, hbscluster218_2616valid.clus
 hbsci218_2616 <- hbscenters218_2616 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci218_2616)
-
+hbsci80_75 <- hbsci218_2616
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -487,7 +498,7 @@ hbscenters545_955 <- inner_join(hbscluster545data, hbscluster545_955valid.cluste
 hbsci545_955 <- hbscenters545_955 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci545_955)
-
+hbsci90_25 <- hbsci545_955
 # 0.5 unweighted percentile 
 hbscluster545_1845valid.cluster <- hbscluster545data %>% 
   group_by(cluster.id) %>%
@@ -500,7 +511,7 @@ hbscenters545_1845 <- inner_join(hbscluster545data, hbscluster545_1845valid.clus
 hbsci545_1845 <- hbscenters545_1845 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci545_1845)
-
+hbsci90_50 <- hbsci545_1845 
 # 0.75 unweighted percentile 
 
 hbscluster545_3828valid.cluster <- hbscluster545data %>% 
@@ -514,7 +525,7 @@ hbscenters545_3828 <- inner_join(hbscluster545data, hbscluster545_3828valid.clus
 hbsci545_3828 <- hbscenters545_3828 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci545_3828)
-
+hbsci90_75 <- hbsci545_3828
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -598,7 +609,8 @@ hbscenters1060_694 <- inner_join(hbscluster1060data, hbscluster1060_694valid.clu
 hbsci1060_694 <- hbscenters1060_694 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci1060_694)
-
+hbsci95_25 <- hbsci1060_694
+  
 # 0.5 unweighted percentile 
 hbscluster1060_1725valid.cluster <- hbscluster1060data %>% 
   group_by(cluster.id) %>%
@@ -611,6 +623,7 @@ hbscenters1060_1725 <- inner_join(hbscluster1060data, hbscluster1060_1725valid.c
 hbsci1060_1725 <- hbscenters1060_1725 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci1060_1725)
+hbsci95_50 <- hbsci1060_1725
 
 # 0.75 unweighted percentile 
 
@@ -625,7 +638,7 @@ hbscenters1060_3124 <- inner_join(hbscluster1060data, hbscluster1060_3124valid.c
 hbsci1060_3124 <- hbscenters1060_3124 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbsci1060_3124)
-
+hbsci95_75 <- hbsci1060_3124
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -670,6 +683,8 @@ nrow(hbsci1060_17534)
 
 
 ## HBR 
+#
+load(file.path(INTERMEDIATE_DIR, "hbrclusters.RData"))
 # hbr.den 50% (1085) percentile 1085
 # Get distribution of sum of sizeterms and calculate percentiles of sum of sizeterms 
 hbrcluster1085data <- hbrcluster1085@data
@@ -710,7 +725,7 @@ hbrcenters1085_4657 <- inner_join(hbrcluster1085data, hbrcluster1085_4657valid.c
 hbrci1085_4657 <- hbrcenters1085_4657 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1085_4657)
-
+hbrci50_25 <- hbrci1085_4657
 # 0.5 unweighted percentile 
 hbrcluster1085_7723valid.cluster <- hbrcluster1085data %>% 
   group_by(cluster.id) %>%
@@ -723,7 +738,7 @@ hbrcenters1085_7723 <- inner_join(hbrcluster1085data, hbrcluster1085_7723valid.c
 hbrci1085_7723 <- hbrcenters1085_7723 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1085_7723)
-
+hbrci50_50 <- hbrci1085_7723
 # 0.75 unweighted percentile 
 
 hbrcluster1085_22201valid.cluster <- hbrcluster1085data %>% 
@@ -737,7 +752,7 @@ hbrcenters1085_22201 <- inner_join(hbrcluster1085data, hbrcluster1085_22201valid
 hbrci1085_22201 <- hbrcenters1085_22201 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1085_22201)
-
+hbrci50_75 <- hbrci1085_22201
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -820,7 +835,7 @@ hbrcenters1375_3777 <- inner_join(hbrcluster1375data, hbrcluster1375_3777valid.c
 hbrci1375_3777 <- hbrcenters1375_3777 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1375_3777)
-
+hbrci60_25 <- hbrci1375_3777
 # 0.5 unweighted percentile 
 hbrcluster1375_7306valid.cluster <- hbrcluster1375data %>% 
   group_by(cluster.id) %>%
@@ -833,7 +848,7 @@ hbrcenters1375_7306 <- inner_join(hbrcluster1375data, hbrcluster1375_7306valid.c
 hbrci1375_7306 <- hbrcenters1375_7306 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1375_7306)
-
+hbrci60_50 <- hbrci1375_7306
 # 0.75 unweighted percentile 
 
 hbrcluster1375_13519valid.cluster <- hbrcluster1375data %>% 
@@ -847,7 +862,7 @@ hbrcenters1375_13519 <- inner_join(hbrcluster1375data, hbrcluster1375_13519valid
 hbrci1375_13519 <- hbrcenters1375_13519 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1375_13519)
-
+hbrci60_75 <- hbrci1375_13519
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -931,7 +946,7 @@ hbrcenters1761_3239 <- inner_join(hbrcluster1761data, hbrcluster1761_3239valid.c
 hbrci1761_3239 <- hbrcenters1761_3239 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1761_3239)
-
+hbrci70_25 <- hbrci1761_3239
 # 0.5 unweighted percentile 
 hbrcluster1761_6483valid.cluster <- hbrcluster1761data %>% 
   group_by(cluster.id) %>%
@@ -944,7 +959,7 @@ hbrcenters1761_6483 <- inner_join(hbrcluster1761data, hbrcluster1761_6483valid.c
 hbrci1761_6483 <- hbrcenters1761_6483 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1761_6483)
-
+hbrci70_50 <- hbrci1761_6483
 # 0.75 unweighted percentile 
 
 hbrcluster1761_13077valid.cluster <- hbrcluster1761data %>% 
@@ -958,7 +973,7 @@ hbrcenters1761_13077 <- inner_join(hbrcluster1761data, hbrcluster1761_13077valid
 hbrci1761_13077 <- hbrcenters1761_13077 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci1761_13077)
-
+hbrci70_75 <- hbrci1761_13077
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1042,7 +1057,7 @@ hbrcenters2238_2850 <- inner_join(hbrcluster2238data, hbrcluster2238_2850valid.c
 hbrci2238_2850 <- hbrcenters2238_2850 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci2238_2850)
-
+hbrci80_25 <- hbrci2238_2850
 # 0.5 unweighted percentile 
 hbrcluster2238_6128valid.cluster <- hbrcluster2238data %>% 
   group_by(cluster.id) %>%
@@ -1055,7 +1070,7 @@ hbrcenters2238_6128 <- inner_join(hbrcluster2238data, hbrcluster2238_6128valid.c
 hbrci2238_6128 <- hbrcenters2238_6128 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci2238_6128)
-
+hbrci80_50 <- hbrci2238_6128
 # 0.75 unweighted percentile 
 
 hbrcluster2238_11056valid.cluster <- hbrcluster2238data %>% 
@@ -1069,7 +1084,7 @@ hbrcenters2238_11056 <- inner_join(hbrcluster2238data, hbrcluster2238_11056valid
 hbrci2238_11056 <- hbrcenters2238_11056 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci2238_11056)
-
+hbrci80_75 <- hbrci2238_11056
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1153,7 +1168,7 @@ hbrcenters3372_2746 <- inner_join(hbrcluster3372data, hbrcluster3372_2746valid.c
 hbrci3372_2746 <- hbrcenters3372_2746 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci3372_2746)
-
+hbrci90_25 <- hbrci3372_2746
 # 0.5 unweighted percentile 
 hbrcluster3372_6278valid.cluster <- hbrcluster3372data %>% 
   group_by(cluster.id) %>%
@@ -1166,7 +1181,7 @@ hbrcenters3372_6278 <- inner_join(hbrcluster3372data, hbrcluster3372_6278valid.c
 hbrci3372_6278 <- hbrcenters3372_6278 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci3372_6278)
-
+hbrci90_50 <- hbrci3372_6278 
 # 0.75 unweighted percentile 
 
 hbrcluster3372_13772valid.cluster <- hbrcluster3372data %>% 
@@ -1180,7 +1195,7 @@ hbrcenters3372_13772 <- inner_join(hbrcluster3372data, hbrcluster3372_13772valid
 hbrci3372_13772 <- hbrcenters3372_13772 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci3372_13772)
-
+hbrci90_75 <- hbrci3372_13772
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1264,7 +1279,7 @@ hbrcenters5494_6848 <- inner_join(hbrcluster5494data, hbrcluster5494_6848valid.c
 hbrci5494_6848 <- hbrcenters5494_6848 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci5494_6848)
-
+hbrci95_25 <- hbrci5494_6848
 # 0.5 unweighted percentile 
 hbrcluster5494_9089valid.cluster <- hbrcluster5494data %>% 
   group_by(cluster.id) %>%
@@ -1277,7 +1292,7 @@ hbrcenters5494_9089 <- inner_join(hbrcluster5494data, hbrcluster5494_9089valid.c
 hbrci5494_9089 <- hbrcenters5494_9089 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci5494_9089)
-
+hbrci95_50 <- hbrci5494_9089
 # 0.75 unweighted percentile 
 
 hbrcluster5494_12932valid.cluster <- hbrcluster5494data %>% 
@@ -1291,7 +1306,7 @@ hbrcenters5494_12932 <- inner_join(hbrcluster5494data, hbrcluster5494_12932valid
 hbrci5494_12932 <- hbrcenters5494_12932 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbrci5494_12932)
-
+hbrci95_75 <- hbrci5494_12932
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1336,6 +1351,9 @@ nrow(hbrci5494_146273)
 
 
 ## HBO 
+#
+load(file.path(INTERMEDIATE_DIR, "hboclusters.RData"))
+
 # hbo.den 50% (251) percentile 251
 # Get distribution of sum of sizeterms and calculate percentiles of sum of sizeterms 
 hbocluster251data <- hbocluster251@data
@@ -1376,7 +1394,7 @@ hbocenters251_1433 <- inner_join(hbocluster251data, hbocluster251_1433valid.clus
 hboci251_1433 <- hbocenters251_1433 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci251_1433)
-
+hboci50_25 <- hboci251_1433
 # 0.5 unweighted percentile 
 hbocluster251_2209valid.cluster <- hbocluster251data %>% 
   group_by(cluster.id) %>%
@@ -1389,7 +1407,7 @@ hbocenters251_2209 <- inner_join(hbocluster251data, hbocluster251_2209valid.clus
 hboci251_2209 <- hbocenters251_2209 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci251_2209)
-
+hboci50_50 <- hboci251_2209
 # 0.75 unweighted percentile 
 
 hbocluster251_7268valid.cluster <- hbocluster251data %>% 
@@ -1403,7 +1421,7 @@ hbocenters251_7268 <- inner_join(hbocluster251data, hbocluster251_7268valid.clus
 hboci251_7268 <- hbocenters251_7268 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci251_7268)
-
+hboci50_75 <- hboci251_7268
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1487,6 +1505,7 @@ hbocenters353_1395 <- inner_join(hbocluster353data, hbocluster353_1395valid.clus
 hboci353_1395 <- hbocenters353_1395 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci353_1395)
+hboci60_25 <- hboci353_1395
 
 # 0.5 unweighted percentile 
 hbocluster353_2439valid.cluster <- hbocluster353data %>% 
@@ -1500,7 +1519,7 @@ hbocenters353_2439 <- inner_join(hbocluster353data, hbocluster353_2439valid.clus
 hboci353_2439 <- hbocenters353_2439 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci353_2439)
-
+hboci60_50 <- hboci353_2439
 # 0.75 unweighted percentile 
 
 hbocluster353_6592valid.cluster <- hbocluster353data %>% 
@@ -1514,7 +1533,7 @@ hbocenters353_6592 <- inner_join(hbocluster353data, hbocluster353_6592valid.clus
 hboci353_6592 <- hbocenters353_6592 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci353_6592)
-
+hboci60_75 <- hboci353_6592
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1598,7 +1617,7 @@ hbocenters496_1874 <- inner_join(hbocluster496data, hbocluster496_1874valid.clus
 hboci496_1874 <- hbocenters496_1874 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci496_1874)
-
+hboci70_25 <- hboci496_1874
 # 0.5 unweighted percentile 
 hbocluster496_3532valid.cluster <- hbocluster496data %>% 
   group_by(cluster.id) %>%
@@ -1611,7 +1630,7 @@ hbocenters496_3532 <- inner_join(hbocluster496data, hbocluster496_3532valid.clus
 hboci496_3532 <- hbocenters496_3532 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci496_3532)
-
+hboci70_50 <- hboci496_3532
 # 0.75 unweighted percentile 
 
 hbocluster496_9055valid.cluster <- hbocluster496data %>% 
@@ -1625,7 +1644,7 @@ hbocenters496_9055 <- inner_join(hbocluster496data, hbocluster496_9055valid.clus
 hboci496_9055 <- hbocenters496_9055 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci496_9055)
-
+hboci70_75 <- hboci496_9055
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1709,7 +1728,7 @@ hbocenters766_1348 <- inner_join(hbocluster766data, hbocluster766_1348valid.clus
 hboci766_1348 <- hbocenters766_1348 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci766_1348)
-
+hboci80_25 <- hboci766_1348
 # 0.5 unweighted percentile 
 hbocluster766_3399valid.cluster <- hbocluster766data %>% 
   group_by(cluster.id) %>%
@@ -1722,7 +1741,7 @@ hbocenters766_3399 <- inner_join(hbocluster766data, hbocluster766_3399valid.clus
 hboci766_3399 <- hbocenters766_3399 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci766_3399)
-
+hboci80_50 <- hboci766_3399
 # 0.75 unweighted percentile 
 
 hbocluster766_7554valid.cluster <- hbocluster766data %>% 
@@ -1736,7 +1755,7 @@ hbocenters766_7554 <- inner_join(hbocluster766data, hbocluster766_7554valid.clus
 hboci766_7554 <- hbocenters766_7554 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci766_7554)
-
+hboci80_75 <- hboci766_7554
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1820,7 +1839,7 @@ hbocenters1473_2089 <- inner_join(hbocluster1473data, hbocluster1473_2089valid.c
 hboci1473_2089 <- hbocenters1473_2089 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci1473_2089)
-
+hboci90_25 <- hboci1473_2089
 # 0.5 unweighted percentile 
 hbocluster1473_3390valid.cluster <- hbocluster1473data %>% 
   group_by(cluster.id) %>%
@@ -1833,6 +1852,7 @@ hbocenters1473_3390 <- inner_join(hbocluster1473data, hbocluster1473_3390valid.c
 hboci1473_3390 <- hbocenters1473_3390 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci1473_3390)
+hboci90_50 <- hboci1473_3390
 
 # 0.75 unweighted percentile 
 
@@ -1847,7 +1867,7 @@ hbocenters1473_6886 <- inner_join(hbocluster1473data, hbocluster1473_6886valid.c
 hboci1473_6886 <- hbocenters1473_6886 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci1473_6886)
-
+hboci90_75 <- hboci1473_6886
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -1931,7 +1951,7 @@ hbocenters2553_2768 <- inner_join(hbocluster2553data, hbocluster2553_2768valid.c
 hboci2553_2768 <- hbocenters2553_2768 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci2553_2768)
-
+hboci95_25 <- hboci2553_2768
 # 0.5 unweighted percentile 
 hbocluster2553_3684valid.cluster <- hbocluster2553data %>% 
   group_by(cluster.id) %>%
@@ -1944,7 +1964,7 @@ hbocenters2553_3684 <- inner_join(hbocluster2553data, hbocluster2553_3684valid.c
 hboci2553_3684 <- hbocenters2553_3684 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci2553_3684)
-
+hboci95_50 <- hboci2553_3684
 # 0.75 unweighted percentile 
 
 hbocluster2553_6601valid.cluster <- hbocluster2553data %>% 
@@ -1958,7 +1978,7 @@ hbocenters2553_6601 <- inner_join(hbocluster2553data, hbocluster2553_6601valid.c
 hboci2553_6601 <- hbocenters2553_6601 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hboci2553_6601)
-
+hboci95_75 <- hboci2553_6601
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -2003,8 +2023,121 @@ nrow(hboci2553_69812)
 
 
 ## HBW
+#
+load(file.path(INTERMEDIATE_DIR, "hbwclusters.RData"))
 
-# forget to save scripts for hbw.den 50% (170) 
+# hbw.den 50% (170) percentile 170
+# Get distribution of sum of sizeterms and calculate percentiles of sum of sizeterms 
+hbwcluster170data <- hbwcluster170@data
+
+hbwcluster170datasum <- hbwcluster170data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1)  %>%
+  arrange(cluster.sum,cluster.count)
+
+str(hbwcluster170datasum)
+
+as.data.frame(hbwcluster170datasum)
+
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "hbwcluster170datasum.txt")
+  write.table(hbwcluster170datasum,intm.file,sep="\t")
+}
+
+quantile(hbwcluster170datasum$cluster.sum, c(0.25,0.5,0.75))
+
+hbwcluster170datasumdistribution <- data.frame(cluster.sum=rep(hbwcluster170datasum$cluster.sum, hbwcluster170datasum $cluster.count))
+quantile(hbwcluster170datasumdistribution$cluster.sum, c(0.25,0.5,0.75))
+
+
+# identify TAZs indexs 
+# Unweighted percentiles
+# 0.25 unweighted percentile 
+
+hbwcluster170_667valid.cluster <- hbwcluster170data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 667)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters170_667 <- inner_join(hbwcluster170data, hbwcluster170_667valid.cluster)
+
+hbwci170_667 <- hbwcenters170_667 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci170_667)
+hbwci50_25 <- hbwci170_667
+
+# 0.5 unweighted percentile 
+hbwcluster170_2229valid.cluster <- hbwcluster170data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 2229)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters170_2229 <- inner_join(hbwcluster170data, hbwcluster170_2229valid.cluster)
+
+hbwci170_2229 <- hbwcenters170_2229 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci170_2229)
+hbwci50_50 <- hbwci170_2229
+
+# 0.75 unweighted percentile 
+
+hbwcluster170_5285valid.cluster <- hbwcluster170data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 5285)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters170_5285 <- inner_join(hbwcluster170data, hbwcluster170_5285valid.cluster)
+
+hbwci170_5285 <- hbwcenters170_5285 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci170_5285)
+hbwci50_75 <- hbwci170_5285
+
+
+# weighted percentiles
+# 0.25 weighted percentile 
+hbwcluster170_90678valid.cluster <- hbwcluster170data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 90678)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters170_90678 <- inner_join(hbwcluster170data, hbwcluster170_90678valid.cluster)
+
+hbwci170_90678 <- hbwcenters170_90678 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci170_90678)
+
+# 0.5 weighted percentile 
+hbwcluster170_325254valid.cluster <- hbwcluster170data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 325254)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters170_325254 <- inner_join(hbwcluster170data, hbwcluster170_325254valid.cluster)
+
+hbwci170_325254 <- hbwcenters170_325254 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci170_325254)
+
+# 0.75 weighted percentile 
+
+hbwcluster170_379089valid.cluster <- hbwcluster170data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 379089)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters170_379089 <- inner_join(hbwcluster170data, hbwcluster170_379089valid.cluster)
+
+hbwci170_379089 <- hbwcenters170_379089 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci170_379089)
 
 # hbw.den 60% (316) percentile 316
 # Get distribution of sum of sizeterms and calculate percentiles of sum of sizeterms 
@@ -2046,7 +2179,7 @@ hbwcenters316_1550 <- inner_join(hbwcluster316data, hbwcluster316_1550valid.clus
 hbwci316_1550 <- hbwcenters316_1550 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci316_1550)
-
+hbwci60_25 <- hbwci316_1550
 # 0.5 unweighted percentile 
 hbwcluster316_3903valid.cluster <- hbwcluster316data %>% 
   group_by(cluster.id) %>%
@@ -2059,7 +2192,7 @@ hbwcenters316_3903 <- inner_join(hbwcluster316data, hbwcluster316_3903valid.clus
 hbwci316_3903 <- hbwcenters316_3903 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci316_3903)
-
+hbwci60_50 <- hbwci316_3903
 # 0.75 unweighted percentile 
 
 hbwcluster316_14188valid.cluster <- hbwcluster316data %>% 
@@ -2073,7 +2206,7 @@ hbwcenters316_14188 <- inner_join(hbwcluster316data, hbwcluster316_14188valid.cl
 hbwci316_14188 <- hbwcenters316_14188 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci316_14188)
-
+hbwci60_75 <- hbwci316_14188
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -2156,7 +2289,7 @@ hbwcenters529_2534 <- inner_join(hbwcluster529data, hbwcluster529_2534valid.clus
 hbwci529_2534 <- hbwcenters529_2534 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci529_2534)
-
+hbwci70_25 <- hbwci529_2534
 # 0.5 unweighted percentile 
 hbwcluster529_4819valid.cluster <- hbwcluster529data %>% 
   group_by(cluster.id) %>%
@@ -2169,7 +2302,7 @@ hbwcenters529_4819 <- inner_join(hbwcluster529data, hbwcluster529_4819valid.clus
 hbwci529_4819 <- hbwcenters529_4819 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci529_4819)
-
+hbwci70_50 <- hbwci529_4819
 # 0.75 unweighted percentile 
 
 hbwcluster529_9672valid.cluster <- hbwcluster529data %>% 
@@ -2183,7 +2316,7 @@ hbwcenters529_9672 <- inner_join(hbwcluster529data, hbwcluster529_9672valid.clus
 hbwci529_9672 <- hbwcenters529_9672 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci529_9672)
-
+hbwci70_75 <- hbwci529_9672
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -2268,7 +2401,7 @@ hbwcenters1010_2840 <- inner_join(hbwcluster1010data, hbwcluster1010_2840valid.c
 hbwci1010_2840 <- hbwcenters1010_2840 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci1010_2840)
-
+hbwci80_25 <- hbwci1010_2840
 # 0.5 unweighted percentile 
 hbwcluster1010_5165valid.cluster <- hbwcluster1010data %>% 
   group_by(cluster.id) %>%
@@ -2281,7 +2414,7 @@ hbwcenters1010_5165 <- inner_join(hbwcluster1010data, hbwcluster1010_5165valid.c
 hbwci1010_5165 <- hbwcenters1010_5165 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci1010_5165)
-
+hbwci80_50 <- hbwci1010_5165
 # 0.75 unweighted percentile 
 
 hbwcluster1010_12083valid.cluster <- hbwcluster1010data %>% 
@@ -2295,7 +2428,7 @@ hbwcenters1010_12083 <- inner_join(hbwcluster1010data, hbwcluster1010_12083valid
 hbwci1010_12083 <- hbwcenters1010_12083 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci1010_12083)
-
+hbwci80_75 <- hbwci1010_12083
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -2338,6 +2471,115 @@ hbwci1010_98691 <- hbwcenters1010_98691 %>% dplyr::select(TAZ, center.id=cluster
 
 nrow(hbwci1010_98691)
 
+# hbw.den 90% (2249) percentile 
+# Get distribution of sum of sizeterms and calculate percentiles of sum of sizeterms 
+hbwcluster2249data <- hbwcluster2249@data
+
+hbwcluster2249datasum <- hbwcluster2249data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1)  %>%
+  arrange(cluster.sum,cluster.count)
+
+str(hbwcluster2249datasum)
+
+as.data.frame(hbwcluster2249datasum)
+
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "hbwcluster2249datasum.txt")
+  write.table(hbwcluster2249datasum,intm.file,sep="\t")
+}
+
+quantile(hbwcluster2249datasum$cluster.sum, c(0.25,0.5,0.75))
+
+hbwcluster2249datasumdistribution <- data.frame(cluster.sum=rep(hbwcluster2249datasum$cluster.sum, hbwcluster2249datasum $cluster.count))
+quantile(hbwcluster2249datasumdistribution$cluster.sum, c(0.25,0.5,0.75))
+
+
+# identify TAZs indexs 
+# Unweighted percentiles
+# 0.25 unweighted percentile 
+
+hbwcluster2249_3780valid.cluster <- hbwcluster2249data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 3780)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters2249_3780 <- inner_join(hbwcluster2249data, hbwcluster2249_3780valid.cluster)
+
+hbwci2249_3780 <- hbwcenters2249_3780 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci2249_3780)
+hbwci90_25 <- hbwci2249_3780
+# 0.5 unweighted percentile 
+hbwcluster2249_6584valid.cluster <- hbwcluster2249data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 6584)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters2249_6584 <- inner_join(hbwcluster2249data, hbwcluster2249_6584valid.cluster)
+
+hbwci2249_6584 <- hbwcenters2249_6584 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci2249_6584)
+hbwci90_50 <- hbwci2249_6584
+# 0.75 unweighted percentile 
+
+hbwcluster2249_10805valid.cluster <- hbwcluster2249data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 10805)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters2249_10805 <- inner_join(hbwcluster2249data, hbwcluster2249_10805valid.cluster)
+
+hbwci2249_10805 <- hbwcenters2249_10805 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci2249_10805)
+hbwci90_75 <- hbwci2249_10805
+
+# weighted percentiles
+# 0.25 weighted percentile 
+hbwcluster2249_6732valid.cluster <- hbwcluster2249data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 6732)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters2249_6732 <- inner_join(hbwcluster2249data, hbwcluster2249_6732valid.cluster)
+
+hbwci2249_6732 <- hbwcenters2249_6732 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci2249_6732)
+
+# 0.5 weighted percentile 
+hbwcluster2249_14115valid.cluster <- hbwcluster2249data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 14115)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters2249_14115 <- inner_join(hbwcluster2249data, hbwcluster2249_14115valid.cluster)
+
+hbwci2249_14115 <- hbwcenters2249_14115 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci2249_14115)
+
+# 0.75 weighted percentile 
+
+hbwcluster2249_65425valid.cluster <- hbwcluster2249data %>% 
+  group_by(cluster.id) %>%
+  summarise(cluster.sum=sum(tot.emp), cluster.count=n()) %>%
+  filter(cluster.id!=0 & cluster.count > 1&cluster.sum >= 65425)  %>%
+  dplyr::select(cluster.id)
+
+hbwcenters2249_65425 <- inner_join(hbwcluster2249data, hbwcluster2249_65425valid.cluster)
+
+hbwci2249_65425 <- hbwcenters2249_65425 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
+
+nrow(hbwci2249_65425)
 
 # hbw.den 95% (4138) percentile 
 # Get distribution of sum of sizeterms and calculate percentiles of sum of sizeterms 
@@ -2379,6 +2621,7 @@ hbwcenters4138_5171 <- inner_join(hbwcluster4138data, hbwcluster4138_5171valid.c
 hbwci4138_5171 <- hbwcenters4138_5171 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci4138_5171)
+hbwci95_25 <- hbwci4138_5171
 
 # 0.5 unweighted percentile 
 hbwcluster4138_7805valid.cluster <- hbwcluster4138data %>% 
@@ -2392,7 +2635,7 @@ hbwcenters4138_7805 <- inner_join(hbwcluster4138data, hbwcluster4138_7805valid.c
 hbwci4138_7805 <- hbwcenters4138_7805 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci4138_7805)
-
+hbwci95_50 <- hbwci4138_7805
 # 0.75 unweighted percentile 
 
 hbwcluster4138_9899valid.cluster <- hbwcluster4138data %>% 
@@ -2406,7 +2649,7 @@ hbwcenters4138_9899 <- inner_join(hbwcluster4138data, hbwcluster4138_9899valid.c
 hbwci4138_9899 <- hbwcenters4138_9899 %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 nrow(hbwci4138_9899)
-
+hbwci95_75 <- hbwci4138_9899
 
 # weighted percentiles
 # 0.25 weighted percentile 
@@ -2449,4 +2692,112 @@ hbwci4138_117180 <- hbwcenters4138_117180 %>% dplyr::select(TAZ, center.id=clust
 
 nrow(hbwci4138_117180)
 
+# save center by different cutoffs 
+# save 50_25
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers50_25.RData")
+  save(hbwci50_25, hbsci50_25, hbrci50_25, hboci50_25, file=intm.file)
+}
+
+# save 50_50
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers50_50.RData")
+  save(hbwci50_50, hbsci50_50, hbrci50_50, hboci50_50, file=intm.file)
+}
+
+# save 50_75
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers50_75.RData")
+  save(hbwci50_75, hbsci50_75, hbrci50_75, hboci50_75, file=intm.file)
+}
+
+# save 60_25
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers60_25.RData")
+  save(hbwci60_25, hbsci60_25, hbrci60_25, hboci60_25, file=intm.file)
+}
+
+# save 60_50
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers60_50.RData")
+  save(hbwci60_50, hbsci60_50, hbrci60_50, hboci60_50, file=intm.file)
+}
+
+# save 60_75
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers60_75.RData")
+  save(hbwci60_75, hbsci60_75, hbrci60_75, hboci60_75, file=intm.file)
+}
+
+# save 70_25
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers70_25.RData")
+  save(hbwci70_25, hbsci70_25, hbrci70_25, hboci70_25, file=intm.file)
+}
+
+# save 70_50
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers70_50.RData")
+  save(hbwci70_50, hbsci70_50, hbrci70_50, hboci70_50, file=intm.file)
+}
+
+# save 70_75
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers70_75.RData")
+  save(hbwci70_75, hbsci70_75, hbrci70_75, hboci70_75, file=intm.file)
+}
+
+# save 80_25
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers80_25.RData")
+  save(hbwci80_25, hbsci80_25, hbrci80_25, hboci80_25, file=intm.file)
+}
+
+# save 80_50
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers80_50.RData")
+  save(hbwci80_50, hbsci80_50, hbrci80_50, hboci80_50, file=intm.file)
+}
+
+# save 80_75
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers80_75.RData")
+  save(hbwci80_75, hbsci80_75, hbrci80_75, hboci80_75, file=intm.file)
+}
+
+# save 90_25
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers90_25.RData")
+  save(hbwci90_25, hbsci90_25, hbrci90_25, hboci90_25, file=intm.file)
+}
+
+# save 90_50
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers90_50.RData")
+  save(hbwci90_50, hbsci90_50, hbrci90_50, hboci90_50, file=intm.file)
+}
+
+# save 90_75
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers90_75.RData")
+  save(hbwci90_75, hbsci90_75, hbrci90_75, hboci90_75, file=intm.file)
+}
+
+# save 95_25
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers95_25.RData")
+  save(hbwci95_25, hbsci95_25, hbrci95_25, hboci95_25, file=intm.file)
+}
+
+# save 95_50
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers95_50.RData")
+  save(hbwci95_50, hbsci95_50, hbrci95_50, hboci95_50, file=intm.file)
+}
+
+# save 95_75
+if (SAVE.INTERMEDIARIES) {
+  intm.file <- file.path(INTERMEDIATE_DIR, "centers95_75.RData")
+  save(hbwci95_75, hbsci95_75, hbrci95_75, hboci95_75, file=intm.file)
+}
 
