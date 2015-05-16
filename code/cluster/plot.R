@@ -8,7 +8,7 @@ library(RColorBrewer)
 source("code/thirdparty/openGraphSaveGraph.R")
 
 graph.path <- file.path(OUTPUT_DIR, "graphics")
-dir.create(file.path(graph.path), showWarnings = FALSE)
+dir.create(file.path(graph.path), recursive = TRUE, showWarnings = FALSE)
 
 #::
 

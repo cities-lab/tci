@@ -94,5 +94,11 @@ weighted_tt <- function(centers, tt, trips) {
     weighted_avg_tt
 }
 
+sum.na.rm <- function(x) sum(x, na.rm=T)
+
+nd.weighted.mean <- function(X, W, dims) {
+  apply(X*W, dims, sum.na.rm) / apply(W, dims, sum.na.rm)
+}
+
 in.memory <- function(obj.names)
   all(obj.names %in% ls())
