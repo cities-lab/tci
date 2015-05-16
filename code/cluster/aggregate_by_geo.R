@@ -89,7 +89,7 @@ for (cm in Cm) {
     ZiPrcost <- get(ZiPrcost.name)
     AggCost.DiPr <- array(0, dim=c(length(Di), length(Ic)), dimnames=c(list(Di), list(Ic)))
     for (pr in Pr) {
-      AggCost.DiPr[, ic] <- aggregated.weighted.mean(ZiPrcost[, pr], TripProd.ZiPr[, pr], District.Zi)
+      AggCost.DiPr[, pr] <- aggregated.weighted.mean(ZiPrcost[, pr], TripProd.ZiPr[, pr], District.Zi)
     }
     dicost.name <- paste(cm, tp, 'AggCost.DiPr', sep="")
     assign(dicost.name, AggCost.DiPr)
