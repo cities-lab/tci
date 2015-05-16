@@ -18,9 +18,6 @@ if (!in.memory(paste(Pr, "ci", sep="")))
 #Begin iteration by trip purpose
 #-------------------------------  
 for (pr in Pr) {
-  CentersObjName <- paste(pr, "ci", sep="")
-  Centers <- get(CentersObjName); rm(CentersObjName)
-  
   # Begin iteration by income group
   for (ic in Ic) {
     # Begin iteration by time period
