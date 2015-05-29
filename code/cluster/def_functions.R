@@ -49,13 +49,35 @@ identify_clusters <- function(map.df, filter=NULL, dist=NULL) {
  #writeOGR(map.df2[filter, ],"./","test_map",driver="ESRI Shapefile")
 
 
-identify_centers <- function(map.df, colname, cutoff, dist=NULL, sum.col=NULL, sum.cutoff=0){
+identify_centers <- function(map.df, 
+                             colname, 
+                             cutoff.val=0,
+                             cutoff.percentile=0,
+                             dist=NULL, 
+                             sum.col=NULL, 
+                             sum.cutoff.val=0,
+                             sum.cutoff.percentile=0,
+                             cutoffs=NULL,
+                             ){
    data.df <- map.df@data
+   if (!is.null(cutoffs)) {
+     if ("cutoff.val" %in% names(cutoffs)) cutoff.val <- cutoffs[["cutoff.val"]]
+     if ("cutoff.percentile" %in% names(cutoffs)) cutoff.percentile <- cutoffs[["cutoff.percentile"]]
+     if ("sum.cutoff.val" %in% names(cutoffs)) sum.cutoff.val <- cutoffs[["sum.cutoff.val"]]
+     if ("sum.cutoff.percentile" %in% names(cutoffs)) sum.cutoff.percentile <- cutoffs[["sum.cutoff.percentile"]]
+   }
+
+   cutoff.val2 <- quantile(data.df[,colname], cutoff.percentile)
+   cutoff <- max(cutoff.val, cutoff.val2)} 
+   
    filter <- data.df[,colname] >= cutoff
    clusters.shp <- identify_clusters(map.df, filter=filter, dist=dist)
    clusters.df <- clusters.shp@data
    summary(clusters.df$tot.emp)
    if (!is.null(sum.col)) {
+     sum.cutoff.val2 <- quantile(clusters.df[, sum.col], sum.cutoff.percentile)
+     sum.cutoff <- max(sum.cutoff.val, sum.cutoff.val2)
+     
      valid.clusters <- clusters.df %>%
        group_by(cluster.id) %>%
        summarise_(cluster.sum = paste("sum(", sum.col, ")", sep=""), cluster.count="n()") %>%

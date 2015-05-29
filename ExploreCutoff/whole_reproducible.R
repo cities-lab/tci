@@ -8,7 +8,27 @@ var_list.0 <- ls()
 source("code/cluster/settings.R")
 
 # Load required functions
-source("code/cluster/def_functions.R")
+
+for (cutoff.p in c(.5, .75, .95) {
+  sum.cutoff.p in c(.5, .75, .95){
+    cutoffs <- data.frame(hbw=c(cutoff.p, sum.cutoff.p), 
+                          hbs=c(cutoff.p, sum.cutoff.p), 
+                          hbr=c(cutoff.p, sum.cutoff.p), 
+                          hbo=c(cutoff.p, sum.cutoff.p))
+    row.names(cutoffs) <- c("cutoff.percentile", 'sum.cutoff.percentile')
+    
+    OUTPUT_DIR <- paste("output/cluster/", "cutoffp", cuttoff.p, "sum.cutoff.p", sum.cutoff.p)
+    
+    source("ExploreCutoff/cluster/identify_centers.R")
+    source("ExploreCutoff/cluster/compute_md_prob_trips.R")
+    source("ExploreCutoff/cluster/compute_tcost.R")
+    source("ExploreCutoff/cluster/aggregate_tcost.R")
+    
+  }
+  
+}
+
+
 
 
 # combine all total cutoff values into array 

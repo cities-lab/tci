@@ -86,23 +86,22 @@ if (SAVE.INTERMEDIARIES) {
 
 # eliminate TAZ with null value
 TAZPloyNoNA <- TAZPoly[!is.na(TAZPoly@data$totemp.den),]
-
-thresholds <- list(totemp.den=2500, st.hbs.den=102, st.hbr.den=1763, st.hbo.den=495)
-
+      
 # identify hbw tazs of centers
-hbwci <- identify_centers(TAZPloyNoNA, "totemp.den", 2500, dist=1.0, sum.col="tot.emp", sum.cutoff=1000)
+#hbwci <- identify_centers(TAZPloyNoNA, "totemp.den", cutoff.val=cutoff['cutoff.val', 'hbw'], dist=1.0, sum.col="tot.emp", sum.cutoff.val=cutoff['sum.cutoff.val', 'hbw'])
+hbwci <- identify_centers(TAZPloyNoNA, "totemp.den", dist=1.0, sum.col="tot.emp", cutoffs=split(cutoffs[, 'hbw'], rownames(cutoffs))
 hbwci <- hbwci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 # identify hbs tazs of centers 
-hbsci <- identify_centers(TAZPloyNoNA, "st.hbs.den", 102, dist=1.0, sum.col="st.hbs", sum.cutoff=1000)
+hbsci <- identify_centers(TAZPloyNoNA, "st.hbs.den", cutoff.val=102, dist=1.0, sum.col="st.hbs", sum.cutoff.val=1000)
 hbsci <- hbsci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 # identify hbr tazs of centers 
-hbrci <- identify_centers(TAZPloyNoNA, "st.hbr.den", 1763, dist=1.0, sum.col="st.hbr", sum.cutoff=1000)
+hbrci <- identify_centers(TAZPloyNoNA, "st.hbr.den", cutoff.val=1763, dist=1.0, sum.col="st.hbr", sum.cutoff.val=1000)
 hbrci <- hbrci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 # identify hbo tazs of centers 
-hboci <- identify_centers(TAZPloyNoNA, "st.hbo.den", 495, dist=1.0, sum.col="st.hbo", sum.cutoff=1000)
+hboci <- identify_centers(TAZPloyNoNA, "st.hbo.den", cutoff.val=495, dist=1.0, sum.col="st.hbo", sum.cutoff.val=1000)
 hboci <- hboci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
 if (SAVE.INTERMEDIARIES) {
@@ -114,19 +113,19 @@ if (SAVE.INTERMEDIARIES) {
 # Explore LQ for use in determining center identification threshold 
 
   # identify hbw tazs of centers based on LQ
-  lq.hbwci <- identify_centers(TAZPloyNoNA, "lq.hbw", 1, dist=1.0, sum.col="tot.emp", sum.cutoff=0.1)
+  lq.hbwci <- identify_centers(TAZPloyNoNA, "lq.hbw", cutoff.val=1, dist=1.0, sum.col="tot.emp", sum.cutoff.val=0.1)
   lq.hbwci <- lq.hbwci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
   # identify hbs tazs of centers based on LQ
-  lq.hbsci <- identify_centers(TAZPloyNoNA, "lq.hbs", 1, dist=1.0, sum.col="st.hbs", sum.cutoff=0.1)
+  lq.hbsci <- identify_centers(TAZPloyNoNA, "lq.hbs", cutoff.val=1, dist=1.0, sum.col="st.hbs", sum.cutoff.val=0.1)
   lq.hbsci <- lq.hbsci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
   # identify hbr tazs of centers based on LQ
-  lq.hbrci <- identify_centers(TAZPloyNoNA, "lq.hbr", 1, dist=1.0, sum.col="st.hbr", sum.cutoff=0.1)
+  lq.hbrci <- identify_centers(TAZPloyNoNA, "lq.hbr", cutoff.val=1, dist=1.0, sum.col="st.hbr", sum.cutoff.val=0.1)
   lq.hbrci <- lq.hbrci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
   # identify hbo tazs of centers based on LQ
-  lq.hboci <- identify_centers(TAZPloyNoNA, "lq.hbo", 1, dist=1.0, sum.col="st.hbo", sum.cutoff=0.1)
+  lq.hboci <- identify_centers(TAZPloyNoNA, "lq.hbo", cutoff.val=1, dist=1.0, sum.col="st.hbo", sum.cutoff.val=0.1)
   lq.hboci <- lq.hboci %>% dplyr::select(TAZ, center.id=cluster.id) %>% arrange(TAZ)
 
   if (SAVE.INTERMEDIARIES) {
