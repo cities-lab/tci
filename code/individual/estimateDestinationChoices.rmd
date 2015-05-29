@@ -38,7 +38,7 @@ load(file.path(INPUT_DIR, "OHAS_PDX.RData"))
 # zonal data
 zonalEmpData <- read.csv(file.path(INPUT_DIR, "totemp_2010.csv"), header=T)
 # skim data
-tdist <- read.csv(file.path(INPUT_DIR, "mf61.csv"), header=F)
+tdist <- read.csv(file.path(INPUT_DIR, "TDM/mf61.csv"), header=F)
 # logsum data
 # hbw
 logsum.dir <- file.path(INPUT_DIR, 'TDM/logsums')
@@ -279,7 +279,7 @@ hbw.high.dc$mfR2 <- mfR2.null(hbw.high.dc, "tripid")
 hbw.high.dc$lratio <- lratio.null(hbw.high.dc, "tripid")
 hbw.dc$mfR2 <- mfR2.null(hbw.dc, "tripid")
 hbw.dc$lratio <- lratio.null(hbw.dc, "tripid")
-stargazer(hbw.low.dc, hbw.med.dc, hbw.high.dc, hbw.dc, type="text")
+stargazer(hbw.low.dc, hbw.med.dc, hbw.high.dc, hbw.dc, type="text", no.space=TRUE)
 # hbs, hbr, and hbo destination choice models
 hbs.dc$mfR2 <- mfR2.null(hbs.dc, "tripid")
 hbs.dc$lratio <- lratio.null(hbs.dc, "tripid")
@@ -287,7 +287,7 @@ hbr.dc$mfR2 <- mfR2.null(hbr.dc, "tripid")
 hbr.dc$lratio <- lratio.null(hbr.dc, "tripid")
 hbo.dc$mfR2 <- mfR2.null(hbo.dc, "tripid")
 hbo.dc$lratio <- lratio.null(hbo.dc, "tripid")
-stargazer(hbs.dc, hbr.dc, hbo.dc, type="text")
+stargazer(hbs.dc, hbr.dc, hbo.dc, type="text", no.space=TRUE)
 ```
 
 ### Predict destination choices
