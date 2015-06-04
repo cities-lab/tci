@@ -25,7 +25,7 @@ for (cutoff.p in c(.5, .6, .7, .8, .9,  .95) ){
     INTERMEDIATE_DIR <- paste("output/intermediate/cluster/cutoffs/",  cutoff.p, "sum.cutoff.p", sum.cutoff.p, sep="")
     dir.create(file.path(INTERMEDIATE_DIR), recursive = TRUE, showWarnings = FALSE)
     
-    source("code/cluster/identify_centers.R")
+    #source("code/cluster/identify_centers.R")
     source("code/cluster/compute_md_prob_trips.R")
     source("code/cluster/compute_tcost.R")
     source("code/cluster/aggregate_tcost.R")

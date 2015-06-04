@@ -57,7 +57,7 @@ identify_centers <- function(map.df,
                              sum.col=NULL, 
                              sum.cutoff.val=0,
                              sum.cutoff.percentile=0,
-                             cutoffs=NULL,
+                             cutoffs=NULL
                              ){
    data.df <- map.df@data
    if (!is.null(cutoffs)) {
@@ -68,7 +68,7 @@ identify_centers <- function(map.df,
    }
 
    cutoff.val2 <- quantile(data.df[,colname], cutoff.percentile)
-   cutoff <- max(cutoff.val, cutoff.val2)} 
+   cutoff <- max(cutoff.val, cutoff.val2)
    
    filter <- data.df[,colname] >= cutoff
    clusters.shp <- identify_clusters(map.df, filter=filter, dist=dist)
