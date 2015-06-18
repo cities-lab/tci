@@ -27,13 +27,13 @@ for (cm in Cm) {
     #:: Begin iteration by trip purpose 
     for (pr in Pr) { 
       
-      peakAggCost.ZiIcPr.name <- paste(cm, "peak", "AggCost.ZiIcPr", sep="")
-      load(file.path(OUTPUT_DIR, paste("aggcostCmTp/",peakAggCost.ZiIcPr.name, ".RData", sep="" )))
-      peakAggCost.ZiIcPr <- get(peakAggCost.ZiIcPr.name)
+      #peakAggCost.ZiIcPr.name <- paste(cm, "peak", "AggCost.ZiIcPr", sep="")
+      #load(file.path(OUTPUT_DIR, paste("aggcostCmTp/",peakAggCost.ZiIcPr.name, ".RData", sep="" )))
+      #peakAggCost.ZiIcPr <- get(peakAggCost.ZiIcPr.name)
 
-      offpeakAggCost.ZiIcPr.name <- paste(cm, "offpeak", "AggCost.ZiIcPr", sep="")
-      load(file.path(OUTPUT_DIR, paste("aggcostCmTp/",offpeakAggCost.ZiIcPr.name, ".RData", sep="" )))
-      offpeakAggCost.ZiIcPr <- get(offpeakAggCost.ZiIcPr.name)      
+      #offpeakAggCost.ZiIcPr.name <- paste(cm, "offpeak", "AggCost.ZiIcPr", sep="")
+      #load(file.path(OUTPUT_DIR, paste("aggcostCmTp/",offpeakAggCost.ZiIcPr.name, ".RData", sep="" )))
+      #offpeakAggCost.ZiIcPr <- get(offpeakAggCost.ZiIcPr.name)      
       # Begin iteration by income group
       for (ic in Ic) {
         
