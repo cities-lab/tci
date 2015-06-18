@@ -87,7 +87,7 @@ for (cm in Cm) {
     #by district & trip purpose
     ZiPrcost.name <- paste(cm, tp, 'AggCost.ZiPr', sep="")
     ZiPrcost <- get(ZiPrcost.name)
-    AggCost.DiPr <- array(0, dim=c(length(Di), length(Ic)), dimnames=c(list(Di), list(Ic)))
+    AggCost.DiPr <- array(0, dim=c(length(Di), length(Pr)), dimnames=c(list(Di), list(Pr)))
     for (pr in Pr) {
       AggCost.DiPr[, pr] <- aggregated.weighted.mean(ZiPrcost[, pr], TripProd.ZiPr[, pr], District.Zi)
     }
@@ -96,8 +96,5 @@ for (cm in Cm) {
   }
 }
 
-rm(list=c('zicost.name', 'dicost.name'))
-
-
 output.file <- file.path(OUTPUT_DIR, 'AggCost.Di.RData')
-save(list=setdiff(vars.ls, ls()), file=output.file)
+save(list=setdiff(vars.ls, c(ls(), c('zicost.name', 'dicost.name'))), file=output.file)
