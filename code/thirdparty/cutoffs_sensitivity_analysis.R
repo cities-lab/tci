@@ -7,11 +7,13 @@ var_list.0 <- ls()
 
 source("code/cluster/settings.R")
 source("code/cluster/def_functions.R")
-
+require(stargazer)
 # Load required functions
+all.df <- NULL
 
-for (cutoff.p in c(.5, .6, .7, .8, .9,  .95) ){
+ for (cutoff.p in c(.5, .6, .7, .8, .9,  .95) ){
   for (sum.cutoff.p in c(.25, .5, .75)) {
+
     cutoffs <- data.frame(hbw=c(cutoff.p, sum.cutoff.p), 
                           hbs=c(cutoff.p, sum.cutoff.p), 
                           hbr=c(cutoff.p, sum.cutoff.p), 
@@ -25,7 +27,7 @@ for (cutoff.p in c(.5, .6, .7, .8, .9,  .95) ){
     INTERMEDIATE_DIR <- paste("output/intermediate/cluster/cutoffs/",  cutoff.p, "sum.cutoff.p", sum.cutoff.p, sep="")
     dir.create(file.path(INTERMEDIATE_DIR), recursive = TRUE, showWarnings = FALSE)
     
-    #source("code/cluster/identify_centers.R")
+    source("code/cluster/identify_centers.R")
     source("code/cluster/compute_md_prob_trips.R")
     source("code/cluster/compute_tcost.R")
     source("code/cluster/aggregate_tcost.R")
@@ -36,11 +38,11 @@ for (cutoff.p in c(.5, .6, .7, .8, .9,  .95) ){
     df <- data.frame(minpeakAggCost.Zi, minoffpeakAggCost.Zi, minAggTpCost.Zi, 
                      weightedpeakAggCost.Zi, weightedoffpeakAggCost.Zi, weightedAggTpCost.Zi)
     
-    title.name <- paste("density.cutoff = ", dc, "and total.cutoff = ", tc, sep=" ")
+    title.name <- paste("density.cutoff = ", cutoff.p, "and total.cutoff = ", sum.cutoff.p, sep=" ")
     
     
     
-    ds <- stargazer(df, type = "text", title=title.name, 
+    data.summary <- stargazer(df, type = "text", title=title.name, 
                     summary.stat = c("n","min", "p25", "median", "mean","sd", "p75", "max"), digits=4)
     
     
@@ -51,17 +53,17 @@ for (cutoff.p in c(.5, .6, .7, .8, .9,  .95) ){
            weightedpeakAggCost.ZiIcPr, weightedpeakAggCost.Zi, weightedoffpeakAggCost.ZiIcPr, weightedoffpeakAggCost.Zi,
            minAggTpCost.Zi, weightedAggTpCost.Zi)
     
-    df <- data.frame(ds)
-    colnames(df) <- "Descriptive statistics"
+    data.summary.df <- data.frame(data.summary)
+    colnames(data.summary.df) <- "Descriptive statistics"
     
     # store all data.frame into one data.frame
     
     if(is.null(all.df)) {
-      all.df <- df
+      all.df <- data.summary.df
     }
     
     else{ 
-      all.df <- cbind(all.df, df)
+      all.df <- cbind(all.df, data.summary.df)
       
     }
     
@@ -71,7 +73,7 @@ for (cutoff.p in c(.5, .6, .7, .8, .9,  .95) ){
 
 
 OUTPUT_DIR <- 'output/cluster'
-output.file <- file.path(OUTPUT_DIR, 'all_df_putty.RData')
+output.file <- file.path(OUTPUT_DIR, 'all_df_puttyJune18_4pm.RData')
 save(all.df, file=output.file)
 
 

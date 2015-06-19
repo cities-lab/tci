@@ -69,20 +69,26 @@ identify_centers <- function(map.df,
 
    cutoff.val2 <- quantile(data.df[,colname], cutoff.percentile)
    cutoff <- max(cutoff.val, cutoff.val2)
-   
+   print(cutoff)
    filter <- data.df[,colname] >= cutoff
    clusters.shp <- identify_clusters(map.df, filter=filter, dist=dist)
    clusters.df <- clusters.shp@data
    summary(clusters.df$tot.emp)
    if (!is.null(sum.col)) {
-     sum.cutoff.val2 <- quantile(clusters.df[, sum.col], sum.cutoff.percentile)
-     sum.cutoff <- max(sum.cutoff.val, sum.cutoff.val2)
      
-     valid.clusters <- clusters.df %>%
+     clusters.df.sum <- clusters.df %>% 
        group_by(cluster.id) %>%
        summarise_(cluster.sum = paste("sum(", sum.col, ")", sep=""), cluster.count="n()") %>%
-       filter(cluster.id != 0 & cluster.count > 1 & cluster.sum >= sum.cutoff) %>%
+       filter(cluster.id!=0 & cluster.count > 1)  %>%
+       arrange(cluster.sum,cluster.count)
+     
+     sum.cutoff.val2 <- quantile(clusters.df.sum$cluster.sum, sum.cutoff.percentile)
+     sum.cutoff <- max(sum.cutoff.val, sum.cutoff.val2)
+     print(sum.cutoff)
+     valid.clusters <- clusters.df.sum %>%
+       filter(cluster.sum >= sum.cutoff) %>%
        dplyr::select(cluster.id)
+     
    }
    cluster.df <- inner_join(clusters.df, valid.clusters)
    cluster.df

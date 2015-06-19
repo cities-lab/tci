@@ -3,8 +3,8 @@
 ## results are appended to taz shapefile, then centers are identified
 ## based on clustering
 
-my.dir <- dirname(sys.frame(1)$ofile)
-source(file.path(my.dir,'def_functions.R'))
+#my.dir <- dirname(sys.frame(1)$ofile)
+#source(file.path(my.dir,'def_functions.R'))
 
 # load required package
 require(dplyr)
