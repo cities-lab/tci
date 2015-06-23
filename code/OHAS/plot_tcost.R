@@ -4,10 +4,10 @@
 source("code/thirdparty/openGraphSaveGraph.R")
 
 
-#Load mapping data and functions   
-#===============================
-
-
+# plot travel costs distribution by income group
+require(ggplot2)
+m <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level))
+m + geom_density(fill=NA, size=2) + labs(x="time costs ($)")
 
 # load required libraries
 library(maptools)
@@ -47,22 +47,6 @@ choropleth <- function(geo=TazPoly, data, DataIndex=TazIndex, palette="Blues", b
     text(7415412, 543378, "Reference Zone", pos=4)
   }
 }
-
-
-# make names for household incme groups, trip types and calculation method for plotting 
-
-IcNames <- c("Low Income", "Mid Income", "High Income")
-Ic <- c("lowInc", "midInc", "highInc")
-names(IcNames) <- Ic
-
-PrNames <- c("Work", "Shopping", "Recreation", "Other")
-Pr <- c("hbw", "hbs", "hbr", "hbo")
-names(PrNames) <- Pr
-
-CmNames <- c("mintcost", "avgtcost", "maxtcost")
-Cm <- c("min", "avg", "max")
-names(CmNames) <- Cm  
-
 
 for (cm in CmNames) {
   # Set up plot layout, map will go on top and histogram on bottom

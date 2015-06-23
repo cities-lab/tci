@@ -5,114 +5,106 @@ require(dplyr)
 require(tidyr)
 
 ## read OHAS activity, household, trip table
-load(file.path(INPUT_DIR, "OHAS_PDX.RData"))
+load(file.path(INPUT_DIR, "OHAS_Final.Rdata"))
 load(file.path(INPUT_DIR, "Zi.RData"))
 
-activity <- activity %>%
-  dplyr::select(sampn, perno, plano, thisaggact, tpurp, mode, trpdur) %>%
-  arrange(sampn, perno, plano) %>%
-  group_by(sampn, perno) %>%
-  mutate(maxAct=n(), actNo=1:n())
-
-linked <- activity %>%
-  # remove the Change-Of-Mode trips (tpurp==7) in the middle of the day and
-  # the first and last 'trip'
-  filter(tpurp!=7 & actNo!=1 & actNo != maxAct) %>%
-  arrange(sampn, perno, plano) %>%
-  group_by(sampn, perno) %>%
-  mutate(actNo=1:n(), maxAct=n(),
-         lastaggact=lag(thisaggact),
-         last_tpurp=lag(tpurp) # last tpurp
-  )
-
-# identify home-based trips
-#* hba (home-based all); all home-based trips
-#* hbw (home-based work); work, not including all other activities at work and work related activities
-#* hbs (home-based shopping); both routine and special shopping
-#* hbr (home-based recreation); both outdoor and indoor recreation
-#* hbo (home-based other); other home-based trips
-linked <- mutate(linked, 
-                 h2o = ifelse(actNo!=1&(lastaggact=='Home'|lastaggact=='WorkAtHome')&(thisaggact!='Home'&thisaggact!='WorkAtHome'), 1, 0),
-                 o2h = ifelse(actNo!=1&(lastaggact!='Home'&lastaggact!='WorkAtHome')&(thisaggact=='Home'|thisaggact=='WorkAtHome'), 1, 0),
-                 hba = ifelse(h2o==1|o2h==1, 1, 0))
-
-
-# identify trip purposes 
-linked <- mutate(linked, 
-                 hbw = ifelse((h2o==1&tpurp==3)|(o2h==1&last_tpurp==3), 1, 0),
-                 hbs = ifelse((h2o==1&(tpurp==13|tpurp==14))|(o2h==1&(last_tpurp==13|last_tpurp==14)), 1, 0),
-                 hbr = ifelse((h2o==1&(tpurp==20|tpurp==21))|(o2h==1&(last_tpurp==20|last_tpurp==21)), 1, 0),
-                 hbo = ifelse((h2o==1&(tpurp!=3&tpurp!=5&tpurp!=6&tpurp!=13&tpurp!=14&tpurp!=20&tpurp!=21))
-                              |(o2h==1&(last_tpurp!=3&tpurp!=5&tpurp!=6&last_tpurp!=13&last_tpurp!=14&last_tpurp!=20&last_tpurp!=21)), 1, 0))
-
-# use tidyr to create a character trip purpose column tpurp.ch
-linked <- linked %>% gather(tpurp.ch, flag, hbw:hbo) %>% filter(flag==1) %>% dplyr::select(-flag)
+# identify home-based trips in linkedTrip
+linked <- linkedTrip %>% 
+  select(SAMPN, PERNO, HHWGT, PERWGT, TripPurpose, MODE, TRPDUR, DistanceRoute) %>%
+  mutate(TripPurpose = tolower(TripPurpose),
+         TripPurpose=ifelse(TripPurpose=="hbshp", "hbs", TripPurpose),
+         TripPurpose=ifelse(TripPurpose=="hbrec", "hbr", TripPurpose)
+         #TripPurpose=ifelse(TripPurpose=="hbsch", "hbo", TripPurpose),                #HB School trips ==> HBO trips
+         #TripPurpose=ifelse(str_detect(TripPurpose, "^hb.*esc$"), "hbo", TripPurpose) #HB Escort trips ==> HBO trips
+         ) %>%
+  filter( TripPurpose %in% c("hbw", "hbs", "hbr", "hbo"))
 
 # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
-household$inc.level = cut(household$income,
-                          breaks=c(1, 3, 5, 9),
-                          labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
-                          include.lowest=T, right=F)
-#low <- (1,2); median <- (3,4); high <- 5:8
-hh <- dplyr::select(household, sampn, inc.level, htaz)
+hh$inc.level = cut(hh$INCOME,
+                   breaks=c(1, 3, 5, 9),
+                   labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
+                   include.lowest=T, right=F)
+# low <- (1,2); median <- (3,4); high <- 5:8
 
-linked <- left_join(linked, hh, by="sampn")
+hh.metro <- hh %>% filter(AREA==11) %>%
+  #dplyr::select(SAMPN, inc.level, HTAZ)
+  dplyr::select(SAMPN, inc.level, HXCORD, HYCORD) %>%
+  as.data.frame()
+
+require(maptools)
+require(rgeos)
+require(rgdal)
+home.spdf = SpatialPointsDataFrame(hh.metro[, c('HXCORD', 'HYCORD')], 
+                                   hh.metro, 
+                                   proj4string=CRS("+init=epsg:4326"))
+
+home.spdf2 <- spTransform(home.spdf, CRS("+init=epsg:2913"))
+
+# spatial join with TAZ to get HTAZ (HOME TAZ)
+TAZPoly <- readShapePoly(file.path(INPUT_DIR, "shp/TAZ.shp"),
+                         proj4string=CRS("+init=epsg:2913"))
+hh.metro$HTAZ <- over(home.spdf2, TAZPoly)$newtaz
+
+linked <- left_join(linked, hh.metro, by="SAMPN")
 
 if(SAVE.INTERMEDIARIES) {
   intm_file = file.path(INTERMEDIATE_DIR, "linked_trips.RData")
   save(linked, file=intm_file)
 }
 
-#append value of time by mode
-linked <- left_join(linked, VOT.by.mode, by="mode")
-linked <- mutate(linked, trip.tcost=VOT*trpdur/60)
-          
-#exclude rows with unknown htaz, tpurp.ch, or inc.level  
-#linked <- dplyr::filter(linked, !is.na(htaz), !is.na(tpurp.ch), !is.na(inc.level))
-linked <- na.omit(linked)
-
+#append unit travel cost by mode (and potentially by income)
+linked <- left_join(linked, unitcosts)
+linked <- linked %>% 
+  mutate(t.cost=VOT*TRPDUR/60,              #time costs
+         m.cost=mcpm*DistanceRoute/5280,    #monetary costs
+         tcost= t.cost + m.cost) %>%         #total costs
+  na.omit()                                #exclude rows with unknown HTAZ, tpurp, or inc.level  
+  
 # summarize trip-level travel time cost by taz, trip purpose, and income level
-tcost.htaz.tpurp.inc <- linked %>%
-  group_by(htaz, tpurp.ch, inc.level) %>%
+tcost.HTAZ.tpurp.inc <- linked %>%
+  group_by(HTAZ, TripPurpose, inc.level) %>%
   summarise(n = n(),
-            tcost.min=min(trip.tcost, na.rm=T),
-            tcost.avg=mean(trip.tcost, na.rm=T),
-            tcost.max=max(trip.tcost, na.rm=T),
-            tcost.sd=sd(trip.tcost, na.rm=T)
+            tcost.min=min(tcost, na.rm=T),
+            tcost.avg=mean(tcost, na.rm=T),
+            tcost.max=max(tcost, na.rm=T),
+            tcost.sd=sd(tcost, na.rm=T)
   ) 
 
-print(tcost.htaz.tpurp.inc)
+print(tcost.HTAZ.tpurp.inc)
 
 # calculate household-level travel time cost
 tcost.hh <- linked %>%
-  group_by(sampn) %>%
-  summarise(tcost=sum(trip.tcost))
+  group_by(SAMPN) %>%
+  summarise(tcost=sum(tcost),
+            HTAZ=first(HTAZ),             #retain HTAZ, inc.level and HHWGT
+            inc.level=first(inc.level),
+            HHWGT=first(HHWGT)
+            )
 
 # summarize household-level travel time cost by taz and/or income level
-tcost.hh <- left_join(tcost.hh, hh, by="sampn")
-tcost.htaz.inc <- tcost.hh %>%
-  group_by(htaz, inc.level) %>%
+tcost.HTAZ.inc <- tcost.hh %>%
+  group_by(HTAZ, inc.level) %>%
   summarise(n = n(),
             tcost.min=min(tcost, na.rm=T),
             tcost.avg=mean(tcost, na.rm=T),
             tcost.max=max(tcost, na.rm=T),
             tcost.sd=sd(tcost, na.rm=T)
   )
-print(tcost.htaz.inc)
+print(tcost.HTAZ.inc)
 
-tcost.htaz <- tcost.hh %>%
-  group_by(htaz) %>%
+tcost.HTAZ <- tcost.hh %>%
+  group_by(HTAZ) %>%
   summarise(n = n(),
             tcost.min=min(tcost, na.rm=T),
             tcost.avg=mean(tcost, na.rm=T),
             tcost.max=max(tcost, na.rm=T),
             tcost.sd=sd(tcost, na.rm=T)
   )
-print(tcost.htaz)
+print(tcost.HTAZ)
 
-# summarize household-level travel time cost by taz and/or income level
+# summarize household-level travel time cost by district
 load(file.path(INPUT_DIR, "districts.RData"))
-tcost.hh <- left_join(tcost.hh, districts, by=c("htaz"="zone"))
+tcost.hh <- left_join(tcost.hh, districts, by=c("HTAZ"="zone"))
 tcost.distr <- tcost.hh %>%
   dplyr::rename(district.id=ugb) %>%
   group_by(district.id) %>%
@@ -138,22 +130,22 @@ print(tcost.all)
 
 if(SAVE.INTERMEDIARIES) {
   intm_file = file.path(INTERMEDIATE_DIR, "tcost.RData")
-  save(tcost.htaz.tpurp.inc, tcost.hh, tcost.htaz.inc, tcost.htaz, tcost.distr, tcost.all, file=intm_file)
+  save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, file=intm_file)
 }
 
 #reshape data frame into arrays for plotting
 require(reshape2)
-#tcost by htaz, inc.level, and tpurp
-mintcost.ZiIcPr <- acast(tcost.htaz.tpurp.inc, htaz~inc.level~tpurp.ch, value.var="tcost.min")
-avgtcost.ZiIcPr <- acast(tcost.htaz.tpurp.inc, htaz~inc.level~tpurp.ch, value.var="tcost.avg")
-maxtcost.ZiIcPr <- acast(tcost.htaz.tpurp.inc, htaz~inc.level~tpurp.ch, value.var="tcost.max")
+#tcost by HTAZ, inc.level, and tpurp
+mintcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.min")
+avgtcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.avg")
+maxtcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.max")
 
-#tcost by htaz, inc.level
-minhhtcost.ZiIc <- acast(tcost.htaz.inc, htaz~inc.level, value.var="tcost.min")
-avghhtcost.ZiIc <- acast(tcost.htaz.inc, htaz~inc.level, value.var="tcost.avg")
-maxhhtcost.ZiIc <- acast(tcost.htaz.inc, htaz~inc.level, value.var="tcost.max")
+#tcost by HTAZ, inc.level
+minhhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.min")
+avghhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.avg")
+maxhhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.max")
 
-#tcost by htaz
-flat.tcost.htaz <- dplyr::select(tcost.htaz, htaz, min=tcost.min, avg=tcost.avg, max=tcost.max) %>%
-                   gather(func, value, -htaz)
-hhCost.ZiCm <- acast(flat.tcost.htaz, htaz~func, value.var="value") #could use spread
+#tcost by HTAZ
+flat.tcost.HTAZ <- dplyr::select(tcost.HTAZ, HTAZ, min=tcost.min, avg=tcost.avg, max=tcost.max) %>%
+                   gather(func, value, -HTAZ)
+hhCost.ZiCm <- acast(flat.tcost.HTAZ, HTAZ~func, value.var="value") #could use spread

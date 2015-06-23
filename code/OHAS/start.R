@@ -6,6 +6,7 @@ setwd("~/tci")
 
 var_list.0 <- ls()
 
+## settings
 INPUT_DIR <- 'data/'
 OUTPUT_DIR <- 'output/OHAS'
 dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
@@ -14,26 +15,27 @@ SAVE.INTERMEDIARIES <- TRUE
 INTERMEDIATE_DIR <- "output/intermediate/OHAS"
 dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
 
-# mode specific VOT
-hourly.wage <- 24.77
-mode <- c(1:10,97) #as being coded in OHAS
-#1  WALK
-#2  BIKE
-#3	AUTO / VAN/ TRUCK DRIVER
-#4	AUTO / VAN / TRUCK PASSENGER
-#5	BUS
-#6	RAIL
-#7	DIAL-A-RIDE/PARATRANSIT
-#8	TAXI
-#9	SCHOOL BUS
-#10	CARPOOL / VANPOOL
-#97	OTHER (SPECIFY)
-VOT <- c(0.5,0.5,0.5,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.5) * hourly.wage
-VOT.by.mode <- data.frame(mode, VOT)
+# make names for household income groups, trip purpose and calculation method
+IcNames <- c("Low Income", "Mid Income", "High Income")
+Ic <- c("lowInc", "midInc", "highInc")
+names(IcNames) <- Ic
+
+PrNames <- c("Work", "Shopping", "Recreation", "Other")
+Pr <- c("hbw", "hbs", "hbr", "hbo")
+names(PrNames) <- Pr
+
+CmNames <- c("mintcost", "avgtcost", "maxtcost")
+Cm <- c("min", "avg", "max")
+names(CmNames) <- Cm  
+
+##source common settings
+source("code/settings.R")
 
 ##start scripts
 source("code/OHAS/compute_tcost.R")
 source("code/OHAS/plot_tcost.R")
+
+##clean up
 var_list.1 <- ls()
 rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
 rm(var_list.1)
