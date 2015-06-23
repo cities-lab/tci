@@ -6,6 +6,9 @@ setwd("~/tci")
 
 var_list.0 <- ls()
 
+##source common settings, which may be overrided below
+source("code/settings.R")
+
 ## settings
 INPUT_DIR <- 'data/'
 OUTPUT_DIR <- 'output/OHAS'
@@ -27,9 +30,6 @@ names(PrNames) <- Pr
 CmNames <- c("mintcost", "avgtcost", "maxtcost")
 Cm <- c("min", "avg", "max")
 names(CmNames) <- Cm  
-
-##source common settings
-source("code/settings.R")
 
 ##start scripts
 source("code/OHAS/compute_tcost.R")
