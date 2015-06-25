@@ -12,9 +12,6 @@ tcost.trip <- tcost.trip %>%
          tcost= t.cost + m.cost) %>%        #total costs
   na.omit()                                 #exclude rows with unknown HTAZ, tpurp, or inc.level
 
-tcost.HTAZ.tpurp.inc <- compute_tcost(tcost.trip, by=c("HTAZ", "TripPurpose", "inc.level"), summarize_tcost)
-print(tcost.HTAZ.tpurp.inc)
-
 # calculate household-level travel cost
 tcost.hh <- tcost.trip %>%
   group_by(SAMPN) %>%
@@ -23,20 +20,24 @@ tcost.hh <- tcost.trip %>%
             inc.level=first(inc.level),
             HHWGT=first(HHWGT),
             district.id=first(district.id)
-            )
+  )
 
-# summarize household-level travel time cost by taz and/or income level
+# summarize trip-level tcost
+tcost.HTAZ.tpurp.inc <- compute_tcost(tcost.trip, by=c("HTAZ", "TripPurpose", "inc.level"), summarize_tcost)
+print(tcost.HTAZ.tpurp.inc)
+
+# summarize household-level travel cost by taz and/or income level
 tcost.HTAZ.inc <- compute_tcost(tcost.hh, by=c("HTAZ", "inc.level"), summarize_tcost, w="HHWGT")
 print(tcost.HTAZ.inc)
 
 tcost.HTAZ <- compute_tcost(tcost.hh, by=c("HTAZ"), summarize_tcost, w="HHWGT")
 print(tcost.HTAZ)
 
-# summarize household-level travel time cost by district
+# summarize household-level travel cost by district
 tcost.distr <- compute_tcost(tcost.hh, by="district.id", summarize_tcost, w="HHWGT")
 print(tcost.distr)
 
-# summarize overall household-level travel time cost  
+# summarize overall household-level travel cost  
 tcost.all <- compute_tcost(tcost.hh %>% mutate(all=1), by=c("all"), summarize_tcost, w="HHWGT")
 print(tcost.all)
 
