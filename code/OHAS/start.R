@@ -31,7 +31,15 @@ CmNames <- c("mintcost", "avgtcost", "maxtcost")
 Cm <- c("min", "avg", "max")
 names(CmNames) <- Cm  
 
+## read OHAS hh (household) and linkedTrip table
+load(file.path(INPUT_DIR, "OHAS_Final.Rdata"))
+load(file.path(INPUT_DIR, "districts.RData"))
+TAZ.shpfile <- file.path(INPUT_DIR, "shp/TAZ.shp")
+TAZ.id_name <- "newtaz"
+
 ##start scripts
+source("code/OHAS/functions.R")
+source("code/OHAS/prepare_data.R")
 source("code/OHAS/compute_tcost.R")
 source("code/OHAS/plot_tcost.R")
 

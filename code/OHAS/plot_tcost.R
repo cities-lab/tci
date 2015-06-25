@@ -3,11 +3,15 @@
 # load saveGraph function
 source("code/thirdparty/openGraphSaveGraph.R")
 
+#load(file.path(OUTPUT_DIR, "tcost.RData"))
 
 # plot travel costs distribution by income group
 require(ggplot2)
+output_file = file.path(OUTPUT_DIR, "density_hhtcost_by_inc")
+saveGraph(filename=output_file, type="pdf")  
+
 m <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level))
-m + geom_density(fill=NA, size=2) + labs(x="time costs ($)")
+m + geom_density(fill=NA, size=2) + labs(x="travel costs")
 
 # load required libraries
 library(maptools)
