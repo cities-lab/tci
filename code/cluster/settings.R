@@ -41,3 +41,6 @@ modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, 
 
 cutoffs <- data.frame(hbw=c(2500, 1000), hbs=c(102, 1000), hbr=c(1763, 1000), hbo=c(495, 1000))
 row.names(cutoffs)=c("cutoff.val", 'sum.cutoff.val')
+## alternatively set percentile cutoffs
+#cutoffs <- data.frame(hbw=c(.50, .50), hbs=c(.50, .50), hbr=c(.50, .50), hbo=c(.50, .50))
+#row.names(cutoffs) <- c("cutoff.percentile", 'sum.cutoff.percentile')
