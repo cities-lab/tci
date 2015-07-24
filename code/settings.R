@@ -7,7 +7,12 @@
 
 # this configuration converts travel costs to $
 hourly.wage <- 24.77
-MODE <- c(1:10,97) #as being coded in OHAS
+MODE <- c(1:10,97, 21, 22, 23, 24, 25) # 1:10 and 97 are coded in OHAS; 1:2 and 21:25 are coded for TDM
+MdNames <- c("walk", "bike", "auto / van/ truck driver", "auto / van / truck passenger", "bus", "rail", "dial-a-ride/paratransit", "taxi",  
+             "school bus", "carpool / vanpool", "other (specify)", "driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus")
+names(MODE) <- MdNames
+
+
 #1  WALK
 #2  BIKE
 #3	AUTO / VAN/ TRUCK DRIVER
@@ -19,18 +24,19 @@ MODE <- c(1:10,97) #as being coded in OHAS
 #9	SCHOOL BUS
 #10	CARPOOL / VANPOOL
 #97	OTHER (SPECIFY)
-VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5) * hourly.wage
+VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35) * hourly.wage
+
 
 # distance-based monetary cost per mile
 #http://www.portlandfacts.com/cost_of_transit_&_cars.html
 #http://portlandtaxi.net/rates.php
-#mcpm <- c(0,   0,   59.2,59.2, 101.0, 138.0, 0,  260.0,  0,  0,  29.6) / 100
+#mcpm <- c(0,   0,   59.2,59.2, 101.0, 138.0, 0,  260.0,  0,  0,  29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / 100
 mcpm <- rep(0, length(MODE))
 
 ## Alternatively the below configuration converts travel costs to time (minutes or hours)
 #MODE <- c(1:10,97) #as being coded in OHAS
 #VOT <- rep(1, length(MODE))
 ## time-equivalent monetary cost per mile, which can be specific to income group
-#mcpm <- c(0,   0,   59.2,59.2, 101.0, 138.0, 0,  260.0,  0,  0,  29.6) / (100 * hourly.wage)
+#mcpm <- c(0,   0,   59.2,59.2, 101.0, 138.0, 0,  260.0,  0,  0,  29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / (100 * hourly.wage)
 
 unitcosts <- data.frame(MODE, VOT, mcpm)

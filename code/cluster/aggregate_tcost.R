@@ -46,14 +46,14 @@ for (cm in Cm) {
         # calculate row sum of trips trip array 
         #TotTripsArraySum <- rowSums(TotTripsArray, na.rm=TRUE)
         
-        #get travel time cost attay
-        TimeCostArray.name <- paste(pr, ic, tp, "TimeCost.ZiMdCm", sep="")
-        if (!in.memory(c(TimeCostArray.name)))
-          load(file.path(INTERMEDIATE_DIR, paste("costs/", TimeCostArray.name, ".RData", sep="")))
-        TimeCostArray<- get(TimeCostArray.name)
+        #get full travel cost attay
+        FullCostArray.name <- paste(pr, ic, tp, "FullCost.ZiMdCm", sep="")
+        if (!in.memory(c(FullCostArray.name)))
+          load(file.path(INTERMEDIATE_DIR, paste("costs/", FullCostArray.name, ".RData", sep="")))
+        FullCostArray<- get(FullCostArray.name)
         
         # aggregate cost weighted by trips
-        AggCost.ziicpr <- nd.weighted.mean(TimeCostArray[, , cm], TotTripsArray, dims=1)
+        AggCost.ziicpr <- nd.weighted.mean(FullCostArray[, , cm], TotTripsArray, dims=1)
 
         #AggCost.name <- paste(cm, pr, ic, tp,"AggCost.Zi", sep="")
         #assign(AggCost.name, AggCost.Zi)
@@ -65,7 +65,7 @@ for (cm in Cm) {
         # combine cost into array
         AggCost.ZiIcPr[,ic,pr] <- AggCost.ziicpr;
         
-        rm(AggCost.ziicpr, TotTripsArray, TimeCostArray)
+        rm(AggCost.ziicpr, TotTripsArray, FullCostArray)
         
         
       } # End loop by income group 
@@ -144,7 +144,7 @@ for (cm in Cm) {
     # Begin iteration by income group
     for (ic in Ic) {
       
-      TimeCostBothTp.ZiMdCm <- array(0, dim = c(length(Zi), length(Md), length(Cm)), dimnames=list(Zi,Md,Cm))
+      FullCostBothTp.ZiMdCm <- array(0, dim = c(length(Zi), length(Md), length(Cm)), dimnames=list(Zi,Md,Cm))
       
       #get trips array 
       TotTripsArray.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
@@ -156,21 +156,21 @@ for (cm in Cm) {
       #TotTripsArraySum <- rowSums(TotTripsArray, na.rm=TRUE)
       
       #get peak travel time cost array
-      peakTimeCostArray.name <- paste(pr, ic, "peak", "TimeCost.ZiMdCm", sep="")
-      if (!in.memory(c(peakTimeCostArray.name)))
-        load(file.path(INTERMEDIATE_DIR, paste("costs/", peakTimeCostArray.name, ".RData", sep="")))
-      peakTimeCostArray<- get(peakTimeCostArray.name)
+      peakFullCostArray.name <- paste(pr, ic, "peak", "FullCost.ZiMdCm", sep="")
+      if (!in.memory(c(peakFullCostArray.name)))
+        load(file.path(INTERMEDIATE_DIR, paste("costs/", peakFullCostArray.name, ".RData", sep="")))
+      peakFullCostArray<- get(peakFullCostArray.name)
       
       #get offpeak travel time cost array
-      offpeakTimeCostArray.name <- paste(pr, ic, "offpeak", "TimeCost.ZiMdCm", sep="")
-      if (!in.memory(c(offpeakTimeCostArray.name)))
-        load(file.path(INTERMEDIATE_DIR, paste("costs/", offpeakTimeCostArray.name, ".RData", sep="")))
-      offpeakTimeCostArray<- get(offpeakTimeCostArray.name)
+      offpeakFullCostArray.name <- paste(pr, ic, "offpeak", "FullCost.ZiMdCm", sep="")
+      if (!in.memory(c(offpeakFullCostArray.name)))
+        load(file.path(INTERMEDIATE_DIR, paste("costs/", offpeakFullCostArray.name, ".RData", sep="")))
+      offpeakFullCostArray<- get(offpeakFullCostArray.name)
       
       # Begin iteration by mode
       for (md in Md) {
         
-        TimeCostBothTp.ZiMdCm[,md,] <- peakTimeCostArray[,md,]*PeakFactor.PrMd[pr,md] + offpeakTimeCostArray[,md,]*(1-PeakFactor.PrMd[pr,md])
+        FullCostBothTp.ZiMdCm[,md,] <- peakFullCostArray[,md,]*PeakFactor.PrMd[pr,md] + offpeakFullCostArray[,md,]*(1-PeakFactor.PrMd[pr,md])
         
         # End iteration by mode
       }
@@ -178,20 +178,20 @@ for (cm in Cm) {
 
       
       # save travel time cost weighted by time of day 
-      TimeCostBothTp.ZiMdCm.name <- paste(pr, ic, "TimeCostBothTp.ZiMdCm", sep="")
-      assign(TimeCostBothTp.ZiMdCm.name, TimeCostBothTp.ZiMdCm)
+      FullCostBothTp.ZiMdCm.name <- paste(pr, ic, "FullCostBothTp.ZiMdCm", sep="")
+      assign(FullCostBothTp.ZiMdCm.name, FullCostBothTp.ZiMdCm)
       
       if (SAVE.INTERMEDIARIES) {
         intm.path <- file.path(INTERMEDIATE_DIR, 'costs/')
         dir.create(intm.path, showWarnings = FALSE)
-        intm.file <- file.path(intm.path, paste(TimeCostBothTp.ZiMdCm.name, ".RData", sep=""))
-        save(list=TimeCostBothTp.ZiMdCm.name, file=intm.file)
+        intm.file <- file.path(intm.path, paste(FullCostBothTp.ZiMdCm.name, ".RData", sep=""))
+        save(list=FullCostBothTp.ZiMdCm.name, file=intm.file)
       }
       
       
       # aggregate cost weighted by modes
         
-      AggTpCost.Zi<- nd.weighted.mean(TimeCostBothTp.ZiMdCm[, , cm], TotTripsArray, dims=1 )
+      AggTpCost.Zi<- nd.weighted.mean(FullCostBothTp.ZiMdCm[, , cm], TotTripsArray, dims=1 )
 
       
       #AggCost.name <- paste(cm, pr, ic, tp,"AggCost.Zi", sep="")

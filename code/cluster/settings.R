@@ -36,8 +36,8 @@ Tp.factors <- data.frame(pr=c(),
 Cm <- c("min", "weighted")
 
 # define mode cost transformation coefficient (% of hourly wage)
-hourly.wage <- 24.77
-modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, parkAndRideBus=0.35, bike=0.5, walk=0.5)
+#hourly.wage <- 24.77
+#modecosttrans.Md <- c(driveAlone = 0.5, drivePass=0.5, pass=0.35, busWalk=0.35, parkAndRideBus=0.35, bike=0.5, walk=0.5)
 
 cutoffs <- data.frame(hbw=c(2500, 1000), hbs=c(102, 1000), hbr=c(1763, 1000), hbo=c(495, 1000))
 row.names(cutoffs)=c("cutoff.val", 'sum.cutoff.val')
