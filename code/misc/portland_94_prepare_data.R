@@ -1,5 +1,5 @@
 # This script organizes Portland_94 data
-# There are two parts: part1 loads data file; part2 generate linedk trips
+# There are three parts: part1 loads data file; part2 generate linedk trips; part3 calculate trip cost 
 
 # Part1 load data files 
   # load activity 1 data 
@@ -263,5 +263,55 @@
     # identify trip purpose
     linkedTrip <- identifyTripPurpose(act_out)
     
+    # Calculate TRPDUR
+    linkedTrip$TRPDUR <- linkedTrip$TRIPHRS*60 + linkedTrip$TRIPMIN
+
+    
     # save results
     save(act1, act2, hh, per, rhh, rper, veh, linkedTrip, file="data/portland_94.RData")
+
+# Part3    
+  # calculate trip cost 
+    require(dplyr)
+    require(tidyr)
+    
+    # prepare data -> a data.frame for linked trips with columns
+    # SAMPN, HTAZ, inc.level, TripPurpose, MODE, tripdur.hours
+    # Lack HHWGT, trip route distance
+    tcost.trip <- linkedTrip %>% 
+      select(SAMPN, PERNO, TripPurpose, MODE, TRPDUR, Distance) %>%
+      mutate(TripPurpose = tolower(TripPurpose),
+             TripPurpose=ifelse(TripPurpose=="hbshp", "hbs", TripPurpose),
+             TripPurpose=ifelse(TripPurpose=="hbrec", "hbr", TripPurpose)
+             #TripPurpose=ifelse(TripPurpose=="hbsch", "hbo", TripPurpose),                #HB School trips ==> HBO trips
+             #TripPurpose=ifelse(str_detect(TripPurpose, "^hb.*esc$"), "hbo", TripPurpose) #HB Escort trips ==> HBO trips
+      ) %>%
+      filter( TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
+      mutate(tripdur.hours=TRPDUR/60,
+             trip.strightlinedist.miles=Distance/5280
+      )
+    
+    # reclassify income categories (low income: $0- $19,999; mid income: $20,000 - $34,999; high income: $35,000 or more; NA: refused)
+    # low <- (1,4); median <- (5,7); high <- 8:13
+    # lack household x, y coordinate, HTAZ
+    hh.metro <- hh %>% 
+      mutate(inc.level=cut(INCOME,
+                           breaks=c(1, 5, 8, 13.5),
+                           labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
+                           include.lowest=T, right=F)
+             ) 
+      #%>%
+      #dplyr::select(SAMPN, inc.level, HXCORD, HYCORD) %>%
+      #rename(x=HXCORD, y=HYCORD) %>%
+      #as.data.frame() 
+    
+     # hh.metro$HTAZ <- get_htaz(hh.metro, TAZ.shpfile, TAZ.id_name)
+    
+    tcost.trip <- tcost.trip %>%
+      left_join(hh.metro, by="SAMPN") 
+      #%>%
+      #left_join(districts, by=c("HTAZ"="zone")) %>%
+      #dplyr::rename(district.id=ugb)
+    
+    
+    
