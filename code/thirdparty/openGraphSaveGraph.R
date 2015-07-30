@@ -11,6 +11,7 @@ openGraph = function( width=7 , height=7 , mag=1.0 , ... ) {
 }
 
 saveGraph = function( filename="saveGraphOutput" , type="pdf" , ... ) {
+  if(is.null(dev.list())) dev.new()
   if ( .Platform$OS.type != "windows" ) { # Mac OS, Linux
     if ( any( type == c("png","jpeg","jpg","tiff","bmp")) ) {
       sptype = type
