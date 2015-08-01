@@ -5,6 +5,7 @@
 setwd("~/tci")
 var_list.0 <- ls()
 
+source("code/settings.R")  #source project level settings first
 source("code/cluster/settings.R")
 
 # Load required functions

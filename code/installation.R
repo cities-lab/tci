@@ -1,8 +1,11 @@
 
-install.pakcages(c("dplyr", "tidyr", "reshape2",
-                   "maptools", "RColorBrewer",
-                   "rgeos", "rgdal", 
-                   "mlogit", 
+install.packages(c("dplyr",
+                   "ggmap", "ggplot2",
+                   "maptools", "mlogit", 
+                   "pscl",
+                   "RColorBrewer", "reshape2", "rgdal", "rgeos", 
+                   "stargazer",
+                   "tidyr"
                    ))
 
 #install dependencies "rhdf5" package for omx.r
