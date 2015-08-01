@@ -24,16 +24,19 @@ hh.metro <- hh %>% filter(AREA==11) %>%
                        labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
                        include.lowest=T, right=F
   )) %>%
-  dplyr::select(SAMPN, inc.level, HXCORD, HYCORD) %>%
+  dplyr::select(SAMPN, INCOME, inc.level, HHSIZ, HXCORD, HYCORD) %>%
   rename(x=HXCORD, y=HYCORD) %>%
   as.data.frame() 
 
-hh.metro$HTAZ <- get_htaz(hh.metro, TAZ.shpfile, TAZ.id_name)
+hh.metro$HTAZ <- get_xy_polyid(hh.metro, TAZ.shpfile, TAZ.id_name)
+districts.shpfile <- file.path(INPUT_DIR, "shp/districts.shp")
+districts.id_name <- "DISTRICT"
+hh.metro$district.id <- get_xy_polyid(hh.metro, districts.shpfile, districts.id_name)
 
 tcost.trip <- tcost.trip %>%
-  left_join(hh.metro, by="SAMPN") %>%
-  left_join(districts, by=c("HTAZ"="zone")) %>%
-  dplyr::rename(district.id=ugb)
+  left_join(hh.metro, by="SAMPN") #%>%
+  #left_join(districts, by=c("HTAZ"="zone")) %>%
+  #dplyr::rename(district.id=ugb)
 
 if(SAVE.INTERMEDIARIES) {
   intm_file = file.path(INTERMEDIATE_DIR, "linkedTrip.RData")

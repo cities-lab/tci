@@ -17,14 +17,33 @@ tcost.hh <- tcost.trip %>%
   group_by(SAMPN) %>%
   summarise(tcost=sum(tcost),
             HTAZ=first(HTAZ),             #retain HTAZ, inc.level and HHWGT
+            HHSIZ=first(HHSIZ),
+            inc.level=first(inc.level),
+            INCOME=first(INCOME),
+            HHWGT=first(HHWGT),
+            district.id=first(district.id)
+  )
+
+tcost.hh.tpurp <- tcost.trip %>%
+  group_by(SAMPN, TripPurpose) %>%
+  summarise(tcost=sum(tcost),
+            HTAZ=first(HTAZ),
+            HHSIZ=first(HHSIZ),
             inc.level=first(inc.level),
             HHWGT=first(HHWGT),
             district.id=first(district.id)
   )
 
+
 # summarize trip-level tcost
-tcost.HTAZ.tpurp.inc <- compute_tcost(tcost.trip, by=c("HTAZ", "TripPurpose", "inc.level"), summarize_tcost)
+tcost.HTAZ.tpurp.inc <- compute_tcost(tcost.hh.tpurp, by=c("HTAZ", "TripPurpose", "inc.level"), summarize_tcost)
 print(tcost.HTAZ.tpurp.inc)
+
+tcost.tpurp.inc <- compute_tcost(tcost.hh.tpurp, by=c("TripPurpose", "inc.level"), summarize_tcost, w="HHWGT")
+print(tcost.tpurp.inc)
+
+tcost.tpurp <- compute_tcost(tcost.hh.tpurp, by="TripPurpose", summarize_tcost, w="HHWGT")
+print(tcost.tpurp)
 
 # summarize household-level travel cost by taz and/or income level
 tcost.HTAZ.inc <- compute_tcost(tcost.hh, by=c("HTAZ", "inc.level"), summarize_tcost, w="HHWGT")
@@ -32,6 +51,20 @@ print(tcost.HTAZ.inc)
 
 tcost.HTAZ <- compute_tcost(tcost.hh, by=c("HTAZ"), summarize_tcost, w="HHWGT")
 print(tcost.HTAZ)
+
+tcost.inc <- compute_tcost(tcost.hh, by="inc.level", summarize_tcost, w="HHWGT")
+print(tcost.inc)
+
+
+# summarize household-level travel cost by district, TripPurpose and income level
+tcost.distr.tpurp.inc <- compute_tcost(tcost.hh.tpurp, by=c("district.id", "TripPurpose", "inc.level"), summarize_tcost, w="HHWGT")
+print(tcost.distr.tpurp.inc)
+
+tcost.distr.tpurp <- compute_tcost(tcost.hh.tpurp, by=c("district.id", "TripPurpose"), summarize_tcost, w="HHWGT")
+print(tcost.distr.tpurp)
+
+tcost.distr.inc <- compute_tcost(tcost.hh, by=c("district.id", "inc.level"), summarize_tcost, w="HHWGT")
+print(tcost.distr.inc)
 
 # summarize household-level travel cost by district
 tcost.distr <- compute_tcost(tcost.hh, by="district.id", summarize_tcost, w="HHWGT")

@@ -4,7 +4,7 @@ install.packages(c("dplyr",
                    "maptools", "mlogit", 
                    "pscl",
                    "RColorBrewer", "reshape2", "rgdal", "rgeos", 
-                   "stargazer",
+                   "SDMTools", "stargazer",
                    "tidyr"
                    ))
 

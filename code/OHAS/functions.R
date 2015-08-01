@@ -4,14 +4,14 @@ require(rgdal)
 require(dplyr)
 require(lazyeval)
 
-# overlay X,Y coordinate with a TAZ shapefile (shpfile) to get TAZ id (id_name)
-get_htaz <- function(xy.df, shpfile, id_name) {
+# overlay x,y coordinate (longitude, lattitude) with a polygon shapefile (shpfile) to get polygon id (id_name)
+get_xy_polyid <- function(xy.df, shpfile, id_name) {
   spdf = SpatialPointsDataFrame(xy.df[, c('x', 'y')], 
                                 xy.df, 
                                 proj4string=CRS("+init=epsg:4326"))
   spdf.proj <- spTransform(spdf, CRS("+init=epsg:2913"))
   
-  # spatial join with TAZ to get HTAZ (HOME TAZ)
+  # spatial join with the shp polygon to get polygon id (id_name)
   TAZPoly <- readShapePoly(shpfile,
                            proj4string=CRS("+init=epsg:2913"))
   id <- over(spdf.proj, TAZPoly)[, id_name]
@@ -28,11 +28,15 @@ summarize_tcost <- function(.data, w=NULL) {
               )
   
   if (!is.null(w)) {
-    tcost.wavg <- summarize_(.data,
+    require(SDMTools)
+    tcost.wt <- summarize_(.data,
                 #mutate_(tcost.avg=~weighted.mean(tcost, w, na.rm=T))
-                  tcost.wavg=interp(~weighted.mean(tcost, w, na.rm=TRUE), 
-                                   tcost=as.name("tcost"), w=as.name(w)))
-    results <- left_join(results, tcost.wavg)
+                  tcost.wtavg=interp(~wt.mean(tcost, w), 
+                                   tcost=as.name("tcost"), w=as.name(w)),
+                  tcost.wtsd=interp(~wt.sd(tcost, w), 
+                                  tcost=as.name("tcost"), w=as.name(w))
+                )
+    results <- left_join(results, tcost.wt)
   }
   results
 }
