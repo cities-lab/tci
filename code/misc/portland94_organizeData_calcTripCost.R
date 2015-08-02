@@ -102,12 +102,10 @@
     #distance function - lat/long
     distance = function(x1,x2,y1,y2) { 
       
-      dLat = (y2-y1)/180*pi
-      dLon = (x2-x1)/180*pi
-      a = sin(dLat/2) * sin(dLat/2) + cos(y1/180*pi) * cos(y2/180*pi) * sin(dLon/2) * sin(dLon/2)
-      c = 2 * atan2(sqrt(a), sqrt(1-a))
-      d = 3958.82 * c; #(earth radius in miles) * c
-      return(d * 5280) #distance feet
+      xdiff = abs(x1-x2)
+      ydiff = abs(y1-y2)
+      d = sqrt(xdiff^2 + ydiff^2)
+      return(d) #distance feet
     }
     
     # identify trip purpose 
@@ -270,16 +268,24 @@
     # save results
     save(act1, act2, hh, per, rhh, rper, veh, linkedTrip, file="data/portland_94.RData")
 
-# Part3    
+# Part3 calculate travel cost 
+    load("data/portland_94.RData")
+    
   # calculate trip cost 
+  # Load required packages
+    require(maptools)
+    require(rgeos)
+    require(rgdal)
     require(dplyr)
-    require(tidyr)
     
     # prepare data -> a data.frame for linked trips with columns
     # SAMPN, HTAZ, inc.level, TripPurpose, MODE, tripdur.hours
-    # Lack HHWGT, trip route distance
+    # Lack trip route distance
+    # Hypothesis wll HHWGT is 1 
+    linkedTrip$HHWGT <- 1
+    
     tcost.trip <- linkedTrip %>% 
-      select(SAMPN, PERNO, TripPurpose, MODE, TRPDUR, Distance) %>%
+      select(SAMPN, HHWGT, PERNO, TripPurpose, MODE, TRPDUR, Distance) %>%
       mutate(TripPurpose = tolower(TripPurpose),
              TripPurpose=ifelse(TripPurpose=="hbshp", "hbs", TripPurpose),
              TripPurpose=ifelse(TripPurpose=="hbrec", "hbr", TripPurpose)
@@ -288,30 +294,163 @@
       ) %>%
       filter( TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
       mutate(tripdur.hours=TRPDUR/60,
-             trip.strightlinedist.miles=Distance/5280
+             tripdist.miles=Distance/5280  # This is straight line distance
       )
     
     # reclassify income categories (low income: $0- $19,999; mid income: $20,000 - $34,999; high income: $35,000 or more; NA: refused)
     # low <- (1,4); median <- (5,7); high <- 8:13
-    # lack household x, y coordinate, HTAZ
+
+    
+    # Get household TAZ
+    TAZPoly1994 <- readShapePoly("data/taz1260/taz1260.shp", proj4string=CRS("+init=epsg:2913"))
+    hhxy.df <- read.csv("data/portland_94/1994 HOUSEHOLD_xy.csv")
+    hhxy.df <- hhxy.df[which(!is.na(hhxy.df$hx)),]
+    
+    spdf = SpatialPointsDataFrame(hhxy.df[, c('hx', 'hy')], 
+                                  hhxy.df, 
+                                  proj4string=CRS("+init=epsg:2913"))
+    
+    hhxy.df$TAZ <- over(spdf, TAZPoly1994)[,"TAZ"]
+    
+    
     hh.metro <- hh %>% 
       mutate(inc.level=cut(INCOME,
                            breaks=c(1, 5, 8, 13.5),
                            labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
                            include.lowest=T, right=F)
-             ) 
-      #%>%
-      #dplyr::select(SAMPN, inc.level, HXCORD, HYCORD) %>%
-      #rename(x=HXCORD, y=HYCORD) %>%
-      #as.data.frame() 
+             ) %>%
+      left_join(hhxy.df, by=c("SAMPN"="SAMPNO")) %>%
+      dplyr::select(SAMPN, inc.level, hx, hy, TAZ) %>%
+      as.data.frame() 
     
-     # hh.metro$HTAZ <- get_htaz(hh.metro, TAZ.shpfile, TAZ.id_name)
-    
+
+    load("data/districts1994.RData")
     tcost.trip <- tcost.trip %>%
-      left_join(hh.metro, by="SAMPN") 
-      #%>%
-      #left_join(districts, by=c("HTAZ"="zone")) %>%
-      #dplyr::rename(district.id=ugb)
+                  left_join(hh.metro, by="SAMPN") %>%
+                  left_join(districts1994, by="TAZ") %>%
+                  dplyr::rename(district.id=DISTRICT, HTAZ=TAZ)
+    
+    head(tcost.trip)
+    
+# Define unit cost 
+    # settings that are common to all methods
+    
+    # unit travel costs by mode
+    # unit travel costs can be differentiated by income 
+    # by adding an "inc.level" column to the data.frame
+    # with value "lowInc", "midInc", "highInc"
+    
+    # this configuration converts travel costs to $
+    hourly.wage <- 24.77
+    MODE <- c(1:8) # 1:10 and 97 are coded in OHAS; 1:2 and 21:25 are coded for TDM
+    MdNames <- c("other", "walk", "bicycle", "schol bus", "public bus", "MAX", "personal vehicle", "non-personal vehicle") 
+    
+    names(MODE) <- MdNames
     
     
+    VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
+    
+    
+    # distance-based monetary cost per mile
+    #http://www.portlandfacts.com/cost_of_transit_&_cars.html
+    #http://portlandtaxi.net/rates.php
+    #mcpm <- c(29.6, 0, 0, 101.0, 101.0, 138.0, 0, 59.2, 59.2) / 100
+    mcpm <- rep(0, length(MODE))
+    
+    ## time-equivalent monetary cost per mile, which can be specific to income group
+    #mcpm <- c(29.6, 0, 0, 101.0, 101.0, 138.0, 0, 59.2, 59.2) / (100 * hourly.wage)
+    
+    unitcosts <- data.frame(MODE, VOT, mcpm)
+
+  # Define functions to calculate tcost 
+      # summarise tcost with default summary quantities
+      summarize_tcost <- function(.data, w=NULL) {
+        results <- summarize(.data, n = n(),
+                             tcost.min=min(tcost, na.rm=T),
+                             tcost.avg=mean(tcost, na.rm=T),
+                             tcost.max=max(tcost, na.rm=T),
+                             tcost.sd=sd(tcost, na.rm=T)
+        )
+        
+        if (!is.null(w)) {
+          tcost.wavg <- summarize_(.data,
+                                   #mutate_(tcost.avg=~weighted.mean(tcost, w, na.rm=T))
+                                   tcost.wavg=interp(~weighted.mean(tcost, w, na.rm=TRUE), 
+                                                     tcost=as.name("tcost"), w=as.name(w)))
+          results <- left_join(results, tcost.wavg)
+        }
+        results
+      }
+      
+      # compute tcosts by composing grouping and summarizing functions
+      compute_tcost <- function(df, by, func, w=NULL) {
+        df %>%
+          group_by_(.dots=by) %>%
+          func(w=w)
+      }
+      
+  # Calculate travel cost 
+      # Load required packages
+      require(dplyr)
+      require(tidyr)
+      require(reshape2)
+      
+      tcost.trip <- tcost.trip %>% 
+        left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)
+        mutate(t.cost=VOT*tripdur.hours,            #time costs
+               m.cost=mcpm*tripdist.miles,          #monetary costs
+               tcost= t.cost + m.cost) %>%        #total costs
+        na.omit()                                 #exclude rows with unknown HTAZ, tpurp, or inc.level
+      
+      # calculate household-level travel cost
+      tcost.hh <- tcost.trip %>%
+        group_by(SAMPN) %>%
+        summarise(tcost=sum(tcost),
+                  HTAZ=first(HTAZ),             #retain HTAZ, inc.level and HHWGT
+                  inc.level=first(inc.level),
+                  HHWGT=first(HHWGT),
+                  district.id=first(district.id)
+        )
+      
+      # summarize trip-level tcost
+      tcost.HTAZ.tpurp.inc <- compute_tcost(tcost.trip, by=c("HTAZ", "TripPurpose", "inc.level"), summarize_tcost)
+      print(tcost.HTAZ.tpurp.inc)
+      
+      # summarize household-level travel cost by taz and/or income level
+      tcost.HTAZ.inc <- compute_tcost(tcost.hh, by=c("HTAZ", "inc.level"), summarize_tcost, w="HHWGT")
+      print(tcost.HTAZ.inc)
+      
+      tcost.HTAZ <- compute_tcost(tcost.hh, by=c("HTAZ"), summarize_tcost, w="HHWGT")
+      print(tcost.HTAZ)
+      
+      # summarize household-level travel cost by district
+      tcost.distr <- compute_tcost(tcost.hh, by="district.id", summarize_tcost, w="HHWGT")
+      print(tcost.distr)
+      
+      # summarize overall household-level travel cost  
+      tcost.all <- compute_tcost(tcost.hh %>% mutate(all=1), by=c("all"), summarize_tcost, w="HHWGT")
+      print(tcost.all)
+      
+      output.file <- file.path("output/OHAS/tcost1994.RData")
+      save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, file=output.file)
+      
+      #reshape data frame into arrays for plotting
+      #tcost by HTAZ, inc.level, and tpurp
+      mintcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.min")
+      avgtcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.avg")
+      maxtcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.max")
+      
+      #tcost by HTAZ, inc.level
+      minhhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.min")
+      avghhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.avg")
+      maxhhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.max")
+      
+      #tcost by HTAZ
+      flat.tcost.HTAZ <- dplyr::select(tcost.HTAZ, HTAZ, min=tcost.min, avg=tcost.avg, max=tcost.max) %>%
+        gather(func, value, -HTAZ)
+      hhCost.ZiCm <- acast(flat.tcost.HTAZ, HTAZ~func, value.var="value") #could use spread
+      
+      
+      
+   
     
