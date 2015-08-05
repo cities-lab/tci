@@ -20,12 +20,30 @@
     names(act1.colnames) <- as.character(c(1:55))
     colnames(act1) <- act1.colnames
     
-  # Add x, y coordinate to act1 
-    xycord <- read.csv("data/portland_94/1994_ax_ay.csv", header=TRUE,  sep=",")
-    colnames(xycord) <- c("SAMPN", "DAYNO", "PERNO", "ACTNO", "XCORD", "YCORD")
-    act1 <- merge(act1, xycord, by=c("SAMPN", "DAYNO", "PERNO", "ACTNO"), all.x=TRUE)
+    # Read geocode data 
+    geocode <- read.table("data/portland_94/geocode.raw", header=FALSE, sep=",")  
+    
+    colnames(geocode) <- c("UID", "XCORD", "YCORD", "CASE_ID", "FREQ", "RTZ", "SID", "TOTEMP94", "RETEMP94")
+    
+    geocode <- geocode[order(geocode$UID), ] 
+    geocode <- transform(geocode, UID=as.character(UID))
+    
+    geocode <- geocode %>% 
+      mutate(SAMPN=substr(UID, 1,6), PERNO=substr(UID, 7, 7), 
+             DAYNO=substr(UID, 8, 8), ACTNO=substr(UID, 9,10))
+    geocode <- transform(geocode, SAMPN=as.numeric(SAMPN), PERNO=as.numeric(PERNO), 
+                         DYANO=as.numeric(DAYNO), ACTNO=as.numeric(ACTNO))
+    
+    head(geocode)
+    str(geocode)
+    # Merge with act1
+    str(act1)
+    act1[1:5,1:5]
+    act1 <- merge(act1, geocode, by=c("SAMPN", "PERNO", "DAYNO", "ACTNO"), all.x=TRUE)
+    act1$X[1:100]  
   
-  # load activity 2 data
+      
+   # load activity 2 data
     act2 <- read.table("data/portland_94/act2.txt", header=FALSE,  sep=",")
     act2.colnames <- c("PHASE", "SAMPN", "PERNO", "DAYNO", "ACTNO", "OLOC", "ADDTYP") 
     names(act2.colnames) <- as.character(c(1:7))
@@ -98,18 +116,8 @@
 
 # Part2 generates linked trips
     
-    # Define functions for generating linked trips 
-    #distance function - lat/long
-    distance = function(x1,x2,y1,y2) { 
-      
-      xdiff = abs(x1-x2)
-      ydiff = abs(y1-y2)
-      d = sqrt(xdiff^2 + ydiff^2)
-      return(d) #distance feet
-    }
-    
     # identify trip purpose 
-    
+ 
     identifyTripPurpose <- function (df) {
       
       workLabels = c("Work","WorkRelated")
@@ -119,17 +127,17 @@
       schLabels  = c("School")
       notWorkLabels = c(othLabels,shopLabels,recLabels,schLabels)
       
-      df$TripPurpose=ifelse(df$AGGACT %in% workLabels & df$LastOLOC=="HOME","hbw","NA")
-      df$TripPurpose=ifelse(df$AGGACT %in% othLabels  & df$LastOLOC=="HOME","hbo",df$TripPurpose)
-      df$TripPurpose=ifelse(df$AGGACT %in% shopLabels & df$LastOLOC=="HOME","hbshp",df$TripPurpose)
-      df$TripPurpose=ifelse(df$AGGACT %in% recLabels  & df$LastOLOC=="HOME","hbrec",df$TripPurpose)
-      df$TripPurpose=ifelse(df$AGGACT %in% schLabels  & df$LastOLOC=="HOME","hbsch",df$TripPurpose)
+      df$TripPurpose=ifelse(df$AGGACT %in% workLabels & df$LastHOME==1 & df$HOME!=1,"HBW","NA")
+      df$TripPurpose=ifelse(df$AGGACT %in% othLabels  & df$LastHOME==1 & df$HOME!=1,"HBO",df$TripPurpose)
+      df$TripPurpose=ifelse(df$AGGACT %in% shopLabels & df$LastHOME==1 & df$HOME!=1,"HBShp",df$TripPurpose)
+      df$TripPurpose=ifelse(df$AGGACT %in% recLabels  & df$LastHOME==1 & df$HOME!=1,"HBRec",df$TripPurpose)
+      df$TripPurpose=ifelse(df$AGGACT %in% schLabels  & df$LastHOME==1 & df$HOME!=1,"HBSch",df$TripPurpose)
       
-      df$TripPurpose=ifelse(df$OLOC=="HOME" & df$LastAGGACT %in% workLabels,"hbw",df$TripPurpose)
-      df$TripPurpose=ifelse(df$OLOC=="HOME" & df$LastAGGACT %in% othLabels,"hbo",df$TripPurpose)
-      df$TripPurpose=ifelse(df$OLOC=="HOME" & df$LastAGGACT %in% shopLabels,"hbshp",df$TripPurpose)
-      df$TripPurpose=ifelse(df$OLOC=="HOME" & df$LastAGGACT %in% recLabels,"hbrec",df$TripPurpose)
-      df$TripPurpose=ifelse(df$OLOC=="HOME" & df$LastAGGACT %in% schLabels,"hbsch",df$TripPurpose)
+      df$TripPurpose=ifelse(df$HOME==1 & df$LastAGGACT %in% workLabels & df$LastHOME!=1,"HBW",df$TripPurpose)
+      df$TripPurpose=ifelse(df$HOME==1 & df$LastAGGACT %in% othLabels & df$LastHOME!=1,"HBO",df$TripPurpose)
+      df$TripPurpose=ifelse(df$HOME==1 & df$LastAGGACT %in% shopLabels & df$LastHOME!=1,"HBShp",df$TripPurpose)
+      df$TripPurpose=ifelse(df$HOME==1 & df$LastAGGACT %in% recLabels & df$LastHOME!=1,"HBRec",df$TripPurpose)
+      df$TripPurpose=ifelse(df$HOME==1 & df$LastAGGACT %in% schLabels & df$LastHOME!=1,"HBSch",df$TripPurpose)
       
       return(df)
     }
@@ -141,8 +149,8 @@
       
       #This Activity,TAZ (X and Y),Mode
       df$ThisAGGACT = df$AGGACT
-      df$ThisXCORD = df$XCORD
-      df$ThisYCORD = df$YCORD
+      #df$ThisXCORD = df$XCORD
+      #df$ThisYCORD = df$YCORD
       df$ThisMODE = df$MODE
       
       #Last (Previous) Activity, TAZ, Mode, activity number
@@ -154,7 +162,8 @@
         df$LastMODE = df$MODE[lastACTNO]
         df$LastACTNO = df$ACTNO[lastACTNO]
         df$LastOLOC = df$OLOC[lastACTNO]
-        
+        df$LastHOME = df$HOME[lastACTNO]
+        df$LastRTZ = df$RTZ[lastACTNO]
         df$LastACTBEG = df$ACTBEG[lastACTNO]
         df$LastAMPMS = df$AMPMS[lastACTNO]
       } else {
@@ -164,7 +173,8 @@
         df$LastMODE = NA
         df$LastACTNO = NA
         df$LastOLOC = NA
-        
+        df$LastHOME = NA
+        df$LastRTZ = NA
         df$LastACTBEG = NA
         df$LastAMPMS = df$AMPMS[lastACTNO]
       }
@@ -185,9 +195,6 @@
         df$NextMODE = NA
         
       }
-      
-      #Trip straight line distance (ft)
-      df$Distance = distance(df$LastXCORD, df$ThisXCORD, df$LastYCORD, df$ThisYCORD)
       
       return(df)
     }
@@ -214,16 +221,19 @@
     # Generate linked trips
     # Use doParallel and foreach packages to generate linkedTrip
     library(doParallel)
-    clusternumber = 2
+    clusternumber = 8
     cluster = makeCluster(clusternumber)
     registerDoParallel(cluster)
     require(foreach)
     
+    act1$HOME <- ifelse(act1$OLOC=="HOME"|act1$OLOC=="RESIDENCE"|act1$ACT1==51, 1, 0)
     act1 <- act1[order(act1$SAMPN,act1$DAYNO, act1$PERNO, act1$ACTNO), ]
+    
     act_hh = by(act1, act1$SAMPN, function(x) {x})
+    
     act_out = foreach(i=act_hh, .combine="rbind") %dopar% {
       
-      # flag to indicate if activity output data frame created 
+      # flag to indicate if activity output data frame cr eated 
       createdActDF = FALSE 
       
       dayno <- unique(i$DAYNO)
@@ -263,8 +273,32 @@
     
     # Calculate TRPDUR
     linkedTrip$TRPDUR <- linkedTrip$TRIPHRS*60 + linkedTrip$TRIPMIN
-
     
+    # Hypothesis wll HHWGT is 1 
+    linkedTrip$HHWGT <- 1
+    
+    # Identify trip route distance from emme data 
+    # Source omx functions
+    source("code/thirdparty/omx.r")
+    require(rhdf5)
+    
+    load("data/emme1994MfNames.RData")
+    tdist <- readMatrixOMX("data/emme1994.omx", "tdist")
+
+    linkedTrip$DistanceRoute <- NA
+    
+    for (i in c(1:nrow(linkedTrip))) {
+      if (length(tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]) < 1) {
+        
+        linkedTrip[i, "DistanceRoute"] <- NA
+      } else {
+        
+        linkedTrip[i, "DistanceRoute"] <- tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]
+        
+      }
+      
+    }
+
     # save results
     save(act1, act2, hh, per, rhh, rper, veh, linkedTrip, file="data/portland_94.RData")
 
@@ -279,13 +313,12 @@
     require(dplyr)
     
     # prepare data -> a data.frame for linked trips with columns
-    # SAMPN, HTAZ, inc.level, TripPurpose, MODE, tripdur.hours
-    # Lack trip route distance
-    # Hypothesis wll HHWGT is 1 
-    linkedTrip$HHWGT <- 1
+    # SAMPN, HHWGT,  HTAZ, inc.level, TripPurpose, MODE, tripdur.hours, tripdist.miles
+  
+
     
     tcost.trip <- linkedTrip %>% 
-      select(SAMPN, HHWGT, PERNO, TripPurpose, MODE, TRPDUR, Distance) %>%
+      select(SAMPN, HHWGT, PERNO, TripPurpose, MODE, TRPDUR, DistanceRoute) %>%
       mutate(TripPurpose = tolower(TripPurpose),
              TripPurpose=ifelse(TripPurpose=="hbshp", "hbs", TripPurpose),
              TripPurpose=ifelse(TripPurpose=="hbrec", "hbr", TripPurpose)
@@ -294,44 +327,48 @@
       ) %>%
       filter( TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
       mutate(tripdur.hours=TRPDUR/60,
-             tripdist.miles=Distance/5280  # This is straight line distance
+             tripdist.miles=DistanceRoute # This is straight line distance
       )
     
-    # reclassify income categories (low income: $0- $19,999; mid income: $20,000 - $34,999; high income: $35,000 or more; NA: refused)
+    # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
     # low <- (1,4); median <- (5,7); high <- 8:13
-
+    # low <- (1,5); median <- (6,10); high <- 11:13
     
     # Get household TAZ
-    TAZPoly1994 <- readShapePoly("data/taz1260/taz1260.shp", proj4string=CRS("+init=epsg:2913"))
-    hhxy.df <- read.csv("data/portland_94/1994 HOUSEHOLD_xy.csv")
-    hhxy.df <- hhxy.df[which(!is.na(hhxy.df$hx)),]
+    #TAZPoly1994 <- readShapePoly("data/taz1260/taz1260.shp", proj4string=CRS("+init=epsg:2913"))
+    #hhxy.df <- read.csv("data/portland_94/1994 HOUSEHOLD_xy.csv")
+    #hhxy.df <- hhxy.df[which(!is.na(hhxy.df$hx)),]
     
-    spdf = SpatialPointsDataFrame(hhxy.df[, c('hx', 'hy')], 
-                                  hhxy.df, 
-                                  proj4string=CRS("+init=epsg:2913"))
+    #spdf = SpatialPointsDataFrame(hhxy.df[, c('hx', 'hy')], 
+    #                              hhxy.df, 
+    #                              proj4string=CRS("+init=epsg:2913"))
     
-    hhxy.df$TAZ <- over(spdf, TAZPoly1994)[,"TAZ"]
+    #hhxy.df$TAZ <- over(spdf, TAZPoly1994)[,"TAZ"]
     
+    
+    hhtaz <- linkedTrip %>% 
+      filter(OLOC=="HOME"|OLOC=="RESIDENCE"|ACT1==51) %>%
+      group_by(SAMPN)%>%
+      summarise(HTAZ=first(RTZ))
+    head(hhtaz)
     
     hh.metro <- hh %>% 
       mutate(inc.level=cut(INCOME,
-                           breaks=c(1, 5, 8, 13.5),
+                           breaks=c(1, 6, 11, 13.5),
                            labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
                            include.lowest=T, right=F)
              ) %>%
-      left_join(hhxy.df, by=c("SAMPN"="SAMPNO")) %>%
-      dplyr::select(SAMPN, inc.level, hx, hy, TAZ) %>%
+      left_join(hhtaz, by="SAMPN") %>%
+      dplyr::select(SAMPN, inc.level, HTAZ) %>%
       as.data.frame() 
     
-
     load("data/districts1994.RData")
     tcost.trip <- tcost.trip %>%
                   left_join(hh.metro, by="SAMPN") %>%
-                  left_join(districts1994, by="TAZ") %>%
-                  dplyr::rename(district.id=DISTRICT, HTAZ=TAZ)
+                  left_join(districts1994, by=c("HTAZ"="TAZ")) %>%
+                  dplyr::rename(district.id=DISTRICT)
     
-    head(tcost.trip)
-    
+
 # Define unit cost 
     # settings that are common to all methods
     
