@@ -26,6 +26,7 @@ names(MODE) <- MdNames
 #VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35) * hourly.wage
 
 # distance-based monetary cost per mile
+#http://newsroom.aaa.com/tag/driving-cost-per-mile/
 #http://www.portlandfacts.com/cost_of_transit_&_cars.html
 #http://portlandtaxi.net/rates.php
 #mcpm <- c(0,   0,   59.2,59.2, 101.0, 138.0, 0,  260.0,  0,  0,  29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / 100
