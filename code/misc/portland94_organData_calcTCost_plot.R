@@ -1,9 +1,36 @@
 # This script organizes Portland_94 data
 # There are three parts: part1 loads data file; part2 generate linedk trips; part3 calculate trip cost 
 
+# Settings
+  # Set workspace
+  setwd("~/tci")
+  var_list.0 <- ls()
+
+  ## settings
+  INPUT_DIR <- 'data/'
+  OUTPUT_DIR <- 'output/OHAS/portland_94'
+  dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
+  # whether to save intermediate results
+  SAVE.INTERMEDIARIES <- TRUE
+  INTERMEDIATE_DIR <- "output/intermediate/OHAS/portland_94"
+  dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
+  
+  # make names for household income groups, trip purpose and calculation method
+  IcNames <- c("Low Income", "Mid Income", "High Income")
+  Ic <- c("lowInc", "midInc", "highInc")
+  names(IcNames) <- Ic
+  
+  PrNames <- c("Work", "Shopping", "Recreation", "Other")
+  Pr <- c("hbw", "hbs", "hbr", "hbo")
+  names(PrNames) <- Pr
+  
+  CmNames <- c("mintcost", "avgtcost", "maxtcost")
+  Cm <- c("min", "avg", "max")
+  names(CmNames) <- Cm
+
 # Part1 load data files 
-  # load activity 1 data 
-    act1<- read.table("data/portland_94/act1.txt", header=FALSE,  sep=",")
+    # load activity 1 data 
+    act1<- read.table(file.path(INPUT_DIR, "portland_94/act1.txt"), header=FALSE,  sep=",")
   
     # change column names
     # colname is from http://www.surveyarchive.org/sda/Portland/doc/hcbk.htm
@@ -19,9 +46,10 @@
   
     names(act1.colnames) <- as.character(c(1:55))
     colnames(act1) <- act1.colnames
+    act1 <- transform(act1, OLOC=as.character(OLOC))
     
     # Read geocode data 
-    geocode <- read.table("data/portland_94/geocode.raw", header=FALSE, sep=",")  
+    geocode <- read.table(file.path(INPUT_DIR, "portland_94/geocode.raw"), header=FALSE, sep=",")  
     
     colnames(geocode) <- c("UID", "XCORD", "YCORD", "CASE_ID", "FREQ", "RTZ", "SID", "TOTEMP94", "RETEMP94")
     
@@ -33,24 +61,18 @@
              DAYNO=substr(UID, 8, 8), ACTNO=substr(UID, 9,10))
     geocode <- transform(geocode, SAMPN=as.numeric(SAMPN), PERNO=as.numeric(PERNO), 
                          DYANO=as.numeric(DAYNO), ACTNO=as.numeric(ACTNO))
-    
-    head(geocode)
-    str(geocode)
+
     # Merge with act1
-    str(act1)
-    act1[1:5,1:5]
     act1 <- merge(act1, geocode, by=c("SAMPN", "PERNO", "DAYNO", "ACTNO"), all.x=TRUE)
-    act1$X[1:100]  
-  
-      
+
    # load activity 2 data
-    act2 <- read.table("data/portland_94/act2.txt", header=FALSE,  sep=",")
+    act2 <- read.table(file.path(INPUT_DIR, "portland_94/act2.txt"), header=FALSE,  sep=",")
     act2.colnames <- c("PHASE", "SAMPN", "PERNO", "DAYNO", "ACTNO", "OLOC", "ADDTYP") 
     names(act2.colnames) <- as.character(c(1:7))
     colnames(act2) <- act2.colnames
   
   # load household data
-    hh <- read.table("data/portland_94/hh.txt", header=FALSE,  sep=",")
+    hh <- read.table(file.path(INPUT_DIR, "portland_94/hh.txt"), header=FALSE,  sep=",")
     hh[9, 28] <- 0 #  hh[9, 28] input error
    
     
@@ -62,7 +84,7 @@
     colnames(hh) <- hh.colnames
   
   # load person data
-    per <- read.table("data/portland_94/per.txt", header=FALSE,  sep=",")
+    per <- read.table(file.path(INPUT_DIR, "portland_94/per.txt"), header=FALSE,  sep=",")
     per.colnames <- c("PHASE", "SAMPN", "PERNO", "RELATION", "GENDER", "AGE", "RACE", "HOMELANG",
                       "OTHLANG", "SPEAKENG", "LICENSED", "EMPLOYED", "WORKERS", "OCCUPAT", "INDUSTRY",
                       "WORKHOME", "HRSHOME", "SUBPARK", "SHIFTWRK", "PAY2PARK", "COST2PRK", "DRIVE", 
@@ -73,7 +95,7 @@
     colnames(per) <- per.colnames  
   
   # load recrited household file 
-    rhh <- read.table("data/portland_94/rhh.txt", header=FALSE,  sep=",")
+    rhh <- read.table(file.path(INPUT_DIR, "portland_94/rhh.txt"), header=FALSE,  sep=",")
   
     # is second column "comp" ?? only two values, while there are 16 values in codebook for "COMP"
     table(rhh[ , 2])
@@ -93,7 +115,7 @@
   
   
   # load recruited person file data
-    rper <- read.table("data/portland_94/rper.txt", header=FALSE,  sep=",")
+    rper <- read.table(file.path(INPUT_DIR, "portland_94/rper.txt"), header=FALSE,  sep=",")
     rper.colnames <- c("PHASE", "COMP", "SAMPN", "PERNO", "RELATION", "GENDER", "AGE", "RACE", "HOMELANG",
                        "OTHLANG", "SPEAKENG", "LICENSED", "EMPLOYED", "WORKHRS", "OCCUPAT", "INDUSTRY", 
                        "WORKHOME", "HRSHOME", "SUBPARK", "SHIFTWRK", "PAY2PARK", "COST2PPK", "DRIVE", "CARPOOL", 
@@ -104,7 +126,7 @@
     colnames(rper) <- rper.colnames
   
   # load vehicle file 
-    veh <- read.table("data/portland_94/veh.txt", header=FALSE,  sep=",")
+    veh <- read.table(file.path(INPUT_DIR, "portland_94/veh.txt"), header=FALSE,  sep=",")
     veh.colnames <- c("PHASE", "SAMPN", "VEHNUMBER", "VEHOWNER", "YEAR", "ACQUIRED", "REPLACE", "MAKE", "MODEL", 
                       "CLASS", "TPYE", "FUEL", "BEGOD", "ENDOD", "MILES")
     names(veh.colnames) <- as.character(c(1:15))
@@ -112,10 +134,11 @@
   
   # load data
     require(foreign)
-    data<- read.dbf("data/portland_94/DATA94.DBF", as.is=FALSE)
+    data<- read.dbf(file.path(INPUT_DIR, "portland_94/DATA94.DBF"), as.is=FALSE)
 
 # Part2 generates linked trips
-    
+  
+  # Defnine functions
     # identify trip purpose 
  
     identifyTripPurpose <- function (df) {
@@ -198,8 +221,9 @@
       
       return(df)
     }
-    
-    # Generate Linked trips 
+   
+   
+  # Generate Linked trips 
 
     # # Add AGGACT and AGGACTCODE for act1 
     ACT1 <- sort(unique(act1$ACT1)) 
@@ -218,7 +242,6 @@
     act1 <- merge(act1, AGGACT.df, by="ACT1", all.x=TRUE)
     act1 <- transform(act1, AGGACT=as.character(AGGACT), AGGACTCODE=as.character(AGGACTCODE))
     
-    # Generate linked trips
     # Use doParallel and foreach packages to generate linkedTrip
     library(doParallel)
     clusternumber = 8
@@ -226,7 +249,10 @@
     registerDoParallel(cluster)
     require(foreach)
     
-    act1$HOME <- ifelse(act1$OLOC=="HOME"|act1$OLOC=="RESIDENCE"|act1$ACT1==51, 1, 0)
+    # Identify if the location is at home or not
+    act1$NCHAROLOC <- nchar(act1$OLOC)
+    act1$HOME <- ifelse((act1$OLOC=="HOME"|act1$OLOC=="RESIDENCE"|act1$ACT1==51) & act1$NCHAROLOC, 1, 0)
+    
     act1 <- act1[order(act1$SAMPN,act1$DAYNO, act1$PERNO, act1$ACTNO), ]
     
     act_hh = by(act1, act1$SAMPN, function(x) {x})
@@ -277,13 +303,15 @@
     # Hypothesis wll HHWGT is 1 
     linkedTrip$HHWGT <- 1
     
-    # Identify trip route distance from emme data 
+    # Identify trip route distance for linked trip
     # Source omx functions
     source("code/thirdparty/omx.r")
     require(rhdf5)
     
-    load("data/emme1994MfNames.RData")
-    tdist <- readMatrixOMX("data/emme1994.omx", "tdist")
+    # Load trip distance matrix
+    load(file.path(INPUT_DIR, "emme1994MfNames.RData"))
+    omx.file <- file.path(INPUT_DIR,"emme1994.omx")
+    tdist <- readMatrixOMX(omx.file, "tdist")
 
     linkedTrip$DistanceRoute <- NA
     
@@ -293,17 +321,21 @@
         linkedTrip[i, "DistanceRoute"] <- NA
       } else {
         
-        linkedTrip[i, "DistanceRoute"] <- tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]
+        linkedTrip[i, "DistanceRoute"] <- tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]*5280
         
       }
       
     }
 
     # save results
-    save(act1, act2, hh, per, rhh, rper, veh, linkedTrip, file="data/portland_94.RData")
+    input_file <- file.path(INPUT_DIR, "portland_94.RData")
+    save(act1, act2, hh, per, rhh, rper, veh, linkedTrip, file=input_file)
 
 # Part3 calculate travel cost 
-    load("data/portland_94.RData")
+   # load(file.path(INPUT_DIR, "portland_94.RData"))
+  
+  # Define functions to calculate tcost 
+    source("code/OHAS/functions.R")    
     
   # calculate trip cost 
   # Load required packages
@@ -315,8 +347,6 @@
     # prepare data -> a data.frame for linked trips with columns
     # SAMPN, HHWGT,  HTAZ, inc.level, TripPurpose, MODE, tripdur.hours, tripdist.miles
   
-
-    
     tcost.trip <- linkedTrip %>% 
       select(SAMPN, HHWGT, PERNO, TripPurpose, MODE, TRPDUR, DistanceRoute) %>%
       mutate(TripPurpose = tolower(TripPurpose),
@@ -327,30 +357,35 @@
       ) %>%
       filter( TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
       mutate(tripdur.hours=TRPDUR/60,
-             tripdist.miles=DistanceRoute # This is straight line distance
+             tripdist.miles=DistanceRoute/5280
       )
     
     # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
-    # low <- (1,4); median <- (5,7); high <- 8:13
     # low <- (1,5); median <- (6,10); high <- 11:13
     
-    # Get household TAZ
-    #TAZPoly1994 <- readShapePoly("data/taz1260/taz1260.shp", proj4string=CRS("+init=epsg:2913"))
-    #hhxy.df <- read.csv("data/portland_94/1994 HOUSEHOLD_xy.csv")
-    #hhxy.df <- hhxy.df[which(!is.na(hhxy.df$hx)),]
-    
-    #spdf = SpatialPointsDataFrame(hhxy.df[, c('hx', 'hy')], 
-    #                              hhxy.df, 
-    #                              proj4string=CRS("+init=epsg:2913"))
-    
-    #hhxy.df$TAZ <- over(spdf, TAZPoly1994)[,"TAZ"]
+    # Identify household TAZ and district id
+    hhtaz <- linkedTrip %>%
+      filter(OLOC=="HOME"|OLOC=="RESIDENCE") %>%  # ACT1 == 51 is not needed to identify household TAZ after checking data
+      arrange(OLOC) %>%                           # Prefer OLOC == "HOME" to identify household TAZ
+      dplyr::select(SAMPN, OLOC, XCORD, YCORD) %>%
+      filter(!is.na(XCORD)) %>%
+      filter(!duplicated(SAMPN))
     
     
-    hhtaz <- linkedTrip %>% 
-      filter(OLOC=="HOME"|OLOC=="RESIDENCE"|ACT1==51) %>%
-      group_by(SAMPN)%>%
-      summarise(HTAZ=first(RTZ))
-    head(hhtaz)
+    TAZPoly1994.shapefile <- file.path(INPUT_DIR, "taz1260/taz1260.shp")
+    TAZPoly1994 <- readShapePoly(TAZPoly1994.shapefile, proj4string=CRS("+init=epsg:2913"))
+    
+    spdf = SpatialPointsDataFrame(hhtaz[, c('XCORD', 'YCORD')], 
+                                  hhtaz, 
+                                  proj4string=CRS("+init=epsg:2913"))
+    
+    hhtaz$HTAZ <- over(spdf, TAZPoly1994)[,"TAZ"]
+    
+    districtsPoly.shapefile <- file.path(INPUT_DIR, "shp/districts.shp")
+    districtsPoly <- readShapePoly(districtsPoly.shapefile, proj4string=CRS("+init=epsg:2913"))
+    hhtaz$district.id <- over(spdf, districtsPoly)[,"DISTRICT"]
+    
+    
     
     hh.metro <- hh %>% 
       mutate(inc.level=cut(INCOME,
@@ -359,17 +394,16 @@
                            include.lowest=T, right=F)
              ) %>%
       left_join(hhtaz, by="SAMPN") %>%
-      dplyr::select(SAMPN, inc.level, HTAZ) %>%
+      dplyr::select(SAMPN, inc.level, HHSIZE, INCOME, HTAZ, district.id) %>%
+      rename(HHSIZ=HHSIZE) %>%
       as.data.frame() 
     
-    load("data/districts1994.RData")
+    
     tcost.trip <- tcost.trip %>%
-                  left_join(hh.metro, by="SAMPN") %>%
-                  left_join(districts1994, by=c("HTAZ"="TAZ")) %>%
-                  dplyr::rename(district.id=DISTRICT)
+      left_join(hh.metro, by="SAMPN")
     
 
-# Define unit cost 
+  # Define unit cost 
     # settings that are common to all methods
     
     # unit travel costs by mode
@@ -389,103 +423,26 @@
     
     
     # distance-based monetary cost per mile
-    #http://www.portlandfacts.com/cost_of_transit_&_cars.html
-    #http://portlandtaxi.net/rates.php
-    #mcpm <- c(29.6, 0, 0, 101.0, 101.0, 138.0, 0, 59.2, 59.2) / 100
-    mcpm <- rep(0, length(MODE))
+    # http://www.portlandfacts.com/cost_of_transit_&_cars.html
+    # http://portlandtaxi.net/rates.php
+    # mcpm <- c(29.6, 0, 0, 101.0, 101.0, 138.0, 0, 59.2, 59.2) / 100
+    # mcpm <- rep(0, length(MODE))
     
     ## time-equivalent monetary cost per mile, which can be specific to income group
-    #mcpm <- c(29.6, 0, 0, 101.0, 101.0, 138.0, 0, 59.2, 59.2) / (100 * hourly.wage)
+    mcpm <- c(29.6, 0, 0, 0, 101.0, 138.0, 59.2, 59.2) / (100 * hourly.wage)
     
     unitcosts <- data.frame(MODE, VOT, mcpm)
 
-  # Define functions to calculate tcost 
-      # summarise tcost with default summary quantities
-      summarize_tcost <- function(.data, w=NULL) {
-        results <- summarize(.data, n = n(),
-                             tcost.min=min(tcost, na.rm=T),
-                             tcost.avg=mean(tcost, na.rm=T),
-                             tcost.max=max(tcost, na.rm=T),
-                             tcost.sd=sd(tcost, na.rm=T)
-        )
-        
-        if (!is.null(w)) {
-          tcost.wavg <- summarize_(.data,
-                                   #mutate_(tcost.avg=~weighted.mean(tcost, w, na.rm=T))
-                                   tcost.wavg=interp(~weighted.mean(tcost, w, na.rm=TRUE), 
-                                                     tcost=as.name("tcost"), w=as.name(w)))
-          results <- left_join(results, tcost.wavg)
-        }
-        results
-      }
-      
-      # compute tcosts by composing grouping and summarizing functions
-      compute_tcost <- function(df, by, func, w=NULL) {
-        df %>%
-          group_by_(.dots=by) %>%
-          func(w=w)
-      }
-      
-  # Calculate travel cost 
-      # Load required packages
-      require(dplyr)
-      require(tidyr)
-      require(reshape2)
-      
-      tcost.trip <- tcost.trip %>% 
-        left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)
-        mutate(t.cost=VOT*tripdur.hours,            #time costs
-               m.cost=mcpm*tripdist.miles,          #monetary costs
-               tcost= t.cost + m.cost) %>%        #total costs
-        na.omit()                                 #exclude rows with unknown HTAZ, tpurp, or inc.level
-      
-      # calculate household-level travel cost
-      tcost.hh <- tcost.trip %>%
-        group_by(SAMPN) %>%
-        summarise(tcost=sum(tcost),
-                  HTAZ=first(HTAZ),             #retain HTAZ, inc.level and HHWGT
-                  inc.level=first(inc.level),
-                  HHWGT=first(HHWGT),
-                  district.id=first(district.id)
-        )
-      
-      # summarize trip-level tcost
-      tcost.HTAZ.tpurp.inc <- compute_tcost(tcost.trip, by=c("HTAZ", "TripPurpose", "inc.level"), summarize_tcost)
-      print(tcost.HTAZ.tpurp.inc)
-      
-      # summarize household-level travel cost by taz and/or income level
-      tcost.HTAZ.inc <- compute_tcost(tcost.hh, by=c("HTAZ", "inc.level"), summarize_tcost, w="HHWGT")
-      print(tcost.HTAZ.inc)
-      
-      tcost.HTAZ <- compute_tcost(tcost.hh, by=c("HTAZ"), summarize_tcost, w="HHWGT")
-      print(tcost.HTAZ)
-      
-      # summarize household-level travel cost by district
-      tcost.distr <- compute_tcost(tcost.hh, by="district.id", summarize_tcost, w="HHWGT")
-      print(tcost.distr)
-      
-      # summarize overall household-level travel cost  
-      tcost.all <- compute_tcost(tcost.hh %>% mutate(all=1), by=c("all"), summarize_tcost, w="HHWGT")
-      print(tcost.all)
-      
-      output.file <- file.path("output/OHAS/tcost1994.RData")
-      save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, file=output.file)
-      
-      #reshape data frame into arrays for plotting
-      #tcost by HTAZ, inc.level, and tpurp
-      mintcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.min")
-      avgtcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.avg")
-      maxtcost.ZiIcPr <- acast(tcost.HTAZ.tpurp.inc, HTAZ~inc.level~TripPurpose, value.var="tcost.max")
-      
-      #tcost by HTAZ, inc.level
-      minhhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.min")
-      avghhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.avg")
-      maxhhtcost.ZiIc <- acast(tcost.HTAZ.inc, HTAZ~inc.level, value.var="tcost.max")
-      
-      #tcost by HTAZ
-      flat.tcost.HTAZ <- dplyr::select(tcost.HTAZ, HTAZ, min=tcost.min, avg=tcost.avg, max=tcost.max) %>%
-        gather(func, value, -HTAZ)
-      hhCost.ZiCm <- acast(flat.tcost.HTAZ, HTAZ~func, value.var="value") #could use spread
+
+  # Source scripts to calculate tcost
+    source("code/OHAS/compute_tcost.R")
+    source("code/OHAS/plot_tcost.R") 
+    
+##clean up
+  var_list.1 <- ls()
+  rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
+  rm(var_list.1)
+    
       
       
       
