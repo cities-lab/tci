@@ -1,5 +1,7 @@
 # This script organizes Portland_94 data
 # There are three parts: part1 loads data file; part2 generate linedk trips; part3 calculate trip cost 
+require(dplyr)
+require(magrittr)
 
 # Settings
   # Set workspace
@@ -30,7 +32,7 @@
 
 # Part1 load data files 
     # load activity 1 data 
-    act1<- read.table(file.path(INPUT_DIR, "portland_94/act1.txt"), header=FALSE,  sep=",")
+    act1<- read.table(file.path(INPUT_DIR, "portland_94/act1.txt"), header=FALSE,  sep=",", as.is=TRUE)
   
     # change column names
     # colname is from http://www.surveyarchive.org/sda/Portland/doc/hcbk.htm
@@ -46,24 +48,36 @@
   
     names(act1.colnames) <- as.character(c(1:55))
     colnames(act1) <- act1.colnames
-    act1 <- transform(act1, OLOC=as.character(OLOC))
+    #act1 <- transform(act1, OLOC=as.character(OLOC))
     
     # Read geocode data 
     geocode <- read.table(file.path(INPUT_DIR, "portland_94/geocode.raw"), header=FALSE, sep=",")  
     
     colnames(geocode) <- c("UID", "XCORD", "YCORD", "CASE_ID", "FREQ", "RTZ", "SID", "TOTEMP94", "RETEMP94")
     
-    geocode <- geocode[order(geocode$UID), ] 
-    geocode <- transform(geocode, UID=as.character(UID))
-    
-    geocode <- geocode %>% 
-      mutate(SAMPN=substr(UID, 1,6), PERNO=substr(UID, 7, 7), 
-             DAYNO=substr(UID, 8, 8), ACTNO=substr(UID, 9,10))
-    geocode <- transform(geocode, SAMPN=as.numeric(SAMPN), PERNO=as.numeric(PERNO), 
-                         DYANO=as.numeric(DAYNO), ACTNO=as.numeric(ACTNO))
+#     geocode <- geocode[order(geocode$UID), ] 
+#     geocode <- transform(geocode, UID=as.character(UID))
+#     
+#     geocode <- geocode %>% 
+#       mutate(SAMPN=substr(UID, 1,6), PERNO=substr(UID, 7, 7), 
+#              DAYNO=substr(UID, 8, 8), ACTNO=substr(UID, 9,10)) %>%
+#       
+#     geocode <- transform(geocode, SAMPN=as.numeric(SAMPN), PERNO=as.numeric(PERNO), 
+#                          DYANO=as.numeric(DAYNO), ACTNO=as.numeric(ACTNO))
 
     # Merge with act1
-    act1 <- merge(act1, geocode, by=c("SAMPN", "PERNO", "DAYNO", "ACTNO"), all.x=TRUE)
+    #TODO: use left_join (dplyr)
+    #TODO: stringr, str_pad
+    #require(stringr)
+    act1 %<>%
+      mutate(#UID.c = paste(SAMPN, PERNO, DAYNO, str_pad(ACTNO, 2, pad="0"), sep=""),
+             #UID = as.numeric(UID.c)
+             UID = SAMPN * 10^4 + PERNO * 10^3 + DAYNO * 10^2 + ACTNO
+             ) %>% 
+      left_join(geocode)
+    
+    
+    #act1 <- merge(act1, geocode, by=c("SAMPN", "PERNO", "DAYNO", "ACTNO"), all.x=TRUE)
 
    # load activity 2 data
     act2 <- read.table(file.path(INPUT_DIR, "portland_94/act2.txt"), header=FALSE,  sep=",")
@@ -148,6 +162,10 @@
       shopLabels = c("Shopping")
       recLabels  = c("Recreation")
       schLabels  = c("School")
+      
+      ACT1.f
+      ACT1
+      
       notWorkLabels = c(othLabels,shopLabels,recLabels,schLabels)
       
       df$TripPurpose=ifelse(df$AGGACT %in% workLabels & df$LastHOME==1 & df$HOME!=1,"HBW","NA")
@@ -166,142 +184,122 @@
     }
     
     
-    # add This,Next,Last to each activity for activity, TAZ, and mode
-    # Change for portland_94: PLANO--ACTNO; delete city; DEP_HR--ACTBEG; DEP_MIN--AMPMS; delete routeDistance 
-    addThisNextLast = function(df) {
-      
-      #This Activity,TAZ (X and Y),Mode
-      df$ThisAGGACT = df$AGGACT
-      #df$ThisXCORD = df$XCORD
-      #df$ThisYCORD = df$YCORD
-      df$ThisMODE = df$MODE
-      
-      #Last (Previous) Activity, TAZ, Mode, activity number
-      lastACTNO = match(df$ACTNO -1,df$ACTNO)
-      if(length(df$AGGACT) > 1) {
-        df$LastAGGACT = df$AGGACT[lastACTNO]
-        df$LastXCORD = df$XCORD[lastACTNO]
-        df$LastYCORD = df$YCORD[lastACTNO]
-        df$LastMODE = df$MODE[lastACTNO]
-        df$LastACTNO = df$ACTNO[lastACTNO]
-        df$LastOLOC = df$OLOC[lastACTNO]
-        df$LastHOME = df$HOME[lastACTNO]
-        df$LastRTZ = df$RTZ[lastACTNO]
-        df$LastACTBEG = df$ACTBEG[lastACTNO]
-        df$LastAMPMS = df$AMPMS[lastACTNO]
-      } else {
-        df$LastAGGACT = NA
-        df$LastXCORD = NA
-        df$LastYCORD = NA
-        df$LastMODE = NA
-        df$LastACTNO = NA
-        df$LastOLOC = NA
-        df$LastHOME = NA
-        df$LastRTZ = NA
-        df$LastACTBEG = NA
-        df$LastAMPMS = df$AMPMS[lastACTNO]
-      }
-      
-      #Next Activity, TAZ, Mode
-      nextACTNO = match(df$ACTNO +1,df$ACTNO)
-      
-      if(length(df$AGGACT) > 1) {
-        df$NextAGGACT = df$AGGACT[nextACTNO]
-        df$NextXCORD = df$XCORD[nextACTNO]
-        df$NextYCORD = df$YCORD[nextACTNO]
-        df$NextMODE = df$MODE[nextACTNO]
-        
-      } else {
-        df$NextAGGACT = NA
-        df$NextXCORD = NA
-        df$NextYCORD = NA
-        df$NextMODE = NA
-        
-      }
-      
-      return(df)
-    }
+#     # add This,Next,Last to each activity for activity, TAZ, and mode
+#     # Change for portland_94: PLANO--ACTNO; delete city; DEP_HR--ACTBEG; DEP_MIN--AMPMS; delete routeDistance 
+#     addThisNextLast = function(df) {
+#       
+#       #This Activity,TAZ (X and Y),Mode
+#       df$ThisAGGACT = df$AGGACT
+#       #df$ThisXCORD = df$XCORD
+#       #df$ThisYCORD = df$YCORD
+#       df$ThisMODE = df$MODE
+#       
+#       #Last (Previous) Activity, TAZ, Mode, activity number
+#       lastACTNO = match(df$ACTNO -1,df$ACTNO)
+#       if(length(df$AGGACT) > 1) {
+#         df$LastAGGACT = df$AGGACT[lastACTNO]
+#         df$LastXCORD = df$XCORD[lastACTNO]
+#         df$LastYCORD = df$YCORD[lastACTNO]
+#         df$LastMODE = df$MODE[lastACTNO]
+#         df$LastACTNO = df$ACTNO[lastACTNO]
+#         df$LastOLOC = df$OLOC[lastACTNO]
+#         df$LastHOME = df$HOME[lastACTNO]
+#         df$LastRTZ = df$RTZ[lastACTNO]
+#         df$LastACTBEG = df$ACTBEG[lastACTNO]
+#         df$LastAMPMS = df$AMPMS[lastACTNO]
+#       } else {
+#         df$LastAGGACT = NA
+#         df$LastXCORD = NA
+#         df$LastYCORD = NA
+#         df$LastMODE = NA
+#         df$LastACTNO = NA
+#         df$LastOLOC = NA
+#         df$LastHOME = NA
+#         df$LastRTZ = NA
+#         df$LastACTBEG = NA
+#         df$LastAMPMS = df$AMPMS[lastACTNO]
+#       }
+#       
+#       #Next Activity, TAZ, Mode
+#       nextACTNO = match(df$ACTNO +1,df$ACTNO)
+#       
+#       if(length(df$AGGACT) > 1) {
+#         df$NextAGGACT = df$AGGACT[nextACTNO]
+#         df$NextXCORD = df$XCORD[nextACTNO]
+#         df$NextYCORD = df$YCORD[nextACTNO]
+#         df$NextMODE = df$MODE[nextACTNO]
+#         
+#       } else {
+#         df$NextAGGACT = NA
+#         df$NextXCORD = NA
+#         df$NextYCORD = NA
+#         df$NextMODE = NA
+#         
+#       }
+#       
+#       return(df)
+#     }
    
    
   # Generate Linked trips 
 
     # # Add AGGACT and AGGACTCODE for act1 
-    ACT1 <- sort(unique(act1$ACT1)) 
-    
-    AGGACT <- c("Meals", "Work", "WorkRealted", "Shopping", "Shopping", "PersonalBus", "PersonalBus", "PersonalBus",
-                "PersonalBus", "PersonalBus", "PersonalBus", "Escort", "PersonalBus", "Recreation", "Recreation",
-                "School", "SocialRec", "SocialRec", "SocialRec", "SocialRec", "Recreation", "Recreation", 
-                "Recreation", "Recreation", "Recreation", "Recreation", "Other", "Other")
-    AGGACTCODE <-  c("M", "W", "WR", "Shp", "Shp", "PB", "PB", "PB",
-                     "PB", "PB", "PB", "E", "PB", "R", "R",
-                     "Sch", "SR", "SR", "SR", "SR", "R", "R", 
-                     "R", "R", "R", "R", "O", "O")
-    
-    AGGACT.df <- data.frame(ACT1, AGGACT, AGGACTCODE)
-    
-    act1 <- merge(act1, AGGACT.df, by="ACT1", all.x=TRUE)
-    act1 <- transform(act1, AGGACT=as.character(AGGACT), AGGACTCODE=as.character(AGGACTCODE))
+    #ACT1 <- sort(unique(act1$ACT1)) 
+    levels = c(11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 31, 32, 33, 41, 42, 43, 44, 45, 51, 52, 53, 54, 55, 56, 90, 91)
+    AGGACT <- c("Meals", "Work", "Work-related", "Shopping (general)", "Shopping (major)", 
+                "Personal services", "Medical care", "Professional services", "Household or personal business", 
+                "Household maintenance", "Household obligations", "Pick-Up/Drop-Off passengers", "Visiting", 
+                "Casual entertaining", "Formal entertaining", "School", "Culture", "Religion/Civil Services", 
+                "Civic", "Volunteer work", "Amusements (at-home)", "Amusements (out-of-home)", "Hobbies", 
+                "Exercise/Athletics", "Rest and relaxation", "Spectator athletic events", "Incidental trip", "Tag along trip")
+
+    act1$ACT1.f <- factor(act1$ACT1, levels=levels, labels=AGGACT)
     
     # Use doParallel and foreach packages to generate linkedTrip
-    library(doParallel)
-    clusternumber = 8
-    cluster = makeCluster(clusternumber)
-    registerDoParallel(cluster)
-    require(foreach)
-    
+#     library(doParallel)
+#     clusternumber = 8
+#     cluster = makeCluster(clusternumber)
+#     registerDoParallel(cluster)
+#     require(foreach)
+#     
     # Identify if the location is at home or not
-    act1$NCHAROLOC <- nchar(act1$OLOC)
-    act1$HOME <- ifelse((act1$OLOC=="HOME"|act1$OLOC=="RESIDENCE"|act1$ACT1==51) & act1$NCHAROLOC, 1, 0)
+    act1 %<>%
+      mutate(
+        HOME = ifelse(OLOC %in% c("HOME", "RESIDENCE") | as.integer(ACT1) == 51, 1, 0))
     
-    act1 <- act1[order(act1$SAMPN,act1$DAYNO, act1$PERNO, act1$ACTNO), ]
+    # act1$NCHAROLOC <- nchar(act1$OLOC)
     
-    act_hh = by(act1, act1$SAMPN, function(x) {x})
+    # act1$HOME <- ifelse((act1$OLOC=="HOME"|act1$OLOC=="RESIDENCE"|act1$ACT1==51) & act1$NCHAROLOC, 1, 0)
     
-    act_out = foreach(i=act_hh, .combine="rbind") %dopar% {
-      
-      # flag to indicate if activity output data frame cr eated 
-      createdActDF = FALSE 
-      
-      dayno <- unique(i$DAYNO)
-      
-      for (j in dayno) {
+    
+    act1 %<>% 
+      filter(DAYNO==1) %>%
+      arrange(SAMPN, PERNO, ACTNO) %>%
+      group_by(SAMPN, PERNO) %>%
+      mutate(LASTHOME=lag(HOME),
+             LASTAGGACT=lag(ACT1.f),
+             LASTOLOC=lag(OLOC),
+             LastRTZ=lag(RTZ)
+             ) %>%
+      select(SAMPN, PERNO, ACTNO, HOME, LASTHOME, ACT1.f, LASTAGGACT, OLOC, LASTOLOC) 
+     
         
-        act2 <- i[which(i$DAYNO==j), ]
-        perno <- unique(act2$PERNO)
-        
-        for (k in perno) {
-          act3 <- act2[which(act2$PERNO==k), ]
-          act4 <- addThisNextLast(act3)
-          # act6 <- identifyTripPurpose(act5)
-          
-          if(createdActDF) {
-            actReturn = rbind(actReturn, act4)
-          } else {
-            actReturn = act4
-            createdActDF = TRUE 
-            
-          }
-          
-          # End loop for perno
-        }
-        
-        # End loop for dayno
-      }
-      return(actReturn)
-      
-      # End loop for sampn
-    }
-    
+
     
    
     # identify trip purpose
-    linkedTrip <- identifyTripPurpose(act_out)
+    linkedTrip <- identifyTripPurpose(act1)
     
-    # Calculate TRPDUR
-    linkedTrip$TRPDUR <- linkedTrip$TRIPHRS*60 + linkedTrip$TRIPMIN
     
-    # Hypothesis wll HHWGT is 1 
-    linkedTrip$HHWGT <- 1
+    linkedTrip %>%
+      mutate(TRPDUR=TRIPHRS *60+TRIPMIN,
+             HHWGT=1)
+    
+#     # Calculate TRPDUR
+#     linkedTrip$TRPDUR <- linkedTrip$TRIPHRS *60 + linkedTrip$TRIPMIN
+#     
+#     # Hypothesis wll HHWGT is 1 
+#     linkedTrip$HHWGT <- 1
     
     # Identify trip route distance for linked trip
     # Source omx functions
@@ -312,20 +310,27 @@
     load(file.path(INPUT_DIR, "emme1994MfNames.RData"))
     omx.file <- file.path(INPUT_DIR,"emme1994.omx")
     tdist <- readMatrixOMX(omx.file, "tdist")
-
-    linkedTrip$DistanceRoute <- NA
     
-    for (i in c(1:nrow(linkedTrip))) {
-      if (length(tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]) < 1) {
-        
-        linkedTrip[i, "DistanceRoute"] <- NA
-      } else {
-        
-        linkedTrip[i, "DistanceRoute"] <- tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]*5280
-        
-      }
-      
-    }
+    #depends on how many rows with LASTRTZ == NA
+    linkedTrip %>%
+      left_join(hhtaz)
+      mutate(LASTRTZ=ifelse(is.na(LASTRTZ), HTAZ, LASTRTZ))
+    
+    linkedTrip$DistanceRoute <- with(linkedTrip, tdist[cbind(LASTRTZ, RTZ)] * 5280)
+
+#     linkedTrip$DistanceRoute <- NA
+#     
+#     for (i in c(1:nrow(linkedTrip))) {
+#       if (length(tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]) < 1) {
+#         
+#         linkedTrip[i, "DistanceRoute"] <- NA
+#       } else {
+#         
+#         linkedTrip[i, "DistanceRoute"] <- tdist[linkedTrip[i, "LastRTZ"], linkedTrip[i, "RTZ"]]*5280
+#         
+#       }
+#       
+#     }
 
     # save results
     input_file <- file.path(INPUT_DIR, "portland_94.RData")
@@ -364,7 +369,14 @@
     # low <- (1,5); median <- (6,10); high <- 11:13
     
     # Identify household TAZ and district id
-    hhtaz <- linkedTrip %>%
+    hhtaz.1 <- linkedTrip %>%
+      filter(OLOC=="HOME"| OLOC=="RESIDENCE") %>%
+      arrange(SAMPN, OLOC) %>%
+      group_by(SAMPN) %>%
+      summarize(HTAZ=RTZ)
+    
+    
+    hhtaz.2 <- linkedTrip %>%
       filter(OLOC=="HOME"|OLOC=="RESIDENCE") %>%  # ACT1 == 51 is not needed to identify household TAZ after checking data
       arrange(OLOC) %>%                           # Prefer OLOC == "HOME" to identify household TAZ
       dplyr::select(SAMPN, OLOC, XCORD, YCORD) %>%
