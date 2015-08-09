@@ -4,6 +4,7 @@
 require(dplyr)
 require(tidyr)
 require(reshape2)
+require(SDMTools)
 
 tcost.trip <- tcost.trip %>% 
   left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)

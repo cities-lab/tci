@@ -7,6 +7,7 @@ source("code/thirdparty/openGraphSaveGraph.R")
 
 # plot travel costs distribution by income group
 require(ggplot2)
+require(ggmap)
 
 pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) +
   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
@@ -45,7 +46,7 @@ m.sp + geom_point(fill=NA, size=2, position = "jitter") + labs(y="Travel Costs (
 m.bp <- ggplot(tcost.hh, aes(inc.level, tcost, fill=inc.level))
 m.bp + geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + ylim(0, 250)
 
-t.dp <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wavg, colour=TripPurpose, group=TripPurpose))
+t.dp <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
 t.dp + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 30)
 saveGraph(filename=output_file, type="pdf")
 

@@ -47,3 +47,33 @@ compute_tcost <- function(df, by, func, w=NULL) {
     group_by_(.dots=by) %>%
     func(w=w)
 }
+
+
+
+# identify trip purposes 
+
+identifyTripPurpose <- function (df) {
+  
+  workLabels = c("Work", "Work-related")
+  othLabels  = c("Meals", "Personal services", "Medical care", "Professional services", "Household or personal business", 
+                 "Household maintenance", "Household obligations", "Pick-Up/Drop-Off passengers", "Visiting", "Culture",
+                 "Religion/Civil Services", "Civic", "Volunteer work",  "Hobbies", "Exercise/Athletics", 
+                 "Rest and relaxation", "Spectator athletic events", "Incidental trip", "Tag along trip")
+  shopLabels = c("Shopping (general)", "Shopping (major)")
+  recLabels  = c("Casual entertaining", "Formal entertaining", "Amusements (at-home)", "Amusements (out-of-home)")
+  schLabels  = c("School")
+  
+  df$TripPurpose=ifelse(df$ACT1.f %in% workLabels & df$LastHOME==1 & df$HOME!=1,"HBW","NA")
+  df$TripPurpose=ifelse(df$ACT1.f %in% othLabels  & df$LastHOME==1 & df$HOME!=1,"HBO",df$TripPurpose)
+  df$TripPurpose=ifelse(df$ACT1.f %in% shopLabels & df$LastHOME==1 & df$HOME!=1,"HBShp",df$TripPurpose)
+  df$TripPurpose=ifelse(df$ACT1.f %in% recLabels  & df$LastHOME==1 & df$HOME!=1,"HBRec",df$TripPurpose)
+  df$TripPurpose=ifelse(df$ACT1.f %in% schLabels  & df$LastHOME==1 & df$HOME!=1,"HBSch",df$TripPurpose)
+  
+  df$TripPurpose=ifelse(df$HOME==1 & df$LastACT1.f %in% workLabels & df$LastHOME!=1,"HBW",df$TripPurpose)
+  df$TripPurpose=ifelse(df$HOME==1 & df$LastACT1.f %in% othLabels & df$LastHOME!=1,"HBO",df$TripPurpose)
+  df$TripPurpose=ifelse(df$HOME==1 & df$LastACT1.f %in% shopLabels & df$LastHOME!=1,"HBShp",df$TripPurpose)
+  df$TripPurpose=ifelse(df$HOME==1 & df$LastACT1.f %in% recLabels & df$LastHOME!=1,"HBRec",df$TripPurpose)
+  df$TripPurpose=ifelse(df$HOME==1 & df$LastACT1.f %in% schLabels & df$LastHOME!=1,"HBSch",df$TripPurpose)
+  
+  return(df)
+}
