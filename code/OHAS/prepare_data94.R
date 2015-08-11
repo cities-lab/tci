@@ -115,32 +115,54 @@
 
   # Identify if the location is at home or not
   act1 <- act1%>%
-    mutate(HOME = ifelse(OLOC %in% c("HOME", "RESIDENCE") | as.integer(ACT1) == 51, 1, 0))%>% 
-    filter(!is.na(XCORD))
+    mutate(HOME = ifelse(OLOC %in% c("HOME", "RESIDENCE") | as.integer(ACT1) == 51, 1, 0))
   
   # Identify activity TAZ
   # Do not use RTZ from geocode because some RTZ value is zero
+  
+  act1.xy <- act1 %>% 
+             dplyr::select(SAMPN, DAYNO, PERNO, ACTNO, XCORD, YCORD) %>% 
+             filter(!is.na(XCORD))
+  
   TAZPoly1994.shapefile <- file.path(INPUT_DIR, "taz1260/taz1260.shp")
   TAZPoly1994 <- readShapePoly(TAZPoly1994.shapefile, proj4string=CRS("+init=epsg:2913"))
   
-  act1.spdf = SpatialPointsDataFrame(act1[, c('XCORD', 'YCORD')], 
-                                act1, 
-                                proj4string=CRS("+init=epsg:2913"))
+  act1.spdf = SpatialPointsDataFrame(act1.xy[, c('XCORD', 'YCORD')], 
+                                     act1.xy, 
+                                     proj4string=CRS("+init=epsg:2913"))
   
-  act1$TAZ <- over(act1.spdf, TAZPoly1994)[,"TAZ"]
+  act1.xy$TAZ <- over(act1.spdf, TAZPoly1994)[,"TAZ"]
+  
+  act1 <- act1 %>%
+          left_join(act1.xy, by=c("SAMPN", "DAYNO", "PERNO", "ACTNO", "XCORD", "YCORD"))
+  
   
   # Identify last location, activity and TAZ
-  act1 <- act1%>% #filter(DAYNO==1) %>%
-    arrange(SAMPN, PERNO, ACTNO) %>%
-    group_by(SAMPN, PERNO) %>%
+  act1 <- act1%>% 
+    arrange(SAMPN, DAYNO, PERNO, ACTNO) %>%
+    group_by(SAMPN, DAYNO, PERNO) %>%
     mutate(LastHOME=lag(HOME),
-           LastACT1.f=lag(ACT1.f),
+           LastACT1.f=lag(as.character(ACT1.f)),
            LastOLOC=lag(OLOC),
            LastTAZ=lag(TAZ)
     ) %>%
-   select(SAMPN, PERNO, ACTNO, MODE, HOME, LastHOME, ACT1.f, LastACT1.f, OLOC, LastOLOC, LastTAZ, TAZ, 
-          TRIPHRS, TRIPMIN, XCORD, YCORD) 
-
+    select(SAMPN, DAYNO, PERNO, ACTNO, MODE, HOME, LastHOME, ACT1, ACT1.f, LastACT1.f, OLOC, LastOLOC, TAZ, LastTAZ,
+           TRIPHRS, TRIPMIN, XCORD, YCORD) 
+  
+  
+  # Identify survey day and filter Saturday and Sunday 
+  hh.dayno <- hh%>%
+              dplyr::select(SAMPN, DAY1, DAY2)%>%
+              gather(SURVEYDAY,DAYCODE, DAY1:DAY2)%>%
+              arrange(SAMPN,DAYCODE)
+              hh.dayno[which(hh.dayno$SURVEYDAY=="DAY1"), "DAYNO"] = 1
+              hh.dayno[which(hh.dayno$SURVEYDAY=="DAY2"), "DAYNO"] = 2
+  
+  act1 <- act1%>%
+            left_join(hh.dayno,by=c("SAMPN", "DAYNO")) %>% 
+            filter(DAYCODE!=6&DAYCODE!=7)
+  
+  
   # identify trip purpose
   linkedTrip <- identifyTripPurpose(act1)
   
@@ -199,6 +221,7 @@
   hhdist <- linkedTrip %>%
     filter(OLOC=="HOME"| OLOC=="RESIDENCE") %>%
     arrange(SAMPN, OLOC) %>%
+    filter(!is.na(XCORD)) %>%
     group_by(SAMPN) %>%  
     summarize(HXCORD=first(XCORD), HYCORD=first(YCORD)) %>%
     as.data.frame()
@@ -213,7 +236,7 @@
 
   hh.metro <- hh %>% 
     mutate(inc.level=cut(INCOME,
-                         breaks=c(1, 6, 11, 13.5),
+                         breaks=c(1, 6, 11, 13),
                          labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
                          include.lowest=T, right=F)
     ) %>%

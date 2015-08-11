@@ -61,8 +61,6 @@ mcpm <- c(29.6, 0, 0, 0, 101.0, 138.0, 59.2, 59.2) / (100 * hourly.wage)
 
 unitcosts <- data.frame(MODE, VOT, mcpm)
 
-
-
 # load(file.path(INPUT_DIR, "portland_94.RData"))
 
 # Define functions to calculate tcost 
