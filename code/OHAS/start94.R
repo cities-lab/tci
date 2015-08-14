@@ -5,6 +5,7 @@ require(rhdf5)
 require(maptools)
 require(rgeos)
 require(rgdal)
+require(tidyr)
 
 # Settings
 # Set workspace
@@ -19,6 +20,9 @@ dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
 SAVE.INTERMEDIARIES <- TRUE
 INTERMEDIATE_DIR <- "output/intermediate/OHAS/portland_94"
 dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
+
+TAZPoly1994.shapefile <- file.path(INPUT_DIR, "shp/taz1260.shp")
+districtsPoly.shapefile <- file.path(INPUT_DIR, "shp/districts.shp")
 
 # make names for household income groups, trip purpose and calculation method
 IcNames <- c("Low Income", "Mid Income", "High Income")

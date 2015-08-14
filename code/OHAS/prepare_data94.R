@@ -114,7 +114,7 @@
 
 
   # Identify if the location is at home or not
-  act1 <- act1%>%
+  act1 <- act1 %>%
     mutate(HOME = ifelse(OLOC %in% c("HOME", "RESIDENCE") | as.integer(ACT1) == 51, 1, 0))
   
   # Identify activity TAZ
@@ -124,7 +124,7 @@
              dplyr::select(SAMPN, DAYNO, PERNO, ACTNO, XCORD, YCORD) %>% 
              filter(!is.na(XCORD))
   
-  TAZPoly1994.shapefile <- file.path(INPUT_DIR, "taz1260/taz1260.shp")
+  
   TAZPoly1994 <- readShapePoly(TAZPoly1994.shapefile, proj4string=CRS("+init=epsg:2913"))
   
   act1.spdf = SpatialPointsDataFrame(act1.xy[, c('XCORD', 'YCORD')], 
@@ -152,16 +152,16 @@
   
   # Identify survey day and filter Saturday and Sunday 
   hh.dayno <- hh%>%
-              dplyr::select(SAMPN, DAY1, DAY2)%>%
-              gather(SURVEYDAY,DAYCODE, DAY1:DAY2)%>%
-              arrange(SAMPN,DAYCODE)
-              hh.dayno[which(hh.dayno$SURVEYDAY=="DAY1"), "DAYNO"] = 1
-              hh.dayno[which(hh.dayno$SURVEYDAY=="DAY2"), "DAYNO"] = 2
-  
-  act1 <- act1%>%
-            left_join(hh.dayno,by=c("SAMPN", "DAYNO")) %>% 
-            filter(DAYCODE!=6&DAYCODE!=7)
-  
+    dplyr::select(SAMPN, DAY1, DAY2)%>%
+    gather(SURVEYDAY,DAYCODE, DAY1:DAY2)%>%
+    mutate(DAYNO=ifelse(SURVEYDAY=="DAY1", 1, 2)) %>%
+    filter(DAYCODE!=6 & DAYCODE!=7) %>%
+    arrange(SAMPN, DAYNO) %>%
+    group_by(SAMPN) %>%
+    summarize(DAYNO=first(DAYNO))
+
+  act1.test <- act1 %>%
+    inner_join(hh.dayno,by=c("SAMPN", "DAYNO"))
   
   # identify trip purpose
   linkedTrip <- identifyTripPurpose(act1)
@@ -230,7 +230,7 @@
                                        hhdist, 
                                        proj4string=CRS("+init=epsg:2913"))
   
-  districtsPoly.shapefile <- file.path(INPUT_DIR, "shp/districts.shp")
+  
   districtsPoly <- readShapePoly(districtsPoly.shapefile, proj4string=CRS("+init=epsg:2913"))
   hhdist$district.id <- over(hhdist.spdf, districtsPoly)[,"DISTRICT"]
 
