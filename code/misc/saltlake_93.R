@@ -122,7 +122,7 @@ names(CmNames) <- Cm
     
     
     # Identify trip purpose 
-    workLabels = c("work", "work-related")
+    workLabels = c("work", "work-related", "travels for a living")
     othLabels  = c("at home activities", "pick-up/drop-off someone at work", "pick-up/drop-off someone at school",
                    "pick-up/drop-off someone at other", "childcare(daycare/after school care)", 
                    "banking/personal business", "out of town/leaving the area")
@@ -130,8 +130,8 @@ names(CmNames) <- Cm
     recLabels  = c("social/recreation/church/eat out")
     schLabels  = c("school")
     
-    # do not consider went for a drive, travels for living
-    # pick-up/drop-off someone at work, pick-up/drop-off someone at school, pick-up/drop-off someone at other
+    # There are 11 trips for  "went for a drive" 
+    
     
     trip$TripPurpose=ifelse(trip$destpurp.f %in% workLabels & trip$orighome==1 & trip$desthome!=1,"HBW","NA")
     trip$TripPurpose=ifelse(trip$destpurp.f %in% othLabels  & trip$orighome==1 & trip$desthome!=1,"HBO",trip$TripPurpose)
