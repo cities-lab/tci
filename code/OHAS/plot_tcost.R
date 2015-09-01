@@ -47,7 +47,7 @@ m.bp <- ggplot(tcost.hh, aes(inc.level, tcost, fill=inc.level))
 m.bp + geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + ylim(0, 250)
 
 t.dp <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
-t.dp + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 30)
+t.dp + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120)
 saveGraph(filename=output_file, type="pdf")
 
 t.bp <- ggplot(tcost.hh, aes(factor(INCOME), tcost, fill=inc.level))
