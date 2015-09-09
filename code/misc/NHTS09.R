@@ -1,4 +1,4 @@
-# This script uses NHTS2009 to calculate trip cost for Portland and Tampa Bay 
+# This script uses NHTS2009 to calculate trip cost for MSAs
 
 # Load required packages
   require(dplyr)
@@ -8,6 +8,13 @@
   setwd("~/tci")
   var_list.0 <- ls()
   INPUT_DIR <- 'data/'
+
+  
+  # Survey area
+  # HHC_MSA: CMSA FIPS code for HH address
+  # 6442 = Portland--Salem, OR--WA; 1637 trips
+  # 8280 = Tampa--St. Petersburg--Clearwater, FL
+  HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=9999)  
   
   # make names for household income groups, trip purpose and calculation method
   IcNames <- c("Low Income", "Mid Income", "High Income")
@@ -22,29 +29,24 @@
   Cm <- c("min", "avg", "max")
   names(CmNames) <- Cm
 
+  
 # Road and process data 
   # Load national household survey data 
   day <- read.csv("data/NHTS/DAYV2PUB.CSV", header=TRUE, sep=",") 
   
   # Select survey areas 
   day <- day %>% 
-         filter(HHC_MSA==8280|HHC_MSA==6442)
+    filter(HHC_MSA %in% HHC_MSAs) %>%
+    # Filter unkown trip distance rows  
+    # TRPMILES Calculated Trip distance converted into miles: -9 = Not ascertained; -8 = Don't know; -7 = Refused; -1 = Appropriate skip; 0-9000
+    filter(TRPMILES >= 0) %>%
+    # Filter unkown trip duration rows: -9 = Not ascertained; 0-1439
+    # TRVLCMIN (Calculated travel time) is calculacted based on ENDTIME (Trip END time in military) and STRTTIME (Trip START time in military)
+    filter(TRVLCMIN >= 0) %>%
+    # Filter surveyday 
+    # TDWKND TD trip was on weekend: 01 = Yes; 02 = No
+    filter(TDWKND==2)
 
-  # Filter unkown trip distance rows  
-  # TRPMILES Calculated Trip distance converted into miles: -9 = Not ascertained; -8 = Don't know; -7 = Refused; -1 = Appropriate skip; 0-9000
-  day <- day %>% 
-            filter(TRPMILES >= 0)
-  
-  # Filter unkown trip duration rows: -9 = Not ascertained; 0-1439
-  # TRVLCMIN (Calculated travel time) is calculacted based on ENDTIME (Trip END time in military) and STRTTIME (Trip START time in military)
-  day <- day %>% 
-            filter(TRVLCMIN >= 0)
-  
-  # Filter surveyday 
-  # TDWKND TD trip was on weekend: 01 = Yes; 02 = No
-  day <- day %>%
-            filter(TDWKND==2)
-  
   # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
   # HHFAMINC: Total household income
   day <- day %>% 
@@ -104,31 +106,25 @@
 # Calculate and plot trip cost for Portland and Tampa Bay
   
   # Survey areas 
-  AreaNames  <- c("TampaBay", "Portland")
+  #AreaNames  <- c("TampaBay", "Portland")
  
-  # Survey area
-  # HHC_MSA: CMSA FIPS code for HH address
-  # 6442 = Portland--Salem, OR--WA; 1637 trips
-  # 8280 = Tampa--St. Petersburg--Clearwater, FL
-  
-    HHC_MSAs <- c(Portland=6442, TampaBay=8280)
 
-    for (areaname in AreaNames) {
+    for (msa.id in HHC_MSAs) {
       
       # Set output directory 
-      OUTPUT_DIR <- file.path("output/NHTS09", areaname)
+      OUTPUT_DIR <- file.path("output/NHTS09", names(HHC_MSAs)[msa.id])
       dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
       
       # Select survery area
       tcost.trip <- day %>% 
-                    filter(HHC_MSA==HHC_MSAs[areaname])
+                    filter(HHC_MSA==msa.id)
       
-      # Source scripts
-      source("code/OHAS/functions.R")
-      source("code/OHAS/compute_tcost.R")
-      source("code/OHAS/plot_tcost.R")
-      
-      # End of database loop 
+      if (nrow(tcost.trip) > 0) {
+        # Source scripts
+        source("code/OHAS/functions.R")
+        source("code/OHAS/compute_tcost.R")
+        source("code/OHAS/plot_tcost.R")
+      }
     } 
   
 ##clean up
