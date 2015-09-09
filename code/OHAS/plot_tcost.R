@@ -46,9 +46,11 @@ m.sp + geom_point(fill=NA, size=2, position = "jitter") + labs(y="Travel Costs (
 m.bp <- ggplot(tcost.hh, aes(inc.level, tcost, fill=inc.level))
 m.bp + geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + ylim(0, 250)
 
-t.dp <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
-t.dp + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120)
-saveGraph(filename=output_file, type="pdf")
+output_file = file.path(OUTPUT_DIR, "linechart_tcost.hh_by_tpurp.inc.png")
+t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
+t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120)
+ggsave(file=output_file, type="cairo-png")
+#saveGraph(filename=output_file, type="pdf")
 
 t.bp <- ggplot(tcost.hh, aes(factor(INCOME), tcost, fill=inc.level))
 t.bp + geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + ylim(0, 250)
