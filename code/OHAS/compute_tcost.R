@@ -76,7 +76,8 @@ tcost.all <- compute_tcost(tcost.hh %>% mutate(all=1), by=c("all"), summarize_tc
 print(tcost.all)
 
 output.file <- file.path(OUTPUT_DIR, "tcost.RData")
-save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, file=output.file)
+save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, tcost.hh.tpurp, tcost.tpurp.inc,tcost.trip,
+     file=output.file)
 
 #reshape data frame into arrays for plotting
 #tcost by HTAZ, inc.level, and tpurp
