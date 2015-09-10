@@ -1,0 +1,353 @@
+---
+title: "Comparison of OHAS and NHTS Trip Costs"
+author: "HuajieYang and Liming Wang, Ph.D."
+date: "9/9/2015"
+output: html_document
+---
+
+### Overview 
+This document compares the results of OHAS and NHTS.
+
+```{r, echo=FALSE}
+#TODO: add execution steps to create charts/tables from raw input data
+setwd("~/tci")
+source("code/misc/NHTS09.R")
+source("code/OHAS/start.R")
+
+  # make names for household income groups, trip purpose and calculation method
+  IcNames <- c("Low Income", "Mid Income", "High Income")
+  Ic <- c("lowInc", "midInc", "highInc")
+  names(IcNames) <- Ic
+  
+  PrNames <- c("Work", "Shopping", "Recreation", "Other")
+  Pr <- c("hbw", "hbs", "hbr", "hbo")
+  names(PrNames) <- Pr
+  
+  CmNames <- c("mintcost", "avgtcost", "maxtcost")
+  Cm <- c("min", "avg", "max")
+  names(CmNames) <- Cm
+
+```
+
+### OHAS
+```{r, echo=FALSE}
+setwd("~/tci")
+load("output/OHAS/tcost.RData")
+```
+
+**OHAS data description**
+```{r}
+# Number of household
+nrow(tcost.hh)
+
+# Number of household by household size
+tcost.hh.hhsiz.freq <- tcost.hh %>%
+                 group_by(HHSIZ) %>%
+                 summarise(freq=n())
+tcost.hh.hhsiz.freq
+
+# Number of trips by income groups and and trip purposes 
+tcost.hh.tpurp.inc.freq <- tcost.trip %>%
+                           group_by(TripPurpose, inc.level) %>%
+                           summarise(freq=n()) %>%
+                           as.data.frame()
+tcost.hh.tpurp.inc.freq
+```
+
+
+**OHAS: density_tcost.hh_by_inc.png**
+
+```{r}
+# Plot trip cost by income groups 
+pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) +
+            geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+            scale_colour_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+
+pden.inc
+
+```
+
+
+**OHAS: density_tcost.hh_by_hhsiz.png**
+```{r}
+tcost.hh <- tcost.hh %>% 
+  mutate(hhsiz.cat=cut(HHSIZ,
+                       breaks=c(1, 2, 3, 4, 9),
+                       labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                       include.lowest=T, right=F
+  ))
+pden.hhsiz <- ggplot(tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+  geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+  scale_colour_discrete(name = 'Household Size') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+pden.hhsiz
+```
+
+**OHAS: boxplot_tcost.hh_by_tpurp.inc.png**
+
+```{r}
+tcost.hh.tpurp <- tcost.hh.tpurp %>% 
+  mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
+         TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
+  )
+
+boxp.tpurp_inc <- ggplot(tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+  geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+  scale_fill_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+boxp.tpurp_inc
+```
+
+**OHAS: lineplot_tcost.hh_by_tpurp.inc.png**
+```{r}
+t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
+t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120) +
+  ggtitle("Trip-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+```
+
+### Portland
+```{r, echo=FALSE}
+setwd("~/tci")
+load("output/NHTS09/Portland/tcost.RData")
+```
+
+
+**Portland data description**
+```{r}
+# Number of household
+nrow(tcost.hh)
+
+# Number of household by household size
+tcost.hh.hhsiz.freq <- tcost.hh %>%
+                 group_by(HHSIZ) %>%
+                 summarise(freq=n())
+tcost.hh.hhsiz.freq
+# Number of trips by income groups and and trip purposes 
+tcost.hh.tpurp.inc.freq <- tcost.trip %>%
+                           group_by(TripPurpose, inc.level) %>%
+                           summarise(freq=n())%>%
+                           as.data.frame()
+tcost.hh.tpurp.inc.freq
+```
+
+
+
+**Portland: density_tcost.hh_by_inc.png**
+
+```{r}
+# Plot trip cost by income groups 
+pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) +
+            geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+            scale_colour_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+
+pden.inc
+
+```
+
+
+**Portland: density_tcost.hh_by_hhsiz.png**
+```{r}
+tcost.hh <- tcost.hh %>% 
+  mutate(hhsiz.cat=cut(HHSIZ,
+                       breaks=c(1, 2, 3, 4, 9),
+                       labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                       include.lowest=T, right=F
+  ))
+pden.hhsiz <- ggplot(tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+  geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+  scale_colour_discrete(name = 'Household Size') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+pden.hhsiz
+```
+
+**Portland: boxplot_tcost.hh_by_tpurp.inc.png**
+
+```{r}
+tcost.hh.tpurp <- tcost.hh.tpurp %>% 
+  mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
+         TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
+  )
+
+boxp.tpurp_inc <- ggplot(tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+  geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+  scale_fill_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+boxp.tpurp_inc
+```
+
+**Portland: lineplot_tcost.hh_by_tpurp.inc.png**
+```{r}
+t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
+t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120) +
+  ggtitle("Trip-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+```
+
+### Tampa Bay
+```{r, echo=FALSE}
+setwd("~/tci")
+load("output/NHTS09/TampaBay/tcost.RData")
+```
+
+**Tamba Baydata description**
+```{r}
+# Number of household
+nrow(tcost.hh)
+
+# Number of household by household size
+tcost.hh.hhsiz.freq <- tcost.hh %>%
+                 group_by(HHSIZ) %>%
+                 summarise(freq=n())
+tcost.hh.hhsiz.freq
+# Number of trips by income groups and and trip purposes 
+tcost.hh.tpurp.inc.freq <- tcost.trip %>%
+                           group_by(TripPurpose, inc.level) %>%
+                           summarise(freq=n()) %>%
+                           as.data.frame()
+tcost.hh.tpurp.inc.freq
+```
+
+
+**Tampa Bay: density_tcost.hh_by_inc.png**
+
+```{r}
+# Plot trip cost by income groups 
+pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) +
+            geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+            scale_colour_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+
+pden.inc
+
+```
+
+
+**Tampa Bay: density_tcost.hh_by_hhsiz.png**
+```{r}
+tcost.hh <- tcost.hh %>% 
+  mutate(hhsiz.cat=cut(HHSIZ,
+                       breaks=c(1, 2, 3, 4, 9),
+                       labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                       include.lowest=T, right=F
+  ))
+pden.hhsiz <- ggplot(tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+  geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+  scale_colour_discrete(name = 'Household Size') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+pden.hhsiz
+```
+
+**Tampa Bay: boxplot_tcost.hh_by_tpurp.inc.png**
+
+```{r}
+tcost.hh.tpurp <- tcost.hh.tpurp %>% 
+  mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
+         TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
+  )
+
+boxp.tpurp_inc <- ggplot(tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+  geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+  scale_fill_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+boxp.tpurp_inc
+```
+
+**Tampa Bay: lineplot_tcost.hh_by_tpurp.inc.png**
+```{r}
+t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
+t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120) +
+  ggtitle("Trip-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+```
+
+### Salt Lake City
+```{r, echo=FALSE}
+setwd("~/tci")
+load("output/NHTS09/SaltLakeCity/tcost.RData")
+```
+
+**Salt Lake City data description**
+```{r}
+# Number of household
+nrow(tcost.hh)
+
+# Number of household by household size
+tcost.hh.hhsiz.freq <- tcost.hh %>%
+                 group_by(HHSIZ) %>%
+                 summarise(freq=n())
+tcost.hh.hhsiz.freq
+# Number of trips by income groups and and trip purposes 
+tcost.hh.tpurp.inc.freq <- tcost.trip %>%
+                           group_by(TripPurpose, inc.level) %>%
+                           summarise(freq=n()) %>%
+                           as.data.frame()
+tcost.hh.tpurp.inc.freq
+```
+
+
+**Salt Lake City: density_tcost.hh_by_inc.png**
+
+```{r}
+# Plot trip cost by income groups 
+pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) +
+            geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+            scale_colour_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+
+pden.inc
+
+```
+
+
+**Salt Lake City: density_tcost.hh_by_hhsiz.png**
+```{r}
+tcost.hh <- tcost.hh %>% 
+  mutate(hhsiz.cat=cut(HHSIZ,
+                       breaks=c(1, 2, 3, 4, 9),
+                       labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                       include.lowest=T, right=F
+  ))
+pden.hhsiz <- ggplot(tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+  geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+  scale_colour_discrete(name = 'Household Size') + 
+  ggtitle("Household-level travel cost by household size") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+pden.hhsiz
+```
+
+**Salt Lake City: boxplot_tcost.hh_by_tpurp.inc.png**
+
+```{r}
+tcost.hh.tpurp <- tcost.hh.tpurp %>% 
+  mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
+         TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
+  )
+
+boxp.tpurp_inc <- ggplot(tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+  geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+  scale_fill_discrete(name = 'Income Level') + 
+  ggtitle("Household-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+boxp.tpurp_inc
+```
+
+**Salt Lake City: lineplot_tcost.hh_by_tpurp.inc.png**
+```{r}
+t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
+t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120) +
+  ggtitle("Trip-level travel cost by trip purposes income groups") +
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+```
