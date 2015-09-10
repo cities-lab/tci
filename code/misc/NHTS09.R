@@ -14,7 +14,8 @@
   # HHC_MSA: CMSA FIPS code for HH address
   # 6442 = Portland--Salem, OR--WA; 1637 trips
   # 8280 = Tampa--St. Petersburg--Clearwater, FL
-  HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=9999)  
+  # 7160 = Salt Lake City--Ogden, UT
+  HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=7160)  
   
   # make names for household income groups, trip purpose and calculation method
   IcNames <- c("Low Income", "Mid Income", "High Income")
@@ -104,15 +105,11 @@
   
     
 # Calculate and plot trip cost for Portland and Tampa Bay
-  
-  # Survey areas 
-  #AreaNames  <- c("TampaBay", "Portland")
- 
 
     for (msa.id in HHC_MSAs) {
       
       # Set output directory 
-      OUTPUT_DIR <- file.path("output/NHTS09", names(HHC_MSAs)[msa.id])
+      OUTPUT_DIR <- file.path("output/NHTS09", names(HHC_MSAs)[HHC_MSAs==msa.id])
       dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
       
       # Select survery area
