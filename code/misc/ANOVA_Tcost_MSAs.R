@@ -1,4 +1,5 @@
-# This script conducts ANOVA test to compare the travel costs of OHAS-Portland, NHTS-Portland, NHTS-TampaBay, NHTS-Salt Lake City   
+# This script conducts ANOVA test to compare the travel costs between OHAS-Portland and WFSC-Salt Lake City 
+# NHTS-Portland, NHTS-TampaBay, NHTS-Salt Lake City   
 
 # Set workplace 
  setwd("~/tci")
@@ -11,22 +12,25 @@
  PrNames <- c("Work", "Shopping", "Recreation", "Other")
  Pr <- c("hbw", "hbs", "hbr", "hbo")
  names(PrNames) <- Pr
- 
- CmNames <- c("mintcost", "avgtcost", "maxtcost")
- Cm <- c("min", "avg", "max")
- names(CmNames) <- Cm  
 
 # Load required packages
  require(ggplot2)
- 
+ require(dplyr)
 # Load data 
    # Load OHAS data 
    load("output/OHAS/tcost.RData")
-   op.tcost.trip <- tcost.trip
-   op.tcost.hh.tpurp <- tcost.hh.tpurp 
+   lp.tcost.trip <- tcost.trip
+   lp.tcost.hh.tpurp <- tcost.hh.tpurp 
    remove(tcost.all, tcost.distr, tcost.hh, tcost.hh.tpurp, tcost.HTAZ.inc, 
           tcost.HTAZ.tpurp.inc, tcost.tpurp.inc, tcost.trip, tcost.HTAZ)
    
+   # Load WFRC data 
+   load("output/WFRC_SaltLake/tcost.RData")
+   ls.tcost.trip <- tcost.trip
+   ls.tcost.hh.tpurp <- tcost.hh.tpurp 
+   remove(tcost.all, tcost.distr, tcost.hh, tcost.hh.tpurp, tcost.HTAZ.inc, 
+          tcost.HTAZ.tpurp.inc, tcost.tpurp.inc, tcost.trip, tcost.HTAZ)
+
    # Load NHTS-Portland data 
    load("output/NHTS09/Portland/tcost.RData")
    np.tcost.trip <- tcost.trip
@@ -47,214 +51,213 @@
    ns.tcost.hh.tpurp <- tcost.hh.tpurp 
    remove(tcost.all, tcost.distr, tcost.hh, tcost.hh.tpurp, tcost.HTAZ.inc, 
           tcost.HTAZ.tpurp.inc, tcost.tpurp.inc, tcost.trip, tcost.HTAZ)
- 
-# Trip-level travel cost  
-  # One-way ANOVA for overall travel cost in different MSAs
+
+# Analyze NHTS data    
+ # Trip-level travel cost  
+  
      # Combine trip-level tcost data 
-     op.tcost.trip.sub <- data.frame(op.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="op")
-     np.tcost.trip.sub <- data.frame(np.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="np")
-     nt.tcost.trip.sub <- data.frame(nt.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="nt")
-     ns.tcost.trip.sub <- data.frame(ns.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="ns")
+     np.tcost.trip.sub <- data.frame(np.tcost.trip[, c("tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Portland")
+     nt.tcost.trip.sub <- data.frame(nt.tcost.trip[, c("tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Tampa Bay")
+     ns.tcost.trip.sub <- data.frame(ns.tcost.trip[, c("tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Salt Lake City")
      
-     tcost.trip.msas <- rbind(op.tcost.trip.sub, np.tcost.trip.sub, nt.tcost.trip.sub, ns.tcost.trip.sub)
-     tcost.trip.msas$TripPurpose <- as.factor(tcost.trip.msas$TripPurpose)
-     # Combine data 
-     ggplot(tcost.trip.msas, aes(x = msa , y = tcost, fill=msa)) +
+     n.tcost.trip.msas <- rbind(np.tcost.trip.sub, nt.tcost.trip.sub, ns.tcost.trip.sub)
+     
+     # Transform TripPurpose field mode
+     n.tcost.trip.msas$TripPurpose <- as.factor(n.tcost.trip.msas$TripPurpose)
+     
+     # Reclassify household size 
+     n.tcost.trip.msas <- n.tcost.trip.msas %>% 
+       mutate(hhsiz.cat=cut(HHSIZ,
+                            breaks=c(1, 2, 3, 4, 9),
+                            labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                            include.lowest=T, right=F
+       ))
+     
+    
+     # Plot data 
+     ggplot(n.tcost.trip.msas, aes(x = msa , y = tcost, fill=msa)) +
        geom_boxplot() +
        scale_x_discrete() + xlab("MSAs") +
-       ylab("Trip-level travel cost") +ylim(0,100)
+       ylab("NHTS trip-level travel cost") +ylim(0,200) + 
+       ggtitle("NHTS trip-level travel cost by MSAs") +
+       theme(plot.title = element_text(face="bold", size=12, vjust=1))
      
-     # ANOVA test
-     tcost.trip.msas.aov <- aov(tcost ~ msa, data=tcost.trip.msas)
-     summary(tcost.trip.msas.aov)
-     TukeyHSD(tcost.trip.msas.aov)
+     # ANOVA test for overall travel cost 
+     n.tcost.trip.msas.aov <- aov(tcost ~ msa, data=n.tcost.trip.msas)
+     summary(n.tcost.trip.msas.aov)
+     TukeyHSD(n.tcost.trip.msas.aov)
      
-  # One-way ANOVA test for travel cost by same income group in diffent areas 
+  # One-way ANOVA test for travel cost for same trip purpose in diffent MSAs 
      # hbw
-     tcost.trip.msas.hbw <- aov(tcost ~ msa, 
-                                data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbw"),])
-     summary(tcost.trip.msas.hbw)
-     TukeyHSD(tcost.trip.msas.hbw)
+     n.tcost.trip.msas.hbw <- aov(tcost ~ msa, 
+                                data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbw"),])
+     summary(n.tcost.trip.msas.hbw)
+     TukeyHSD(n.tcost.trip.msas.hbw)
      
      # hbs
-     tcost.trip.msas.hbs <- aov(tcost ~ msa, 
-                                data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbs"),])
-     summary(tcost.trip.msas.hbs)
-     TukeyHSD(tcost.trip.msas.hbs)
+     n.tcost.trip.msas.hbs <- aov(tcost ~ msa, 
+                                data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbs"),])
+     summary(n.tcost.trip.msas.hbs)
+     TukeyHSD(n.tcost.trip.msas.hbs)
      
      # hbr
-     tcost.trip.msas.hbr <- aov(tcost ~ msa, 
-                                data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbr"),])
-     summary(tcost.trip.msas.hbr)
-     TukeyHSD(tcost.trip.msas.hbr)
+     n.tcost.trip.msas.hbr <- aov(tcost ~ msa, 
+                                data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbr"),])
+     summary(n.tcost.trip.msas.hbr)
+     TukeyHSD(n.tcost.trip.msas.hbr)
      
      # hbo
-     tcost.trip.msas.hbo <- aov(tcost ~ msa, 
-                                data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbo"),])
-     summary(tcost.trip.msas.hbo)
-     TukeyHSD(tcost.trip.msas.hbo)
+     n.tcost.trip.msas.hbo <- aov(tcost ~ msa, 
+                                data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbo"),])
+     summary(n.tcost.trip.msas.hbo)
+     TukeyHSD(n.tcost.trip.msas.hbo)
      
-  # One-way ANOVA test for travel cost for same trip purpose in diffent areas   
+  # One-way ANOVA test for travel cost by same income group in diffent MSAs
      # lowInc
-     tcost.trip.msas.lowInc <- aov(tcost ~ msa, 
-                                   data=tcost.trip.msas[which(tcost.trip.msas$inc.level=="lowInc"),])
-     summary(tcost.trip.msas.lowInc)
-     TukeyHSD(tcost.trip.msas.lowInc)
+     n.tcost.trip.msas.lowInc <- aov(tcost ~ msa, 
+                                   data=n.tcost.trip.msas[which(n.tcost.trip.msas$inc.level=="lowInc"),])
+     summary(n.tcost.trip.msas.lowInc)
+     TukeyHSD(n.tcost.trip.msas.lowInc)
      
      # midInc
-     tcost.trip.msas.midInc <- aov(tcost ~ msa, 
-                                   data=tcost.trip.msas[which(tcost.trip.msas$inc.level=="midInc"),])
-     summary(tcost.trip.msas.midInc)
-     TukeyHSD(tcost.trip.msas.midInc)
+     n.tcost.trip.msas.midInc <- aov(tcost ~ msa, 
+                                   data=n.tcost.trip.msas[which(n.tcost.trip.msas$inc.level=="midInc"),])
+     summary(n.tcost.trip.msas.midInc)
+     TukeyHSD(n.tcost.trip.msas.midInc)
      
      # highInc
-     tcost.trip.msas.highInc <- aov(tcost ~ msa, 
-                                    data=tcost.trip.msas[which(tcost.trip.msas$inc.level=="highInc"),])
-     summary(tcost.trip.msas.highInc)
-     TukeyHSD(tcost.trip.msas.highInc)
+     n.tcost.trip.msas.highInc <- aov(tcost ~ msa, 
+                                    data=n.tcost.trip.msas[which(n.tcost.trip.msas$inc.level=="highInc"),])
+     summary(n.tcost.trip.msas.highInc)
+     TukeyHSD(n.tcost.trip.msas.highInc)
      
   # One-way ANOVA test for travel cost by same income group for same trip purpose in diffent areas 
      # hbw-lowInc
-     tcost.trip.msas.hbw.lowInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbw"&tcost.trip.msas$inc.level=="lowInc"),])
-     summary(tcost.trip.msas.hbw.lowInc)
-     TukeyHSD(tcost.trip.msas.hbw.lowInc)
+     n.tcost.trip.msas.hbw.lowInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbw"&n.tcost.trip.msas$inc.level=="lowInc"),])
+     summary(n.tcost.trip.msas.hbw.lowInc)
+     TukeyHSD(n.tcost.trip.msas.hbw.lowInc)
      
      # hbw-midInc
-     tcost.trip.msas.hbw.midInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbw"&tcost.trip.msas$inc.level=="midInc"),])
-     summary(tcost.trip.msas.hbw.midInc)
-     TukeyHSD(tcost.trip.msas.hbw.midInc)
+     n.tcost.trip.msas.hbw.midInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbw"&n.tcost.trip.msas$inc.level=="midInc"),])
+     summary(n.tcost.trip.msas.hbw.midInc)
+     TukeyHSD(n.tcost.trip.msas.hbw.midInc)
      
      # hbw-highInc
-     tcost.trip.msas.hbw.highInc <- aov(tcost ~ msa, 
-                                        data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbw"&tcost.trip.msas$inc.level=="highInc"),])
-     summary(tcost.trip.msas.hbw.highInc)
-     TukeyHSD(tcost.trip.msas.hbw.highInc)
+     n.tcost.trip.msas.hbw.highInc <- aov(tcost ~ msa, 
+                                        data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbw"&n.tcost.trip.msas$inc.level=="highInc"),])
+     summary(n.tcost.trip.msas.hbw.highInc)
+     TukeyHSD(n.tcost.trip.msas.hbw.highInc)
      
      # hbs-lowInc
-     tcost.trip.msas.hbs.lowInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbs"&tcost.trip.msas$inc.level=="lowInc"),])
-     summary(tcost.trip.msas.hbs.lowInc)
-     TukeyHSD(tcost.trip.msas.hbs.lowInc)
+     n.tcost.trip.msas.hbs.lowInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbs"&n.tcost.trip.msas$inc.level=="lowInc"),])
+     summary(n.tcost.trip.msas.hbs.lowInc)
+     TukeyHSD(n.tcost.trip.msas.hbs.lowInc)
      
      # hbs-midInc
-     tcost.trip.msas.hbs.midInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbs"&tcost.trip.msas$inc.level=="midInc"),])
-     summary(tcost.trip.msas.hbs.midInc)
-     TukeyHSD(tcost.trip.msas.hbs.midInc)
+     n.tcost.trip.msas.hbs.midInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbs"&n.tcost.trip.msas$inc.level=="midInc"),])
+     summary(n.tcost.trip.msas.hbs.midInc)
+     TukeyHSD(n.tcost.trip.msas.hbs.midInc)
      
      # hbs-highInc
-     tcost.trip.msas.hbs.highInc <- aov(tcost ~ msa, 
-                                        data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbs"&tcost.trip.msas$inc.level=="highInc"),])
-     summary(tcost.trip.msas.hbs.highInc)
-     TukeyHSD(tcost.trip.msas.hbs.highInc)
+     n.tcost.trip.msas.hbs.highInc <- aov(tcost ~ msa, 
+                                        data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbs"&n.tcost.trip.msas$inc.level=="highInc"),])
+     summary(n.tcost.trip.msas.hbs.highInc)
+     TukeyHSD(n.tcost.trip.msas.hbs.highInc)
      
      # hbr-lowInc
-     tcost.trip.msas.hbr.lowInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbr"&tcost.trip.msas$inc.level=="lowInc"),])
-     summary(tcost.trip.msas.hbr.lowInc)
-     TukeyHSD(tcost.trip.msas.hbr.lowInc)
+     n.tcost.trip.msas.hbr.lowInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbr"&n.tcost.trip.msas$inc.level=="lowInc"),])
+     summary(n.tcost.trip.msas.hbr.lowInc)
+     TukeyHSD(n.tcost.trip.msas.hbr.lowInc)
      
      # hbr-midInc
-     tcost.trip.msas.hbr.midInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbr"&tcost.trip.msas$inc.level=="midInc"),])
-     summary(tcost.trip.msas.hbr.midInc)
-     TukeyHSD(tcost.trip.msas.hbr.midInc)
+     n.tcost.trip.msas.hbr.midInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbr"&n.tcost.trip.msas$inc.level=="midInc"),])
+     summary(n.tcost.trip.msas.hbr.midInc)
+     TukeyHSD(n.tcost.trip.msas.hbr.midInc)
      
      # hbr-highInc
-     tcost.trip.msas.hbr.highInc <- aov(tcost ~ msa, 
-                                        data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbr"&tcost.trip.msas$inc.level=="highInc"),])
-     summary(tcost.trip.msas.hbr.highInc)
-     TukeyHSD(tcost.trip.msas.hbr.highInc)
+     n.tcost.trip.msas.hbr.highInc <- aov(tcost ~ msa, 
+                                        data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbr"&n.tcost.trip.msas$inc.level=="highInc"),])
+     summary(n.tcost.trip.msas.hbr.highInc)
+     TukeyHSD(n.tcost.trip.msas.hbr.highInc)
      
      # hbo-lowInc
-     tcost.trip.msas.hbo.lowInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbo"&tcost.trip.msas$inc.level=="lowInc"),])
-     summary(tcost.trip.msas.hbo.lowInc)
-     TukeyHSD(tcost.trip.msas.hbo.lowInc)
+     n.tcost.trip.msas.hbo.lowInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbo"&n.tcost.trip.msas$inc.level=="lowInc"),])
+     summary(n.tcost.trip.msas.hbo.lowInc)
+     TukeyHSD(n.tcost.trip.msas.hbo.lowInc)
      
      # hbo-midInc
-     tcost.trip.msas.hbo.midInc <- aov(tcost ~ msa, 
-                                       data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbo"&tcost.trip.msas$inc.level=="midInc"),])
-     summary(tcost.trip.msas.hbo.midInc)
-     TukeyHSD(tcost.trip.msas.hbo.midInc)
+     n.tcost.trip.msas.hbo.midInc <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbo"&n.tcost.trip.msas$inc.level=="midInc"),])
+     summary(n.tcost.trip.msas.hbo.midInc)
+     TukeyHSD(n.tcost.trip.msas.hbo.midInc)
      
      # hbo-highInc
-     tcost.trip.msas.hbo.highInc <- aov(tcost ~ msa, 
-                                        data=tcost.trip.msas[which(tcost.trip.msas$TripPurpose=="hbo"&tcost.trip.msas$inc.level=="highInc"),])
-     summary(tcost.trip.msas.hbo.highInc)
-     TukeyHSD(tcost.trip.msas.hbo.highInc)
+     n.tcost.trip.msas.hbo.highInc <- aov(tcost ~ msa, 
+                                        data=n.tcost.trip.msas[which(n.tcost.trip.msas$TripPurpose=="hbo"&n.tcost.trip.msas$inc.level=="highInc"),])
+     summary(n.tcost.trip.msas.hbo.highInc)
+     TukeyHSD(n.tcost.trip.msas.hbo.highInc)
      
-     
-# Two-way ANOVA test for each MSA
-   # OHAS-Portland 
-     # Transform TripPurpose as factor    
-     op.tcost.trip$TripPurpose <- as.factor(op.tcost.trip$TripPurpose)
-     
-     # Plot travel cost 
-     boxp.op.tcost.trip <- ggplot(op.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-       geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
-       scale_fill_discrete(name = 'Income Level') + 
-       ggtitle("OHAS-Portland trip-level travel cost ") +
+     # Plot trave cost by household size 
+     ggplot(n.tcost.trip.msas, aes(x=msa, y=tcost, fill=hhsiz.cat)) +
+       geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("MSAs") + ylim(0, 250)  +
+       scale_fill_discrete(name = 'Household size') + 
+       ggtitle("NHTS Trip-level travel cost by household size") +
        theme(plot.title = element_text(face="bold", size=12, vjust=1))
-     boxp.op.tcost.trip
+    
+     # One-way ANOVA test for trip cost of same househould classification in different MSAs
+     # hhsiz.cat 1
+     n.tcost.trip.msas.hhsiz.cat1 <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$hhsiz.cat=="1"),])
+     summary(n.tcost.trip.msas.hhsiz.cat1)
+     TukeyHSD(n.tcost.trip.msas.hhsiz.cat1)
      
-     # Two-way ANOVA test 
-     op.tcost.trip.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=op.tcost.trip)
-     summary(op.tcost.trip.PrIc)
+     # hhsiz.cat 2
+     n.tcost.trip.msas.hhsiz.cat2 <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$hhsiz.cat=="2"),])
+     summary(n.tcost.trip.msas.hhsiz.cat2)
+     TukeyHSD(n.tcost.trip.msas.hhsiz.cat2)
      
-     TukeyHSD(op.tcost.trip.PrIc, which="TripPurpose")
-     TukeyHSD(op.tcost.trip.PrIc, which="inc.level")
-
-     # One-way ANOVA test of same trip purpose 
-       # hbw
-       op.tcost.trip.hbw <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbw"),])
-       summary(op.tcost.trip.hbw)
-       TukeyHSD(op.tcost.trip.hbw)
-       
-       # hbs
-       op.tcost.trip.hbs <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbs"),])
-       summary(op.tcost.trip.hbs)
-       TukeyHSD(op.tcost.trip.hbs)
+     # hhsiz.cat 3
+     n.tcost.trip.msas.hhsiz.cat3 <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$hhsiz.cat=="3"),])
+     summary(n.tcost.trip.msas.hhsiz.cat3)
+     TukeyHSD(n.tcost.trip.msas.hhsiz.cat3)
      
-       # hbr
-       op.tcost.trip.hbr <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbr"),])
-       summary(op.tcost.trip.hbr)
-       TukeyHSD(op.tcost.trip.hbr)
-       
-       # hbo
-       op.tcost.trip.hbo <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbo"),])
-       summary(op.tcost.trip.hbo)
-       TukeyHSD(op.tcost.trip.hbo)
+     # hhsiz.cat 4+
+     n.tcost.trip.msas.hhsiz.cat4 <- aov(tcost ~ msa, 
+                                       data=n.tcost.trip.msas[which(n.tcost.trip.msas$hhsiz.cat=="4+"),])
+     summary(n.tcost.trip.msas.hhsiz.cat4)
+     TukeyHSD(n.tcost.trip.msas.hhsiz.cat4)
      
-     # One-way ANOVA test of same income group 
-       # lowInc
-       op.tcost.trip.lowInc <- aov(tcost ~ TripPurpose, data=op.tcost.trip[which(op.tcost.trip$inc.level=="lowInc"),])
-       summary(op.tcost.trip.lowInc)
-       TukeyHSD(op.tcost.trip.lowInc)
-       
-       # midInc
-       op.tcost.trip.midInc <- aov(tcost ~ TripPurpose, data=op.tcost.trip[which(op.tcost.trip$inc.level=="midInc"),])
-       summary(op.tcost.trip.midInc)
-       TukeyHSD(op.tcost.trip.midInc)
-       
-       # highInc
-       op.tcost.trip.highInc <- aov(tcost ~ TripPurpose, data=op.tcost.trip[which(op.tcost.trip$inc.level=="highInc"),])
-       summary(op.tcost.trip.highInc)
-       TukeyHSD(op.tcost.trip.highInc)
-       
+     
+  # ANOVA test for each MSA
+  
     # NHTS-Portland 
        # Transform TripPurpose as factor    
        np.tcost.trip$TripPurpose <- as.factor(np.tcost.trip$TripPurpose)
        
+       # Reclassify househod size group 
+       np.tcost.trip <- np.tcost.trip%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
        # Plot travel cost 
-       boxp.np.tcost.trip <- ggplot(np.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
+       ggplot(np.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
          scale_fill_discrete(name = 'Income Level') + 
-         ggtitle("OHAS-Portland trip-level travel cost ") +
+         ggtitle("NHTS-Portland trip-level travel cost") +
          theme(plot.title = element_text(face="bold", size=12, vjust=1))
-       boxp.np.tcost.trip
+       
        
        # Two-way ANOVA test 
        np.tcost.trip.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=np.tcost.trip)
@@ -263,7 +266,7 @@
        TukeyHSD(np.tcost.trip.PrIc, which="TripPurpose")
        TukeyHSD(np.tcost.trip.PrIc, which="inc.level")
        
-       # One-way ANOVA test of same trip purpose 
+       # One-way ANOVA test of travel cost for the same trip purpose 
        # hbw
        np.tcost.trip.hbw <- aov(tcost ~ inc.level, data=np.tcost.trip[which(np.tcost.trip$TripPurpose=="hbw"),])
        summary(np.tcost.trip.hbw)
@@ -284,32 +287,37 @@
        summary(np.tcost.trip.hbo)
        TukeyHSD(np.tcost.trip.hbo)
        
-       # One-way ANOVA test of same income group 
-       # lowInc
-       np.tcost.trip.lowInc <- aov(tcost ~ TripPurpose, data=np.tcost.trip[which(np.tcost.trip$inc.level=="lowInc"),])
-       summary(np.tcost.trip.lowInc)
-       TukeyHSD(np.tcost.trip.lowInc)
+       # Plot travel cost by househoud categories 
+       ggplot(np.tcost.trip, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("NHTS-Portland trip-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
        
-       # midInc
-       np.tcost.trip.midInc <- aov(tcost ~ TripPurpose, data=np.tcost.trip[which(np.tcost.trip$inc.level=="midInc"),])
-       summary(np.tcost.trip.midInc)
-       TukeyHSD(np.tcost.trip.midInc)
-       
-       # highInc
-       np.tcost.trip.highInc <- aov(tcost ~ TripPurpose, data=np.tcost.trip[which(np.tcost.trip$inc.level=="highInc"),])
-       summary(np.tcost.trip.highInc)
-       TukeyHSD(np.tcost.trip.highInc)
+       # One-way ANOVA test of travel cost by household categories 
+       np.tcost.trip.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=np.tcost.trip)
+       summary(np.tcost.trip.hhsiz.cat)
+       TukeyHSD(np.tcost.trip.hhsiz.cat)
+
     # NHTS-Tampa Bay 
        # Transform TripPurpose as factor    
        nt.tcost.trip$TripPurpose <- as.factor(nt.tcost.trip$TripPurpose)
        
+       # Reclassify househod size group 
+       nt.tcost.trip <- nt.tcost.trip%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
        # Plot travel cost 
-       boxp.nt.tcost.trip <- ggplot(nt.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
+        ggplot(nt.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
          scale_fill_discrete(name = 'Income Level') + 
-         ggtitle("OHAS-Portland trip-level travel cost ") +
+         ggtitle("NHTS-Tampa Bay trip-level travel cost ") +
          theme(plot.title = element_text(face="bold", size=12, vjust=1))
-       boxp.nt.tcost.trip
+      
        
        # Two-way ANOVA test 
        nt.tcost.trip.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=nt.tcost.trip)
@@ -318,7 +326,7 @@
        TukeyHSD(nt.tcost.trip.PrIc, which="TripPurpose")
        TukeyHSD(nt.tcost.trip.PrIc, which="inc.level")
        
-       # One-way ANOVA test of same trip purpose 
+       # One-way ANOVA test of travel cost for the same trip purpose 
        # hbw
        nt.tcost.trip.hbw <- aov(tcost ~ inc.level, data=nt.tcost.trip[which(nt.tcost.trip$TripPurpose=="hbw"),])
        summary(nt.tcost.trip.hbw)
@@ -339,34 +347,37 @@
        summary(nt.tcost.trip.hbo)
        TukeyHSD(nt.tcost.trip.hbo)
        
-       # One-way ANOVA test of same income group 
-       # lowInc
-       nt.tcost.trip.lowInc <- aov(tcost ~ TripPurpose, data=nt.tcost.trip[which(nt.tcost.trip$inc.level=="lowInc"),])
-       summary(nt.tcost.trip.lowInc)
-       TukeyHSD(nt.tcost.trip.lowInc)
+       # Plot travel cost by househoud categories 
+       ggplot(nt.tcost.trip, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("NHTS-Tampa Bay trip-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
        
-       # midInc
-       nt.tcost.trip.midInc <- aov(tcost ~ TripPurpose, data=nt.tcost.trip[which(nt.tcost.trip$inc.level=="midInc"),])
-       summary(nt.tcost.trip.midInc)
-       TukeyHSD(nt.tcost.trip.midInc)
-       
-       # highInc
-       nt.tcost.trip.highInc <- aov(tcost ~ TripPurpose, data=nt.tcost.trip[which(nt.tcost.trip$inc.level=="highInc"),])
-       summary(nt.tcost.trip.highInc)
-       TukeyHSD(nt.tcost.trip.highInc)
+       # One-way ANOVA test of travel cost by household categories 
+       nt.tcost.trip.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=nt.tcost.trip)
+       summary(nt.tcost.trip.hhsiz.cat)
+       TukeyHSD(nt.tcost.trip.hhsiz.cat) 
        
     # NHTS-Salt Lake City 
        # Transform TripPurpose as factor    
        ns.tcost.trip$TripPurpose <- as.factor(ns.tcost.trip$TripPurpose)
        
-       # Plot travel cost 
-       boxp.ns.tcost.trip <- ggplot(ns.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
-         scale_fill_discrete(name = 'Income Level') + 
-         ggtitle("OHAS-Portland trip-level travel cost ") +
-         theme(plot.title = element_text(face="bold", size=12, vjust=1))
-       boxp.ns.tcost.trip
+       # Reclassify househod size group 
+       ns.tcost.trip <- ns.tcost.trip%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
        
+       # Plot travel cost 
+       ggplot(ns.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("NHTS-Salt Lake City trip-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+      
        # Two-way ANOVA test 
        ns.tcost.trip.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=ns.tcost.trip)
        summary(ns.tcost.trip.PrIc)
@@ -374,403 +385,1040 @@
        TukeyHSD(ns.tcost.trip.PrIc, which="TripPurpose")
        TukeyHSD(ns.tcost.trip.PrIc, which="inc.level")
        
-       # One-way ANOVA test of same trip purpose 
-         # hbw
-         ns.tcost.trip.hbw <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbw"),])
-         summary(ns.tcost.trip.hbw)
-         TukeyHSD(ns.tcost.trip.hbw)
-         
-         # hbs
-         ns.tcost.trip.hbs <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbs"),])
-         summary(ns.tcost.trip.hbs)
-         TukeyHSD(ns.tcost.trip.hbs)
-         
-         # hbr
-         ns.tcost.trip.hbr <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbr"),])
-         summary(ns.tcost.trip.hbr)
-         TukeyHSD(ns.tcost.trip.hbr)
-         
-         # hbo
-         ns.tcost.trip.hbo <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbo"),])
-         summary(ns.tcost.trip.hbo)
-         TukeyHSD(ns.tcost.trip.hbo)
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       ns.tcost.trip.hbw <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbw"),])
+       summary(ns.tcost.trip.hbw)
+       TukeyHSD(ns.tcost.trip.hbw)
        
-       # One-way ANOVA test of same income group 
-         # lowInc
-         ns.tcost.trip.lowInc <- aov(tcost ~ TripPurpose, data=ns.tcost.trip[which(ns.tcost.trip$inc.level=="lowInc"),])
-         summary(ns.tcost.trip.lowInc)
-         TukeyHSD(ns.tcost.trip.lowInc)
-         
-         # midInc
-         ns.tcost.trip.midInc <- aov(tcost ~ TripPurpose, data=ns.tcost.trip[which(ns.tcost.trip$inc.level=="midInc"),])
-         summary(ns.tcost.trip.midInc)
-         TukeyHSD(ns.tcost.trip.midInc)
-         
-         # highInc
-         ns.tcost.trip.highInc <- aov(tcost ~ TripPurpose, data=ns.tcost.trip[which(ns.tcost.trip$inc.level=="highInc"),])
-         summary(ns.tcost.trip.highInc)
-         TukeyHSD(ns.tcost.trip.highInc)
+       # hbs
+       ns.tcost.trip.hbs <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbs"),])
+       summary(ns.tcost.trip.hbs)
+       TukeyHSD(ns.tcost.trip.hbs)
        
-# Compare household-level travel cost 
-    # One-way ANOVA for overall travel cost in different MSAs
-         # Combine trip-level tcost data 
-         op.tcost.hh.tpurp.sub <- data.frame(op.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="op")
-         np.tcost.hh.tpurp.sub <- data.frame(np.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="np")
-         nt.tcost.hh.tpurp.sub <- data.frame(nt.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="nt")
-         ns.tcost.hh.tpurp.sub <- data.frame(ns.tcost.trip[, c("tcost", "TripPurpose", "inc.level")], msa="ns")
-         
-         tcost.hh.tpurp.msas <- rbind(op.tcost.hh.tpurp.sub, np.tcost.hh.tpurp.sub, nt.tcost.hh.tpurp.sub, ns.tcost.hh.tpurp.sub)
-         tcost.hh.tpurp.msas$TripPurpose <- as.factor(tcost.hh.tpurp.msas$TripPurpose)
-         # Combine data 
-         ggplot(tcost.hh.tpurp.msas, aes(x = msa , y = tcost, fill=msa)) +
-           geom_boxplot() +
-           scale_x_discrete() + xlab("MSAs") +
-           ylab("Trip-level travel cost") +ylim(0,100)
-         
-         # ANOVA test
-         tcost.hh.tpurp.msas.aov <- aov(tcost ~ msa, data=tcost.hh.tpurp.msas)
-         summary(tcost.hh.tpurp.msas.aov)
-         TukeyHSD(tcost.hh.tpurp.msas.aov)
-         
-    # One-way ANOVA test for travel cost by same income group in diffent areas 
-         # hbw
-         tcost.hh.tpurp.msas.hbw <- aov(tcost ~ msa, 
-                                        data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbw"),])
-         summary(tcost.hh.tpurp.msas.hbw)
-         TukeyHSD(tcost.hh.tpurp.msas.hbw)
-         
-         # hbs
-         tcost.hh.tpurp.msas.hbs <- aov(tcost ~ msa, 
-                                        data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbs"),])
-         summary(tcost.hh.tpurp.msas.hbs)
-         TukeyHSD(tcost.hh.tpurp.msas.hbs)
-         
-         # hbr
-         tcost.hh.tpurp.msas.hbr <- aov(tcost ~ msa, 
-                                        data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbr"),])
-         summary(tcost.hh.tpurp.msas.hbr)
-         TukeyHSD(tcost.hh.tpurp.msas.hbr)
-         
-         # hbo
-         tcost.hh.tpurp.msas.hbo <- aov(tcost ~ msa, 
-                                        data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbo"),])
-         summary(tcost.hh.tpurp.msas.hbo)
-         TukeyHSD(tcost.hh.tpurp.msas.hbo)
-         
-    # One-way ANOVA test for travel cost for same trip purpose in diffent areas   
-         # lowInc
-         tcost.hh.tpurp.msas.lowInc <- aov(tcost ~ msa, 
-                                           data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$inc.level=="lowInc"),])
-         summary(tcost.hh.tpurp.msas.lowInc)
-         TukeyHSD(tcost.hh.tpurp.msas.lowInc)
-         
-         # midInc
-         tcost.hh.tpurp.msas.midInc <- aov(tcost ~ msa, 
-                                           data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$inc.level=="midInc"),])
-         summary(tcost.hh.tpurp.msas.midInc)
-         TukeyHSD(tcost.hh.tpurp.msas.midInc)
-         
-         # highInc
-         tcost.hh.tpurp.msas.highInc <- aov(tcost ~ msa, 
-                                            data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$inc.level=="highInc"),])
-         summary(tcost.hh.tpurp.msas.highInc)
-         TukeyHSD(tcost.hh.tpurp.msas.highInc)
-         
-    # One-way ANOVA test for travel cost by same income group for same trip purpose in diffent areas 
-         # hbw-lowInc
-         tcost.hh.tpurp.msas.hbw.lowInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbw"&tcost.hh.tpurp.msas$inc.level=="lowInc"),])
-         summary(tcost.hh.tpurp.msas.hbw.lowInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbw.lowInc)
-         
-         # hbw-midInc
-         tcost.hh.tpurp.msas.hbw.midInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbw"&tcost.hh.tpurp.msas$inc.level=="midInc"),])
-         summary(tcost.hh.tpurp.msas.hbw.midInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbw.midInc)
-         
-         # hbw-highInc
-         tcost.hh.tpurp.msas.hbw.highInc <- aov(tcost ~ msa, 
-                                                data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbw"&tcost.hh.tpurp.msas$inc.level=="highInc"),])
-         summary(tcost.hh.tpurp.msas.hbw.highInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbw.highInc)
-         
-         # hbs-lowInc
-         tcost.hh.tpurp.msas.hbs.lowInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbs"&tcost.hh.tpurp.msas$inc.level=="lowInc"),])
-         summary(tcost.hh.tpurp.msas.hbs.lowInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbs.lowInc)
-         
-         # hbs-midInc
-         tcost.hh.tpurp.msas.hbs.midInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbs"&tcost.hh.tpurp.msas$inc.level=="midInc"),])
-         summary(tcost.hh.tpurp.msas.hbs.midInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbs.midInc)
-         
-         # hbs-highInc
-         tcost.hh.tpurp.msas.hbs.highInc <- aov(tcost ~ msa, 
-                                                data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbs"&tcost.hh.tpurp.msas$inc.level=="highInc"),])
-         summary(tcost.hh.tpurp.msas.hbs.highInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbs.highInc)
-         
-         # hbr-lowInc
-         tcost.hh.tpurp.msas.hbr.lowInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbr"&tcost.hh.tpurp.msas$inc.level=="lowInc"),])
-         summary(tcost.hh.tpurp.msas.hbr.lowInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbr.lowInc)
-         
-         # hbr-midInc
-         tcost.hh.tpurp.msas.hbr.midInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbr"&tcost.hh.tpurp.msas$inc.level=="midInc"),])
-         summary(tcost.hh.tpurp.msas.hbr.midInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbr.midInc)
-         
-         # hbr-highInc
-         tcost.hh.tpurp.msas.hbr.highInc <- aov(tcost ~ msa, 
-                                                data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbr"&tcost.hh.tpurp.msas$inc.level=="highInc"),])
-         summary(tcost.hh.tpurp.msas.hbr.highInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbr.highInc)
-         
-         # hbo-lowInc
-         tcost.hh.tpurp.msas.hbo.lowInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbo"&tcost.hh.tpurp.msas$inc.level=="lowInc"),])
-         summary(tcost.hh.tpurp.msas.hbo.lowInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbo.lowInc)
-         
-         # hbo-midInc
-         tcost.hh.tpurp.msas.hbo.midInc <- aov(tcost ~ msa, 
-                                               data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbo"&tcost.hh.tpurp.msas$inc.level=="midInc"),])
-         summary(tcost.hh.tpurp.msas.hbo.midInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbo.midInc)
-         
-         # hbo-highInc
-         tcost.hh.tpurp.msas.hbo.highInc <- aov(tcost ~ msa, 
-                                                data=tcost.hh.tpurp.msas[which(tcost.hh.tpurp.msas$TripPurpose=="hbo"&tcost.hh.tpurp.msas$inc.level=="highInc"),])
-         summary(tcost.hh.tpurp.msas.hbo.highInc)
-         TukeyHSD(tcost.hh.tpurp.msas.hbo.highInc)
-         
-         
-    # Two-way ANOVA test for each MSA
-      # OHAS-Portland 
-         # Transform TripPurpose as factor    
-         op.tcost.trip$TripPurpose <- as.factor(op.tcost.trip$TripPurpose)
-         
-         # Plot travel cost 
-         boxp.op.tcost.trip <- ggplot(op.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-           geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
-           scale_fill_discrete(name = 'Income Level') + 
-           ggtitle("OHAS-Portland trip-level travel cost ") +
-           theme(plot.title = element_text(face="bold", size=12, vjust=1))
-         boxp.op.tcost.trip
-         
-         # Two-way ANOVA test 
-         op.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=op.tcost.trip)
-         summary(op.tcost.hh.tpurp.PrIc)
-         
-         TukeyHSD(op.tcost.hh.tpurp.PrIc, which="TripPurpose")
-         TukeyHSD(op.tcost.hh.tpurp.PrIc, which="inc.level")
-         
-         # One-way ANOVA test of same trip purpose 
-         # hbw
-         op.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbw"),])
-         summary(op.tcost.hh.tpurp.hbw)
-         TukeyHSD(op.tcost.hh.tpurp.hbw)
-         
-         # hbs
-         op.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbs"),])
-         summary(op.tcost.hh.tpurp.hbs)
-         TukeyHSD(op.tcost.hh.tpurp.hbs)
-         
-         # hbr
-         op.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbr"),])
-         summary(op.tcost.hh.tpurp.hbr)
-         TukeyHSD(op.tcost.hh.tpurp.hbr)
-         
-         # hbo
-         op.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=op.tcost.trip[which(op.tcost.trip$TripPurpose=="hbo"),])
-         summary(op.tcost.hh.tpurp.hbo)
-         TukeyHSD(op.tcost.hh.tpurp.hbo)
-         
-         # One-way ANOVA test of same income group 
-         # lowInc
-         op.tcost.hh.tpurp.lowInc <- aov(tcost ~ TripPurpose, data=op.tcost.trip[which(op.tcost.trip$inc.level=="lowInc"),])
-         summary(op.tcost.hh.tpurp.lowInc)
-         TukeyHSD(op.tcost.hh.tpurp.lowInc)
-         
-         # midInc
-         op.tcost.hh.tpurp.midInc <- aov(tcost ~ TripPurpose, data=op.tcost.trip[which(op.tcost.trip$inc.level=="midInc"),])
-         summary(op.tcost.hh.tpurp.midInc)
-         TukeyHSD(op.tcost.hh.tpurp.midInc)
-         
-         # highInc
-         op.tcost.hh.tpurp.highInc <- aov(tcost ~ TripPurpose, data=op.tcost.trip[which(op.tcost.trip$inc.level=="highInc"),])
-         summary(op.tcost.hh.tpurp.highInc)
-         TukeyHSD(op.tcost.hh.tpurp.highInc)
-         
-    # NHTS-Portland 
-         # Transform TripPurpose as factor    
-         np.tcost.trip$TripPurpose <- as.factor(np.tcost.trip$TripPurpose)
-         
-         # Plot travel cost 
-         boxp.np.tcost.trip <- ggplot(np.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-           geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
-           scale_fill_discrete(name = 'Income Level') + 
-           ggtitle("OHAS-Portland trip-level travel cost ") +
-           theme(plot.title = element_text(face="bold", size=12, vjust=1))
-         boxp.np.tcost.trip
-         
-         # Two-way ANOVA test 
-         np.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=np.tcost.trip)
-         summary(np.tcost.hh.tpurp.PrIc)
-         
-         TukeyHSD(np.tcost.hh.tpurp.PrIc, which="TripPurpose")
-         TukeyHSD(np.tcost.hh.tpurp.PrIc, which="inc.level")
-         
-         # One-way ANOVA test of same trip purpose 
-         # hbw
-         np.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=np.tcost.trip[which(np.tcost.trip$TripPurpose=="hbw"),])
-         summary(np.tcost.hh.tpurp.hbw)
-         TukeyHSD(np.tcost.hh.tpurp.hbw)
-         
-         # hbs
-         np.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=np.tcost.trip[which(np.tcost.trip$TripPurpose=="hbs"),])
-         summary(np.tcost.hh.tpurp.hbs)
-         TukeyHSD(np.tcost.hh.tpurp.hbs)
-         
-         # hbr
-         np.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=np.tcost.trip[which(np.tcost.trip$TripPurpose=="hbr"),])
-         summary(np.tcost.hh.tpurp.hbr)
-         TukeyHSD(np.tcost.hh.tpurp.hbr)
-         
-         # hbo
-         np.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=np.tcost.trip[which(np.tcost.trip$TripPurpose=="hbo"),])
-         summary(np.tcost.hh.tpurp.hbo)
-         TukeyHSD(np.tcost.hh.tpurp.hbo)
-         
-         # One-way ANOVA test of same income group 
-         # lowInc
-         np.tcost.hh.tpurp.lowInc <- aov(tcost ~ TripPurpose, data=np.tcost.trip[which(np.tcost.trip$inc.level=="lowInc"),])
-         summary(np.tcost.hh.tpurp.lowInc)
-         TukeyHSD(np.tcost.hh.tpurp.lowInc)
-         
-         # midInc
-         np.tcost.hh.tpurp.midInc <- aov(tcost ~ TripPurpose, data=np.tcost.trip[which(np.tcost.trip$inc.level=="midInc"),])
-         summary(np.tcost.hh.tpurp.midInc)
-         TukeyHSD(np.tcost.hh.tpurp.midInc)
-         
-         # highInc
-         np.tcost.hh.tpurp.highInc <- aov(tcost ~ TripPurpose, data=np.tcost.trip[which(np.tcost.trip$inc.level=="highInc"),])
-         summary(np.tcost.hh.tpurp.highInc)
-         TukeyHSD(np.tcost.hh.tpurp.highInc)
-    
-    # NHTS-Tampa Bay 
-         # Transform TripPurpose as factor    
-         nt.tcost.trip$TripPurpose <- as.factor(nt.tcost.trip$TripPurpose)
-         
-         # Plot travel cost 
-         boxp.nt.tcost.trip <- ggplot(nt.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-           geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
-           scale_fill_discrete(name = 'Income Level') + 
-           ggtitle("OHAS-Portland trip-level travel cost ") +
-           theme(plot.title = element_text(face="bold", size=12, vjust=1))
-         boxp.nt.tcost.trip
-         
-         # Two-way ANOVA test 
-         nt.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=nt.tcost.trip)
-         summary(nt.tcost.hh.tpurp.PrIc)
-         
-         TukeyHSD(nt.tcost.hh.tpurp.PrIc, which="TripPurpose")
-         TukeyHSD(nt.tcost.hh.tpurp.PrIc, which="inc.level")
-         
-      # One-way ANOVA test of same trip purpose 
-         # hbw
-         nt.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=nt.tcost.trip[which(nt.tcost.trip$TripPurpose=="hbw"),])
-         summary(nt.tcost.hh.tpurp.hbw)
-         TukeyHSD(nt.tcost.hh.tpurp.hbw)
-         
-         # hbs
-         nt.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=nt.tcost.trip[which(nt.tcost.trip$TripPurpose=="hbs"),])
-         summary(nt.tcost.hh.tpurp.hbs)
-         TukeyHSD(nt.tcost.hh.tpurp.hbs)
-         
-         # hbr
-         nt.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=nt.tcost.trip[which(nt.tcost.trip$TripPurpose=="hbr"),])
-         summary(nt.tcost.hh.tpurp.hbr)
-         TukeyHSD(nt.tcost.hh.tpurp.hbr)
-         
-         # hbo
-         nt.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=nt.tcost.trip[which(nt.tcost.trip$TripPurpose=="hbo"),])
-         summary(nt.tcost.hh.tpurp.hbo)
-         TukeyHSD(nt.tcost.hh.tpurp.hbo)
-         
-    # One-way ANOVA test of same income group 
-         # lowInc
-         nt.tcost.hh.tpurp.lowInc <- aov(tcost ~ TripPurpose, data=nt.tcost.trip[which(nt.tcost.trip$inc.level=="lowInc"),])
-         summary(nt.tcost.hh.tpurp.lowInc)
-         TukeyHSD(nt.tcost.hh.tpurp.lowInc)
-         
-         # midInc
-         nt.tcost.hh.tpurp.midInc <- aov(tcost ~ TripPurpose, data=nt.tcost.trip[which(nt.tcost.trip$inc.level=="midInc"),])
-         summary(nt.tcost.hh.tpurp.midInc)
-         TukeyHSD(nt.tcost.hh.tpurp.midInc)
-         
-         # highInc
-         nt.tcost.hh.tpurp.highInc <- aov(tcost ~ TripPurpose, data=nt.tcost.trip[which(nt.tcost.trip$inc.level=="highInc"),])
-         summary(nt.tcost.hh.tpurp.highInc)
-         TukeyHSD(nt.tcost.hh.tpurp.highInc)
-         
-    # NHTS-Salt Lake City 
-         # Transform TripPurpose as factor    
-         ns.tcost.trip$TripPurpose <- as.factor(ns.tcost.trip$TripPurpose)
-         
-         # Plot travel cost 
-         boxp.ns.tcost.trip <- ggplot(ns.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-           geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 100)  +
-           scale_fill_discrete(name = 'Income Level') + 
-           ggtitle("OHAS-Portland trip-level travel cost ") +
-           theme(plot.title = element_text(face="bold", size=12, vjust=1))
-         boxp.ns.tcost.trip
-         
-      # Two-way ANOVA test 
-         ns.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=ns.tcost.trip)
-         summary(ns.tcost.hh.tpurp.PrIc)
-         
-         TukeyHSD(ns.tcost.hh.tpurp.PrIc, which="TripPurpose")
-         TukeyHSD(ns.tcost.hh.tpurp.PrIc, which="inc.level")
-         
-      # One-way ANOVA test of same trip purpose 
-         # hbw
-         ns.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbw"),])
-         summary(ns.tcost.hh.tpurp.hbw)
-         TukeyHSD(ns.tcost.hh.tpurp.hbw)
-         
-         # hbs
-         ns.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbs"),])
-         summary(ns.tcost.hh.tpurp.hbs)
-         TukeyHSD(ns.tcost.hh.tpurp.hbs)
-         
-         # hbr
-         ns.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbr"),])
-         summary(ns.tcost.hh.tpurp.hbr)
-         TukeyHSD(ns.tcost.hh.tpurp.hbr)
-         
-         # hbo
-         ns.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbo"),])
-         summary(ns.tcost.hh.tpurp.hbo)
-         TukeyHSD(ns.tcost.hh.tpurp.hbo)
-         
-    # One-way ANOVA test of same income group 
-         # lowInc
-         ns.tcost.hh.tpurp.lowInc <- aov(tcost ~ TripPurpose, data=ns.tcost.trip[which(ns.tcost.trip$inc.level=="lowInc"),])
-         summary(ns.tcost.hh.tpurp.lowInc)
-         TukeyHSD(ns.tcost.hh.tpurp.lowInc)
-         
-         # midInc
-         ns.tcost.hh.tpurp.midInc <- aov(tcost ~ TripPurpose, data=ns.tcost.trip[which(ns.tcost.trip$inc.level=="midInc"),])
-         summary(ns.tcost.hh.tpurp.midInc)
-         TukeyHSD(ns.tcost.hh.tpurp.midInc)
-         
-         # highInc
-         ns.tcost.hh.tpurp.highInc <- aov(tcost ~ TripPurpose, data=ns.tcost.trip[which(ns.tcost.trip$inc.level=="highInc"),])
-         summary(ns.tcost.hh.tpurp.highInc)
-         TukeyHSD(ns.tcost.hh.tpurp.highInc)
+       # hbr
+       ns.tcost.trip.hbr <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbr"),])
+       summary(ns.tcost.trip.hbr)
+       TukeyHSD(ns.tcost.trip.hbr)
+       
+       # hbo
+       ns.tcost.trip.hbo <- aov(tcost ~ inc.level, data=ns.tcost.trip[which(ns.tcost.trip$TripPurpose=="hbo"),])
+       summary(ns.tcost.trip.hbo)
+       TukeyHSD(ns.tcost.trip.hbo)
+       
+       # Plot travel cost by househoud categories 
+       ggplot(ns.tcost.trip, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("NHTS-Salt Lake City trip-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       ns.tcost.trip.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=ns.tcost.trip)
+       summary(ns.tcost.trip.hhsiz.cat)
+       TukeyHSD(ns.tcost.trip.hhsiz.cat)
+       
+  # Household-level trip cost analysis 
+       
+       # Household-level travel cost  
+       # Combine trip-level tcost data 
+       np.tcost.hh.tpurp.sub <- data.frame(np.tcost.hh.tpurp[, c("SAMPN", "tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Portland")
+       nt.tcost.hh.tpurp.sub <- data.frame(nt.tcost.hh.tpurp[, c("SAMPN", "tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Tampa Bay")
+       ns.tcost.hh.tpurp.sub <- data.frame(ns.tcost.hh.tpurp[, c("SAMPN", "tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Salt Lake City")
+       
+       n.tcost.hh.tpurp.msas <- rbind(np.tcost.hh.tpurp.sub, nt.tcost.hh.tpurp.sub, ns.tcost.hh.tpurp.sub)
+       
+       # Transform TripPurpose field mode
+       n.tcost.hh.tpurp.msas$TripPurpose <- as.factor(n.tcost.hh.tpurp.msas$TripPurpose)
+       
+       # Reclassify household size 
+       n.tcost.hh.tpurp.msas <- n.tcost.hh.tpurp.msas %>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       
+       # Calculate overall household-level travel cost 
+       n.tcost.hh.msas <- n.tcost.hh.tpurp.msas %>%
+         group_by(SAMPN) %>%
+         summarise(tcost=sum(tcost),
+                   msa=first(msa))
+       
+       # Plot data 
+       ggplot(n.tcost.hh.msas , aes(x = msa , y = tcost, fill=msa)) +
+         geom_boxplot() +
+         scale_x_discrete() + xlab("MSAs") +
+         ylab("NHTS Household-level travel cost") +ylim(0,200) + 
+         ggtitle("NHTS Household-level travel cost by MSAs") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # ANOVA test for overall travel cost 
+       n.tcost.hh.tpurp.msas.aov <- aov(tcost ~ msa, data=n.tcost.hh.tpurp.msas)
+       summary(n.tcost.hh.tpurp.msas.aov)
+       TukeyHSD(n.tcost.hh.tpurp.msas.aov)
+       
+       # One-way ANOVA test for travel cost for same trip purpose in diffent MSAs 
+       # hbw
+       n.tcost.hh.tpurp.msas.hbw <- aov(tcost ~ msa, 
+                                        data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbw"),])
+       summary(n.tcost.hh.tpurp.msas.hbw)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbw)
+       
+       # hbs
+       n.tcost.hh.tpurp.msas.hbs <- aov(tcost ~ msa, 
+                                        data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbs"),])
+       summary(n.tcost.hh.tpurp.msas.hbs)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbs)
+       
+       # hbr
+       n.tcost.hh.tpurp.msas.hbr <- aov(tcost ~ msa, 
+                                        data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbr"),])
+       summary(n.tcost.hh.tpurp.msas.hbr)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbr)
+       
+       # hbo
+       n.tcost.hh.tpurp.msas.hbo <- aov(tcost ~ msa, 
+                                        data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbo"),])
+       summary(n.tcost.hh.tpurp.msas.hbo)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbo)
+       
+       # One-way ANOVA test for travel cost by same income group in diffent MSAs
+       # lowInc
+       n.tcost.hh.tpurp.msas.lowInc <- aov(tcost ~ msa, 
+                                           data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(n.tcost.hh.tpurp.msas.lowInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.lowInc)
+       
+       # midInc
+       n.tcost.hh.tpurp.msas.midInc <- aov(tcost ~ msa, 
+                                           data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(n.tcost.hh.tpurp.msas.midInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.midInc)
+       
+       # highInc
+       n.tcost.hh.tpurp.msas.highInc <- aov(tcost ~ msa, 
+                                            data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(n.tcost.hh.tpurp.msas.highInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.highInc)
+       
+       # One-way ANOVA test for travel cost by same income group for same trip purpose in diffent areas 
+       # hbw-lowInc
+       n.tcost.hh.tpurp.msas.hbw.lowInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbw"&n.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbw.lowInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbw.lowInc)
+       
+       # hbw-midInc
+       n.tcost.hh.tpurp.msas.hbw.midInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbw"&n.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbw.midInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbw.midInc)
+       
+       # hbw-highInc
+       n.tcost.hh.tpurp.msas.hbw.highInc <- aov(tcost ~ msa, 
+                                                data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbw"&n.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbw.highInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbw.highInc)
+       
+       # hbs-lowInc
+       n.tcost.hh.tpurp.msas.hbs.lowInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbs"&n.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbs.lowInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbs.lowInc)
+       
+       # hbs-midInc
+       n.tcost.hh.tpurp.msas.hbs.midInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbs"&n.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbs.midInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbs.midInc)
+       
+       # hbs-highInc
+       n.tcost.hh.tpurp.msas.hbs.highInc <- aov(tcost ~ msa, 
+                                                data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbs"&n.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbs.highInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbs.highInc)
+       
+       # hbr-lowInc
+       n.tcost.hh.tpurp.msas.hbr.lowInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbr"&n.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbr.lowInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbr.lowInc)
+       
+       # hbr-midInc
+       n.tcost.hh.tpurp.msas.hbr.midInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbr"&n.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbr.midInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbr.midInc)
+       
+       # hbr-highInc
+       n.tcost.hh.tpurp.msas.hbr.highInc <- aov(tcost ~ msa, 
+                                                data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbr"&n.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbr.highInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbr.highInc)
+       
+       # hbo-lowInc
+       n.tcost.hh.tpurp.msas.hbo.lowInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbo"&n.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbo.lowInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbo.lowInc)
+       
+       # hbo-midInc
+       n.tcost.hh.tpurp.msas.hbo.midInc <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbo"&n.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbo.midInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbo.midInc)
+       
+       # hbo-highInc
+       n.tcost.hh.tpurp.msas.hbo.highInc <- aov(tcost ~ msa, 
+                                                data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$TripPurpose=="hbo"&n.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(n.tcost.hh.tpurp.msas.hbo.highInc)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hbo.highInc)
+       
+       # One-way ANOVA test for trip cost of same househould classification in different MSAs
+       
+       # hhsiz.cat 1
+       n.tcost.hh.tpurp.msas.hhsiz.cat1 <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$hhsiz.cat=="1"),])
+       summary(n.tcost.hh.tpurp.msas.hhsiz.cat1)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hhsiz.cat1)
+       
+       # hhsiz.cat 2
+       n.tcost.hh.tpurp.msas.hhsiz.cat2 <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$hhsiz.cat=="2"),])
+       summary(n.tcost.hh.tpurp.msas.hhsiz.cat2)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hhsiz.cat2)
+       
+       # hhsiz.cat 3
+       n.tcost.hh.tpurp.msas.hhsiz.cat3 <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$hhsiz.cat=="3"),])
+       summary(n.tcost.hh.tpurp.msas.hhsiz.cat3)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hhsiz.cat3)
+       
+       # hhsiz.cat 4+
+       n.tcost.hh.tpurp.msas.hhsiz.cat4 <- aov(tcost ~ msa, 
+                                               data=n.tcost.hh.tpurp.msas[which(n.tcost.hh.tpurp.msas$hhsiz.cat=="4+"),])
+       summary(n.tcost.hh.tpurp.msas.hhsiz.cat4)
+       TukeyHSD(n.tcost.hh.tpurp.msas.hhsiz.cat4)
+       
+       # ANOVA test for each MSA
+       
+       # NHTS-Portland 
+       # Transform TripPurpose as factor    
+       np.tcost.hh.tpurp$TripPurpose <- as.factor(np.tcost.hh.tpurp$TripPurpose)
+       
+       # Reclassify househod size group 
+       np.tcost.hh.tpurp <- np.tcost.hh.tpurp%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Plot travel cost 
+       ggplot(np.tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("NHTS-Portland Household-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       
+       # Two-way ANOVA test 
+       np.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=np.tcost.hh.tpurp)
+       summary(np.tcost.hh.tpurp.PrIc)
+       
+       TukeyHSD(np.tcost.hh.tpurp.PrIc, which="TripPurpose")
+       TukeyHSD(np.tcost.hh.tpurp.PrIc, which="inc.level")
+       
+       # Calculate overall household-level travel cost 
+       np.tcost.hh <- np.tcost.hh.tpurp %>% 
+         group_by(SAMPN) %>% 
+         summarise(tcost=sum(tcost), 
+                   hhsiz.cat=first(hhsiz.cat))
+       
+       # Plot travel cost by househoud categories 
+       ggplot(np.tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("NHTS-Portland household-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       np.tcost.hh.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=np.tcost.hh)
+       summary(np.tcost.hh.hhsiz.cat)
+       TukeyHSD(np.tcost.hh.hhsiz.cat)
+       
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       np.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=np.tcost.hh.tpurp[which(np.tcost.hh.tpurp$TripPurpose=="hbw"),])
+       summary(np.tcost.hh.tpurp.hbw)
+       TukeyHSD(np.tcost.hh.tpurp.hbw)
+       
+       # hbs
+       np.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=np.tcost.hh.tpurp[which(np.tcost.hh.tpurp$TripPurpose=="hbs"),])
+       summary(np.tcost.hh.tpurp.hbs)
+       TukeyHSD(np.tcost.hh.tpurp.hbs)
+       
+       # hbr
+       np.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=np.tcost.hh.tpurp[which(np.tcost.hh.tpurp$TripPurpose=="hbr"),])
+       summary(np.tcost.hh.tpurp.hbr)
+       TukeyHSD(np.tcost.hh.tpurp.hbr)
+       
+       # hbo
+       np.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=np.tcost.hh.tpurp[which(np.tcost.hh.tpurp$TripPurpose=="hbo"),])
+       summary(np.tcost.hh.tpurp.hbo)
+       TukeyHSD(np.tcost.hh.tpurp.hbo)
+       
+       # NHTS-Tampa Bay 
+       # Transform TripPurpose as factor    
+       nt.tcost.hh.tpurp$TripPurpose <- as.factor(nt.tcost.hh.tpurp$TripPurpose)
+       
+       # Reclassify househod size group 
+       nt.tcost.hh.tpurp <- nt.tcost.hh.tpurp%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Plot travel cost 
+       ggplot(nt.tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("NHTS-Tampa Bay Household-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       
+       # Two-way ANOVA test 
+       nt.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=nt.tcost.hh.tpurp)
+       summary(nt.tcost.hh.tpurp.PrIc)
+       
+       TukeyHSD(nt.tcost.hh.tpurp.PrIc, which="TripPurpose")
+       TukeyHSD(nt.tcost.hh.tpurp.PrIc, which="inc.level")
+       
+       # Calculate overall household-level travel cost 
+       nt.tcost.hh <- nt.tcost.hh.tpurp %>% 
+         group_by(SAMPN) %>% 
+         summarise(tcost=sum(tcost), 
+                   hhsiz.cat=first(hhsiz.cat))
+       
+       # Plot travel cost by househoud categories 
+       ggplot(nt.tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("NHTS-Tampa Bay household-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       nt.tcost.hh.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=nt.tcost.hh)
+       summary(nt.tcost.hh.hhsiz.cat)
+       TukeyHSD(nt.tcost.hh.hhsiz.cat)
+       
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       nt.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=nt.tcost.hh.tpurp[which(nt.tcost.hh.tpurp$TripPurpose=="hbw"),])
+       summary(nt.tcost.hh.tpurp.hbw)
+       TukeyHSD(nt.tcost.hh.tpurp.hbw)
+       
+       # hbs
+       nt.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=nt.tcost.hh.tpurp[which(nt.tcost.hh.tpurp$TripPurpose=="hbs"),])
+       summary(nt.tcost.hh.tpurp.hbs)
+       TukeyHSD(nt.tcost.hh.tpurp.hbs)
+       
+       # hbr
+       nt.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=nt.tcost.hh.tpurp[which(nt.tcost.hh.tpurp$TripPurpose=="hbr"),])
+       summary(nt.tcost.hh.tpurp.hbr)
+       TukeyHSD(nt.tcost.hh.tpurp.hbr)
+       
+       # hbo
+       nt.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=nt.tcost.hh.tpurp[which(nt.tcost.hh.tpurp$TripPurpose=="hbo"),])
+       summary(nt.tcost.hh.tpurp.hbo)
+       TukeyHSD(nt.tcost.hh.tpurp.hbo)
+       
+       # NHTS-Salt Lake City 
+       # Transform TripPurpose as factor    
+       ns.tcost.hh.tpurp$TripPurpose <- as.factor(ns.tcost.hh.tpurp$TripPurpose)
+       
+       # Reclassify househod size group 
+       ns.tcost.hh.tpurp <- ns.tcost.hh.tpurp%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Plot travel cost 
+       ggplot(ns.tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("NHTS-Salt Lake City Household-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       
+       # Two-way ANOVA test 
+       ns.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=ns.tcost.hh.tpurp)
+       summary(ns.tcost.hh.tpurp.PrIc)
+       
+       TukeyHSD(ns.tcost.hh.tpurp.PrIc, which="TripPurpose")
+       TukeyHSD(ns.tcost.hh.tpurp.PrIc, which="inc.level")
+       
+       # Calculate overall household-level travel cost 
+       ns.tcost.hh <- ns.tcost.hh.tpurp %>% 
+         group_by(SAMPN) %>% 
+         summarise(tcost=sum(tcost), 
+                   hhsiz.cat=first(hhsiz.cat))
+       
+       # Plot travel cost by househoud categories 
+       ggplot(ns.tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("NHTS-Salt Lake City household-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       ns.tcost.hh.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=ns.tcost.hh)
+       summary(ns.tcost.hh.hhsiz.cat)
+       TukeyHSD(ns.tcost.hh.hhsiz.cat)
+       
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       ns.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=ns.tcost.hh.tpurp[which(ns.tcost.hh.tpurp$TripPurpose=="hbw"),])
+       summary(ns.tcost.hh.tpurp.hbw)
+       TukeyHSD(ns.tcost.hh.tpurp.hbw)
+       
+       # hbs
+       ns.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=ns.tcost.hh.tpurp[which(ns.tcost.hh.tpurp$TripPurpose=="hbs"),])
+       summary(ns.tcost.hh.tpurp.hbs)
+       TukeyHSD(ns.tcost.hh.tpurp.hbs)
+       
+       # hbr
+       ns.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=ns.tcost.hh.tpurp[which(ns.tcost.hh.tpurp$TripPurpose=="hbr"),])
+       summary(ns.tcost.hh.tpurp.hbr)
+       TukeyHSD(ns.tcost.hh.tpurp.hbr)
+       
+       # hbo
+       ns.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=ns.tcost.hh.tpurp[which(ns.tcost.hh.tpurp$TripPurpose=="hbo"),])
+       summary(ns.tcost.hh.tpurp.hbo)
+       TukeyHSD(ns.tcost.hh.tpurp.hbo)
+  
+       
+# Analyze local survey data 
+  # Trip-level travel cost analysis 
+       
+       # Combine trip-level tcost data 
+       lp.tcost.trip.sub <- data.frame(lp.tcost.trip[, c("tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Portland")
+       ls.tcost.trip.sub <- data.frame(ls.tcost.trip[, c("tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Salt Lake City")
+       
+       l.tcost.trip.msas <- rbind(lp.tcost.trip.sub, ls.tcost.trip.sub)
+       
+       # Transform TripPurpose field mode
+       l.tcost.trip.msas$TripPurpose <- as.factor(l.tcost.trip.msas$TripPurpose)
+       
+       # Reclassify household size 
+       l.tcost.trip.msas <- l.tcost.trip.msas %>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       
+       # Plot data 
+       ggplot(l.tcost.trip.msas, aes(x = msa , y = tcost, fill=msa)) +
+         geom_boxplot() +
+         scale_x_discrete() + xlab("MSAs") +
+         ylab("Local survey trip-level travel cost") +ylim(0,200) + 
+         ggtitle("Local survey trip-level travel cost by MSAs") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # ANOVA test for overall travel cost 
+       l.tcost.trip.msas.aov <- aov(tcost ~ msa, data=l.tcost.trip.msas)
+       summary(l.tcost.trip.msas.aov)
+       TukeyHSD(l.tcost.trip.msas.aov)
+       
+       # One-way ANOVA test for travel cost for same trip purpose in diffent MSAs 
+       # hbw
+       l.tcost.trip.msas.hbw <- aov(tcost ~ msa, 
+                                    data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbw"),])
+       summary(l.tcost.trip.msas.hbw)
+       TukeyHSD(l.tcost.trip.msas.hbw)
+       
+       # hbs
+       l.tcost.trip.msas.hbs <- aov(tcost ~ msa, 
+                                    data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbs"),])
+       summary(l.tcost.trip.msas.hbs)
+       TukeyHSD(l.tcost.trip.msas.hbs)
+       
+       # hbr
+       l.tcost.trip.msas.hbr <- aov(tcost ~ msa, 
+                                    data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbr"),])
+       summary(l.tcost.trip.msas.hbr)
+       TukeyHSD(l.tcost.trip.msas.hbr)
+       
+       # hbo
+       l.tcost.trip.msas.hbo <- aov(tcost ~ msa, 
+                                    data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbo"),])
+       summary(l.tcost.trip.msas.hbo)
+       TukeyHSD(l.tcost.trip.msas.hbo)
+       
+       # One-way ANOVA test for travel cost by same income group in diffent MSAs
+       # lowInc
+       l.tcost.trip.msas.lowInc <- aov(tcost ~ msa, 
+                                       data=l.tcost.trip.msas[which(l.tcost.trip.msas$inc.level=="lowInc"),])
+       summary(l.tcost.trip.msas.lowInc)
+       TukeyHSD(l.tcost.trip.msas.lowInc)
+       
+       # midInc
+       l.tcost.trip.msas.midInc <- aov(tcost ~ msa, 
+                                       data=l.tcost.trip.msas[which(l.tcost.trip.msas$inc.level=="midInc"),])
+       summary(l.tcost.trip.msas.midInc)
+       TukeyHSD(l.tcost.trip.msas.midInc)
+       
+       # highInc
+       l.tcost.trip.msas.highInc <- aov(tcost ~ msa, 
+                                        data=l.tcost.trip.msas[which(l.tcost.trip.msas$inc.level=="highInc"),])
+       summary(l.tcost.trip.msas.highInc)
+       TukeyHSD(l.tcost.trip.msas.highInc)
+       
+       # One-way ANOVA test for travel cost by same income group for same trip purpose in diffent areas 
+       # hbw-lowInc
+       l.tcost.trip.msas.hbw.lowInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbw"&l.tcost.trip.msas$inc.level=="lowInc"),])
+       summary(l.tcost.trip.msas.hbw.lowInc)
+       TukeyHSD(l.tcost.trip.msas.hbw.lowInc)
+       
+       # hbw-midInc
+       l.tcost.trip.msas.hbw.midInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbw"&l.tcost.trip.msas$inc.level=="midInc"),])
+       summary(l.tcost.trip.msas.hbw.midInc)
+       TukeyHSD(l.tcost.trip.msas.hbw.midInc)
+       
+       # hbw-highInc
+       l.tcost.trip.msas.hbw.highInc <- aov(tcost ~ msa, 
+                                            data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbw"&l.tcost.trip.msas$inc.level=="highInc"),])
+       summary(l.tcost.trip.msas.hbw.highInc)
+       TukeyHSD(l.tcost.trip.msas.hbw.highInc)
+       
+       # hbs-lowInc
+       l.tcost.trip.msas.hbs.lowInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbs"&l.tcost.trip.msas$inc.level=="lowInc"),])
+       summary(l.tcost.trip.msas.hbs.lowInc)
+       TukeyHSD(l.tcost.trip.msas.hbs.lowInc)
+       
+       # hbs-midInc
+       l.tcost.trip.msas.hbs.midInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbs"&l.tcost.trip.msas$inc.level=="midInc"),])
+       summary(l.tcost.trip.msas.hbs.midInc)
+       TukeyHSD(l.tcost.trip.msas.hbs.midInc)
+       
+       # hbs-highInc
+       l.tcost.trip.msas.hbs.highInc <- aov(tcost ~ msa, 
+                                            data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbs"&l.tcost.trip.msas$inc.level=="highInc"),])
+       summary(l.tcost.trip.msas.hbs.highInc)
+       TukeyHSD(l.tcost.trip.msas.hbs.highInc)
+       
+       # hbr-lowInc
+       l.tcost.trip.msas.hbr.lowInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbr"&l.tcost.trip.msas$inc.level=="lowInc"),])
+       summary(l.tcost.trip.msas.hbr.lowInc)
+       TukeyHSD(l.tcost.trip.msas.hbr.lowInc)
+       
+       # hbr-midInc
+       l.tcost.trip.msas.hbr.midInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbr"&l.tcost.trip.msas$inc.level=="midInc"),])
+       summary(l.tcost.trip.msas.hbr.midInc)
+       TukeyHSD(l.tcost.trip.msas.hbr.midInc)
+       
+       # hbr-highInc
+       l.tcost.trip.msas.hbr.highInc <- aov(tcost ~ msa, 
+                                            data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbr"&l.tcost.trip.msas$inc.level=="highInc"),])
+       summary(l.tcost.trip.msas.hbr.highInc)
+       TukeyHSD(l.tcost.trip.msas.hbr.highInc)
+       
+       # hbo-lowInc
+       l.tcost.trip.msas.hbo.lowInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbo"&l.tcost.trip.msas$inc.level=="lowInc"),])
+       summary(l.tcost.trip.msas.hbo.lowInc)
+       TukeyHSD(l.tcost.trip.msas.hbo.lowInc)
+       
+       # hbo-midInc
+       l.tcost.trip.msas.hbo.midInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbo"&l.tcost.trip.msas$inc.level=="midInc"),])
+       summary(l.tcost.trip.msas.hbo.midInc)
+       TukeyHSD(l.tcost.trip.msas.hbo.midInc)
+       
+       # hbo-highInc
+       l.tcost.trip.msas.hbo.highInc <- aov(tcost ~ msa, 
+                                            data=l.tcost.trip.msas[which(l.tcost.trip.msas$TripPurpose=="hbo"&l.tcost.trip.msas$inc.level=="highInc"),])
+       summary(l.tcost.trip.msas.hbo.highInc)
+       TukeyHSD(l.tcost.trip.msas.hbo.highInc)
+       
+       # Plot trave cost by household size 
+       ggplot(l.tcost.trip.msas, aes(x=msa, y=tcost, fill=hhsiz.cat)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("MSAs") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Household size') + 
+         ggtitle("Local survey trip-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test for trip cost of same househould classification in different MSAs
+       # hhsiz.cat 1
+       l.tcost.trip.msas.hhsiz.cat1 <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$hhsiz.cat=="1"),])
+       summary(l.tcost.trip.msas.hhsiz.cat1)
+       TukeyHSD(l.tcost.trip.msas.hhsiz.cat1)
+       
+       # hhsiz.cat 2
+       l.tcost.trip.msas.hhsiz.cat2 <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$hhsiz.cat=="2"),])
+       summary(l.tcost.trip.msas.hhsiz.cat2)
+       TukeyHSD(l.tcost.trip.msas.hhsiz.cat2)
+       
+       # hhsiz.cat 3
+       l.tcost.trip.msas.hhsiz.cat3 <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$hhsiz.cat=="3"),])
+       summary(l.tcost.trip.msas.hhsiz.cat3)
+       TukeyHSD(l.tcost.trip.msas.hhsiz.cat3)
+       
+       # hhsiz.cat 4+
+       l.tcost.trip.msas.hhsiz.cat4 <- aov(tcost ~ msa, 
+                                           data=l.tcost.trip.msas[which(l.tcost.trip.msas$hhsiz.cat=="4+"),])
+       summary(l.tcost.trip.msas.hhsiz.cat4)
+       TukeyHSD(l.tcost.trip.msas.hhsiz.cat4)
+       
+       # OHAS-Portland 
+       # Transform TripPurpose as factor    
+       lp.tcost.trip$TripPurpose <- as.factor(lp.tcost.trip$TripPurpose)
+       
+       # Reclassify househod size group 
+       lp.tcost.trip <- lp.tcost.trip%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Plot travel cost 
+       ggplot(lp.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("OHAS-Portland trip-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # Two-way ANOVA test 
+       lp.tcost.trip.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=lp.tcost.trip)
+       summary(lp.tcost.trip.PrIc)
+       
+       TukeyHSD(lp.tcost.trip.PrIc, which="TripPurpose")
+       TukeyHSD(lp.tcost.trip.PrIc, which="inc.level")
+       
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       lp.tcost.trip.hbw <- aov(tcost ~ inc.level, data=lp.tcost.trip[which(lp.tcost.trip$TripPurpose=="hbw"),])
+       summary(lp.tcost.trip.hbw)
+       TukeyHSD(lp.tcost.trip.hbw)
+       
+       # hbs
+       lp.tcost.trip.hbs <- aov(tcost ~ inc.level, data=lp.tcost.trip[which(lp.tcost.trip$TripPurpose=="hbs"),])
+       summary(lp.tcost.trip.hbs)
+       TukeyHSD(lp.tcost.trip.hbs)
+       
+       # hbr
+       lp.tcost.trip.hbr <- aov(tcost ~ inc.level, data=lp.tcost.trip[which(lp.tcost.trip$TripPurpose=="hbr"),])
+       summary(lp.tcost.trip.hbr)
+       TukeyHSD(lp.tcost.trip.hbr)
+       
+       # hbo
+       lp.tcost.trip.hbo <- aov(tcost ~ inc.level, data=lp.tcost.trip[which(lp.tcost.trip$TripPurpose=="hbo"),])
+       summary(lp.tcost.trip.hbo)
+       TukeyHSD(lp.tcost.trip.hbo)
+       
+       # Plot travel cost by househoud categories 
+       ggplot(lp.tcost.trip, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("OHAS-Portland trip-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       lp.tcost.trip.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=lp.tcost.trip)
+       summary(lp.tcost.trip.hhsiz.cat)
+       TukeyHSD(lp.tcost.trip.hhsiz.cat)
+       
+       # WFRC-Salt Lake City 
+       # Transform TripPurpose as factor    
+       ls.tcost.trip$TripPurpose <- as.factor(ls.tcost.trip$TripPurpose)
+       
+       # Reclassify househod size group 
+       ls.tcost.trip <- ls.tcost.trip%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Plot travel cost 
+       ggplot(ls.tcost.trip, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("WFRC-Salt Lake City trip-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # Two-way ANOVA test 
+       ls.tcost.trip.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=ls.tcost.trip)
+       summary(ls.tcost.trip.PrIc)
+       
+       TukeyHSD(ls.tcost.trip.PrIc, which="TripPurpose")
+       TukeyHSD(ls.tcost.trip.PrIc, which="inc.level")
+       
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       ls.tcost.trip.hbw <- aov(tcost ~ inc.level, data=ls.tcost.trip[which(ls.tcost.trip$TripPurpose=="hbw"),])
+       summary(ls.tcost.trip.hbw)
+       TukeyHSD(ls.tcost.trip.hbw)
+       
+       # hbs
+       ls.tcost.trip.hbs <- aov(tcost ~ inc.level, data=ls.tcost.trip[which(ls.tcost.trip$TripPurpose=="hbs"),])
+       summary(ls.tcost.trip.hbs)
+       TukeyHSD(ls.tcost.trip.hbs)
+       
+       # hbr
+       ls.tcost.trip.hbr <- aov(tcost ~ inc.level, data=ls.tcost.trip[which(ls.tcost.trip$TripPurpose=="hbr"),])
+       summary(ls.tcost.trip.hbr)
+       TukeyHSD(ls.tcost.trip.hbr)
+       
+       # hbo
+       ls.tcost.trip.hbo <- aov(tcost ~ inc.level, data=ls.tcost.trip[which(ls.tcost.trip$TripPurpose=="hbo"),])
+       summary(ls.tcost.trip.hbo)
+       TukeyHSD(ls.tcost.trip.hbo)
+       
+       # Plot travel cost by househoud categories 
+       ggplot(ls.tcost.trip, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("WFRC-Salt Lake City trip-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       ls.tcost.trip.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=ls.tcost.trip)
+       summary(ls.tcost.trip.hhsiz.cat)
+       TukeyHSD(ls.tcost.trip.hhsiz.cat)
+       
+  # Household-level travel cost analysis 
+       # Combine household-level tcost data 
+       lp.tcost.hh.tpurp.sub <- data.frame(lp.tcost.hh.tpurp[, c("SAMPN", "tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Portland")
+       ls.tcost.hh.tpurp.sub <- data.frame(ls.tcost.hh.tpurp[, c("SAMPN", "tcost", "TripPurpose", "inc.level", "HHSIZ")], msa="Salt Lake City")
+       
+       l.tcost.hh.tpurp.msas <- rbind(lp.tcost.hh.tpurp.sub, ls.tcost.hh.tpurp.sub)
+       
+       # Transform TripPurpose field mode
+       l.tcost.hh.tpurp.msas$TripPurpose <- as.factor(l.tcost.hh.tpurp.msas$TripPurpose)
+       
+       # Reclassify household size 
+       l.tcost.hh.tpurp.msas <- l.tcost.hh.tpurp.msas %>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Calculate overall household-level travel cost 
+       l.tcost.hh.msas <-  l.tcost.hh.tpurp.msas %>% 
+         group_by(SAMPN) %>% 
+         summarise(tcost=sum(tcost),
+                   msa=first(msa))
+       
+       
+       # Plot data 
+       ggplot(l.tcost.hh.msas, aes(x = msa , y = tcost, fill=msa)) +
+         geom_boxplot() +
+         scale_x_discrete() + xlab("MSAs") +
+         ylab("Local survey household-level travel cost") +ylim(0,200) + 
+         ggtitle("Local survey household-level travel cost by MSAs") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # ANOVA test for overall travel cost 
+       l.tcost.hh.msas.aov <- aov(tcost ~ msa, data=l.tcost.hh.msas)
+       summary(l.tcost.hh.msas.aov)
+       TukeyHSD(l.tcost.hh.msas.aov)
+       
+       # One-way ANOVA test for travel cost for same trip purpose in diffent MSAs 
+       # hbw
+       l.tcost.hh.tpurp.msas.hbw <- aov(tcost ~ msa, 
+                                        data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbw"),])
+       summary(l.tcost.hh.tpurp.msas.hbw)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbw)
+       
+       # hbs
+       l.tcost.hh.tpurp.msas.hbs <- aov(tcost ~ msa, 
+                                        data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbs"),])
+       summary(l.tcost.hh.tpurp.msas.hbs)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbs)
+       
+       # hbr
+       l.tcost.hh.tpurp.msas.hbr <- aov(tcost ~ msa, 
+                                        data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbr"),])
+       summary(l.tcost.hh.tpurp.msas.hbr)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbr)
+       
+       # hbo
+       l.tcost.hh.tpurp.msas.hbo <- aov(tcost ~ msa, 
+                                        data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbo"),])
+       summary(l.tcost.hh.tpurp.msas.hbo)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbo)
+       
+       # One-way ANOVA test for travel cost by same income group in diffent MSAs
+       # lowInc
+       l.tcost.hh.tpurp.msas.lowInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(l.tcost.hh.tpurp.msas.lowInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.lowInc)
+       
+       # midInc
+       l.tcost.hh.tpurp.msas.midInc <- aov(tcost ~ msa, 
+                                           data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(l.tcost.hh.tpurp.msas.midInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.midInc)
+       
+       # highInc
+       l.tcost.hh.tpurp.msas.highInc <- aov(tcost ~ msa, 
+                                            data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(l.tcost.hh.tpurp.msas.highInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.highInc)
+       
+       # One-way ANOVA test for travel cost by same income group for same trip purpose in diffent areas 
+       # hbw-lowInc
+       l.tcost.hh.tpurp.msas.hbw.lowInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbw"&l.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbw.lowInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbw.lowInc)
+       
+       # hbw-midInc
+       l.tcost.hh.tpurp.msas.hbw.midInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbw"&l.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbw.midInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbw.midInc)
+       
+       # hbw-highInc
+       l.tcost.hh.tpurp.msas.hbw.highInc <- aov(tcost ~ msa, 
+                                                data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbw"&l.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbw.highInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbw.highInc)
+       
+       # hbs-lowInc
+       l.tcost.hh.tpurp.msas.hbs.lowInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbs"&l.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbs.lowInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbs.lowInc)
+       
+       # hbs-midInc
+       l.tcost.hh.tpurp.msas.hbs.midInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbs"&l.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbs.midInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbs.midInc)
+       
+       # hbs-highInc
+       l.tcost.hh.tpurp.msas.hbs.highInc <- aov(tcost ~ msa, 
+                                                data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbs"&l.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbs.highInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbs.highInc)
+       
+       # hbr-lowInc
+       l.tcost.hh.tpurp.msas.hbr.lowInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbr"&l.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbr.lowInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbr.lowInc)
+       
+       # hbr-midInc
+       l.tcost.hh.tpurp.msas.hbr.midInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbr"&l.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbr.midInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbr.midInc)
+       
+       # hbr-highInc
+       l.tcost.hh.tpurp.msas.hbr.highInc <- aov(tcost ~ msa, 
+                                                data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbr"&l.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbr.highInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbr.highInc)
+       
+       # hbo-lowInc
+       l.tcost.hh.tpurp.msas.hbo.lowInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbo"&l.tcost.hh.tpurp.msas$inc.level=="lowInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbo.lowInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbo.lowInc)
+       
+       # hbo-midInc
+       l.tcost.hh.tpurp.msas.hbo.midInc <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbo"&l.tcost.hh.tpurp.msas$inc.level=="midInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbo.midInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbo.midInc)
+       
+       # hbo-highInc
+       l.tcost.hh.tpurp.msas.hbo.highInc <- aov(tcost ~ msa, 
+                                                data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$TripPurpose=="hbo"&l.tcost.hh.tpurp.msas$inc.level=="highInc"),])
+       summary(l.tcost.hh.tpurp.msas.hbo.highInc)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hbo.highInc)
+       
+       # Plot trave cost by household size 
+       ggplot(l.tcost.hh.tpurp.msas, aes(x=msa, y=tcost, fill=hhsiz.cat)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("MSAs") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Household size') + 
+         ggtitle("Local survey household-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test for trip cost of same househould classification in different MSAs
+       # hhsiz.cat 1
+       l.tcost.hh.tpurp.msas.hhsiz.cat1 <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$hhsiz.cat=="1"),])
+       summary(l.tcost.hh.tpurp.msas.hhsiz.cat1)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hhsiz.cat1)
+       
+       # hhsiz.cat 2
+       l.tcost.hh.tpurp.msas.hhsiz.cat2 <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$hhsiz.cat=="2"),])
+       summary(l.tcost.hh.tpurp.msas.hhsiz.cat2)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hhsiz.cat2)
+       
+       # hhsiz.cat 3
+       l.tcost.hh.tpurp.msas.hhsiz.cat3 <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$hhsiz.cat=="3"),])
+       summary(l.tcost.hh.tpurp.msas.hhsiz.cat3)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hhsiz.cat3)
+       
+       # hhsiz.cat 4+
+       l.tcost.hh.tpurp.msas.hhsiz.cat4 <- aov(tcost ~ msa, 
+                                               data=l.tcost.hh.tpurp.msas[which(l.tcost.hh.tpurp.msas$hhsiz.cat=="4+"),])
+       summary(l.tcost.hh.tpurp.msas.hhsiz.cat4)
+       TukeyHSD(l.tcost.hh.tpurp.msas.hhsiz.cat4)
+       
+       # OHAS-Portland 
+       # Transform TripPurpose as factor    
+       lp.tcost.hh.tpurp$TripPurpose <- as.factor(lp.tcost.hh.tpurp$TripPurpose)
+       
+       # Reclassify househod size group 
+       lp.tcost.hh.tpurp <- lp.tcost.hh.tpurp%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Plot travel cost 
+       ggplot(lp.tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("OHAS-Portland household-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # Two-way ANOVA test 
+       lp.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=lp.tcost.hh.tpurp)
+       summary(lp.tcost.hh.tpurp.PrIc)
+       
+       TukeyHSD(lp.tcost.hh.tpurp.PrIc, which="TripPurpose")
+       TukeyHSD(lp.tcost.hh.tpurp.PrIc, which="inc.level")
+       
+       # Calculate overall household-level travel cost 
+       lp.tcost.hh <- lp.tcost.hh.tpurp %>%
+         group_by(SAMPN) %>%
+         summarise(tcost=sum(tcost),
+                   hhsiz.cat=first(hhsiz.cat))
+       
+       # Plot travel cost by househoud categories 
+       ggplot(lp.tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("OHAS-Portland household-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       lp.tcost.hh.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=lp.tcost.hh)
+       summary(lp.tcost.hh.hhsiz.cat)
+       TukeyHSD(lp.tcost.hh.hhsiz.cat)
+       
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       lp.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=lp.tcost.hh.tpurp[which(lp.tcost.hh.tpurp$TripPurpose=="hbw"),])
+       summary(lp.tcost.hh.tpurp.hbw)
+       TukeyHSD(lp.tcost.hh.tpurp.hbw)
+       
+       # hbs
+       lp.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=lp.tcost.hh.tpurp[which(lp.tcost.hh.tpurp$TripPurpose=="hbs"),])
+       summary(lp.tcost.hh.tpurp.hbs)
+       TukeyHSD(lp.tcost.hh.tpurp.hbs)
+       
+       # hbr
+       lp.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=lp.tcost.hh.tpurp[which(lp.tcost.hh.tpurp$TripPurpose=="hbr"),])
+       summary(lp.tcost.hh.tpurp.hbr)
+       TukeyHSD(lp.tcost.hh.tpurp.hbr)
+       
+       # hbo
+       lp.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=lp.tcost.hh.tpurp[which(lp.tcost.hh.tpurp$TripPurpose=="hbo"),])
+       summary(lp.tcost.hh.tpurp.hbo)
+       TukeyHSD(lp.tcost.hh.tpurp.hbo)
+       
+       # WFRC-Salt Lake City 
+       # Transform TripPurpose as factor    
+       ls.tcost.hh.tpurp$TripPurpose <- as.factor(ls.tcost.hh.tpurp$TripPurpose)
+       
+       # Reclassify househod size group 
+       ls.tcost.hh.tpurp <- ls.tcost.hh.tpurp%>% 
+         mutate(hhsiz.cat=cut(HHSIZ,
+                              breaks=c(1, 2, 3, 4, 9),
+                              labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                              include.lowest=T, right=F
+         ))
+       
+       # Plot travel cost 
+       ggplot(ls.tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+         geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+         scale_fill_discrete(name = 'Income Level') + 
+         ggtitle("WFRC-Salt Lake City household-level travel cost ") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # Two-way ANOVA test 
+       ls.tcost.hh.tpurp.PrIc <- aov(tcost ~ TripPurpose*inc.level, data=ls.tcost.hh.tpurp)
+       summary(ls.tcost.hh.tpurp.PrIc)
+       
+       TukeyHSD(ls.tcost.hh.tpurp.PrIc, which="TripPurpose")
+       TukeyHSD(ls.tcost.hh.tpurp.PrIc, which="inc.level")
+       
+       # Calculate overall household-level travel cost 
+       ls.tcost.hh <- ls.tcost.hh.tpurp %>%
+         group_by(SAMPN) %>%
+         summarise(tcost=sum(tcost),
+                   hhsiz.cat=first(hhsiz.cat))
+       
+       # Plot travel cost by househoud categories 
+       ggplot(ls.tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+         geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+         scale_colour_discrete(name = 'Household Size')+ 
+         ggtitle("WFRC-Salt Lake City household-level travel cost by household size") +
+         theme(plot.title = element_text(face="bold", size=12, vjust=1))
+       
+       # One-way ANOVA test of travel cost by household categories 
+       ls.tcost.hh.hhsiz.cat <- aov(tcost ~ hhsiz.cat, data=ls.tcost.hh)
+       summary(ls.tcost.hh.hhsiz.cat)
+       TukeyHSD(ls.tcost.hh.hhsiz.cat)
+       
+       # One-way ANOVA test of travel cost for the same trip purpose 
+       # hbw
+       ls.tcost.hh.tpurp.hbw <- aov(tcost ~ inc.level, data=ls.tcost.hh.tpurp[which(ls.tcost.hh.tpurp$TripPurpose=="hbw"),])
+       summary(ls.tcost.hh.tpurp.hbw)
+       TukeyHSD(ls.tcost.hh.tpurp.hbw)
+       
+       # hbs
+       ls.tcost.hh.tpurp.hbs <- aov(tcost ~ inc.level, data=ls.tcost.hh.tpurp[which(ls.tcost.hh.tpurp$TripPurpose=="hbs"),])
+       summary(ls.tcost.hh.tpurp.hbs)
+       TukeyHSD(ls.tcost.hh.tpurp.hbs)
+       
+       # hbr
+       ls.tcost.hh.tpurp.hbr <- aov(tcost ~ inc.level, data=ls.tcost.hh.tpurp[which(ls.tcost.hh.tpurp$TripPurpose=="hbr"),])
+       summary(ls.tcost.hh.tpurp.hbr)
+       TukeyHSD(ls.tcost.hh.tpurp.hbr)
+       
+       # hbo
+       ls.tcost.hh.tpurp.hbo <- aov(tcost ~ inc.level, data=ls.tcost.hh.tpurp[which(ls.tcost.hh.tpurp$TripPurpose=="hbo"),])
+       summary(ls.tcost.hh.tpurp.hbo)
+       TukeyHSD(ls.tcost.hh.tpurp.hbo)
+       
+       
