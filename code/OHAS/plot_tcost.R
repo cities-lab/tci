@@ -13,7 +13,7 @@ pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) 
   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
   scale_colour_discrete(name = 'Income Level') + 
   ggtitle("Household-level trip cost by trip purposes income groups") +
-  theme(plot.title = element_text(face="bold", size=15, vjust=1))
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_inc.png")
 ggsave(pden.inc, file=output_file, type="cairo-png")
 
@@ -27,7 +27,7 @@ pden.hhsiz <- ggplot(tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)
   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
   scale_colour_discrete(name = 'Household Size')+ 
   ggtitle("Household-level travel cost by household size") +
-  theme(plot.title = element_text(face="bold", size=15, vjust=1))
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
 pden.hhsiz
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_hhsiz.png")
 ggsave(pden.hhsiz, file=output_file, type="cairo-png")
@@ -41,7 +41,7 @@ boxp.tpurp_inc <- ggplot(tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.le
   geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
   scale_fill_discrete(name = 'Income Level') + 
   ggtitle("Household-level travel cost by trip purposes income groups") +
-  theme(plot.title = element_text(face="bold", size=15, vjust=1))
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
 boxp.tpurp_inc
 output_file = file.path(OUTPUT_DIR, "boxplot_tcost.hh_by_tpurp.inc.png")
 ggsave(file=output_file, type="cairo-png")
@@ -56,7 +56,7 @@ output_file = file.path(OUTPUT_DIR, "linechart_tcost.hh_by_tpurp.inc.png")
 t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
 t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120) +
   ggtitle("Trip-level travel cost by trip purposes income groups") +
-  theme(plot.title = element_text(face="bold", size=15, vjust=1))
+  theme(plot.title = element_text(face="bold", size=12, vjust=1))
 ggsave(file=output_file, type="cairo-png")
 #saveGraph(filename=output_file, type="pdf")
 
@@ -84,15 +84,32 @@ plot_map <- function(plot.Data) {
 }
 
 #transform data for plotting
-tcost.distr_all <- tcost.distr.tpurp.inc %>% 
-  ungroup() %>%
-  mutate(inc.level=as.character(inc.level),
-         TripPurpose=as.character(TripPurpose)
-  )  %>%
-  union(mutate(ungroup(tcost.distr.tpurp), inc.level="All", TripPurpose=as.character(TripPurpose))) %>%
-  union(mutate(ungroup(tcost.distr.inc), inc.level=as.character(inc.level), TripPurpose="All")) %>%
-  union(mutate(ungroup(tcost.distr), inc.level="All", TripPurpose="All")) %>%
-  right_join(expand.grid(district.id=1:20, TripPurpose=c('All', Pr), inc.level=c(Ic, 'All'), stringsAsFactors = F))
+#  no applicable method for 'right_join' applied to an object of class "list"
+# tcost.distr_all <- tcost.distr.tpurp.inc %>% 
+#   ungroup() %>%
+#   mutate(inc.level=as.character(inc.level),
+#          TripPurpose=as.character(TripPurpose)
+#   )  %>%
+#   union(mutate(ungroup(tcost.distr.tpurp), inc.level="All", TripPurpose=as.character(TripPurpose))) %>%
+#   union(mutate(ungroup(tcost.distr.inc), inc.level=as.character(inc.level), TripPurpose="All")) %>%
+#   union(mutate(ungroup(tcost.distr), inc.level="All", TripPurpose="All")) %>%
+#   right_join(expand.grid(district.id=1:20, TripPurpose=c('All', Pr), inc.level=c(Ic, 'All'), stringsAsFactors = F))
+
+tcost.distr_tpurp.inc <- expand.grid(district.id=1:20, TripPurpose=c(Pr), inc.level=c(Ic), stringsAsFactors = F) %>% 
+                         left_join(tcost.distr.tpurp.inc %>% ungroup() %>% mutate(inc.level=as.character(inc.level), TripPurpose=as.character(TripPurpose))) 
+
+tcost.distr_tpurp.all <- expand.grid(district.id=1:20, TripPurpose=c(Pr), inc.level=c("All"), stringsAsFactors = F) %>%
+                         left_join(mutate(ungroup(tcost.distr.tpurp), inc.level="All", TripPurpose=as.character(TripPurpose))) 
+
+tcost.distr_all.inc <- expand.grid(district.id=1:20, TripPurpose=c("All"), inc.level=c(Ic), stringsAsFactors = F) %>%
+                       left_join(mutate(ungroup(tcost.distr.inc), inc.level=as.character(inc.level), TripPurpose="All")) 
+
+tcost.distr_all.all <- expand.grid(district.id=1:20, TripPurpose=c("All"), inc.level=c("All"), stringsAsFactors = F) %>%
+                       left_join(mutate(ungroup(tcost.distr), inc.level="All", TripPurpose="All")) 
+
+tcost.distr_all <- rbind(tcost.distr_tpurp.inc, tcost.distr_tpurp.all, tcost.distr_all.inc, tcost.distr_all.all) %>%
+                   right_join(expand.grid(district.id=1:20, TripPurpose=c('All', Pr), inc.level=c(Ic, 'All'), stringsAsFactors = F))
+
 
 #prepare data for plotting
 tcost.distr_all <- tcost.distr_all %>% 
@@ -135,7 +152,7 @@ ggsave(maps, file = output_file, width = 8.5, height = 11, type = "cairo-png")
 #   i <- i + 1
 # }
 # grid.arrange(maps, ncol=j-1)
-
-output_file = file.path(OUTPUT_DIR, "map_districts_all.png")
-ggsave(p1, file = output_file, width = 7.5, height = 4.5, type = "cairo-png")
+# 
+# output_file = file.path(OUTPUT_DIR, "map_districts_all.png")
+# ggsave(p1, file = output_file, width = 7.5, height = 4.5, type = "cairo-png")
 
