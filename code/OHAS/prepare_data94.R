@@ -236,7 +236,7 @@
 
   hh.metro <- hh %>% 
     mutate(inc.level=cut(INCOME,
-                         breaks=c(1, 6, 11, 13),
+                         breaks=c(1, 6, 11, 14),
                          labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
                          include.lowest=T, right=F)
     ) %>%
