@@ -21,7 +21,7 @@ SAVE.INTERMEDIARIES <- TRUE
 INTERMEDIATE_DIR <- "output/intermediate/OHAS/portland_94"
 dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
 
-TAZPoly1994.shapefile <- file.path(INPUT_DIR, "shp/taz1260.shp")
+TAZPoly1994.shapefile <- file.path(INPUT_DIR, "shp/taz1260/taz1260.shp")
 districtsPoly.shapefile <- file.path(INPUT_DIR, "shp/districts.shp")
 
 # make names for household income groups, trip purpose and calculation method
@@ -44,15 +44,15 @@ names(CmNames) <- Cm
 # with value "lowInc", "midInc", "highInc"
 
 # this configuration converts travel costs to $
-hourly.wage <- 24.77
-MODE <- c(1:8) # 1:10 and 97 are coded in OHAS; 1:2 and 21:25 are coded for TDM
+hourly.wage <- 60
+MODE <- c(1:8) 
 MdNames <- c("other", "walk", "bicycle", "schol bus", "public bus", "MAX", "personal vehicle", "non-personal vehicle") 
 
 names(MODE) <- MdNames
 
 
-VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
-
+# VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
+VOT <- rep(1, length(MODE)) * hourly.wage
 
 # distance-based monetary cost per mile
 # http://www.portlandfacts.com/cost_of_transit_&_cars.html

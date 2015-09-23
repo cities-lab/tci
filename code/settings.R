@@ -36,6 +36,6 @@ names(MODE) <- MdNames
 #MODE <- c(1:10,97) #as being coded in OHAS
 VOT <- rep(1, length(MODE)) * hourly.wage
 ## time-equivalent monetary cost per mile, which can be specific to income group
-mcpm <- c(0,   0,   59.2,59.2, 101.0, 138.0, 0,  260.0,  0,  0,  29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / (100 * 24.77)
+mcpm <- c(0, 0, 59.2, 59.2, 101.0, 138.0, 0, 260.0, 0, 0, 29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / (100 * 24.77)
 
 unitcosts <- data.frame(MODE, VOT, mcpm)
