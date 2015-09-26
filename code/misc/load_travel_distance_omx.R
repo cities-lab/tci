@@ -6,7 +6,7 @@ load(file.path(INPUT_DIR, 'Zi.RData'))
 # load auto Distance
 # load auto travel time during peak time period 
 # mf40  	2a2std	2a2 SOV auto travel Distance
-autopeakDistance  <- read.csv(file.path(INPUT_DIR, 'TDM/mf40.csv'), header=F)  
+autopeakDistance  <- read.csv(file.path(INPUT_DIR, 'TDM/AutoSkims/mf40.csv'), header=F)  
 rowindex <- c(1:nrow(autopeakDistance)) # nrow(autopeakDistance) = 4672082 < 2162*2162 = 4674244
 driveAlonepeakDistance <- matrix(0, 2162,2162)
 
@@ -27,7 +27,7 @@ all.equal(drivePasspeakDistance, drivePassoffpeakDistance)
 
 # load auto travel time during offpeak time period 
 # mf42  	3m6std	3m6 SOV auto travel Distance
-autooffpeakDistance  <- read.csv(file.path(INPUT_DIR, 'TDM/mf42.csv'), header=F)  
+autooffpeakDistance  <- read.csv(file.path(INPUT_DIR, 'TDM/AutoSkims/mf42.csv'), header=F)  
 rowindex <- c(1:nrow(autooffpeakDistance))
 driveAloneoffpeakDistance <- matrix(0, 2162,2162)
 for (i in rowindex) {
@@ -45,7 +45,7 @@ save(driveAloneoffpeakDistance,drivePassoffpeakDistance, passoffpeakDistance, fi
 # Transit distance
 # mf57 description in ttransit skims
 # mf57	 2biv    	12-12-04 11:11  22 Bus In-vehicle Time  
-IVbuspeakTime <- read.csv(file.path(INPUT_DIR, 'TDM/mf57.csv'), header=F)  
+IVbuspeakTime <- read.csv(file.path(INPUT_DIR, 'TDM/TransitSkims/mf57.csv'), header=F)  
 nrowindex <- c(1:nrow(IVbuspeakTime))
 IVbuspeakTime.mx <- matrix(NA,2162,2162)
 for(i in nrowindex){
@@ -59,7 +59,7 @@ parkAndRideBusDistance <- IVbuspeakTime.mx*15.2/60
 
 # mf47 description
 # mf47	 3biv    12-12-04 11:12  33 Bus In-vehicle Time  
-IVbusoffpeakTime <- read.csv(file.path(INPUT_DIR, 'TDM/mf47.csv'), header=F)  
+IVbusoffpeakTime <- read.csv(file.path(INPUT_DIR, 'TDM/TransitSkims/mf47.csv'), header=F)  
 nrowindex <- c(1:nrow(IVbusoffpeakTime))
 IVbusoffpeakTime.mx <- matrix(NA,2162,2162)
 for(i in nrowindex){
