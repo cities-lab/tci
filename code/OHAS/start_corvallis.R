@@ -40,7 +40,7 @@ TAZ.id_name <- "TAZ"
 source("code/OHAS/functions.R")
 source("code/OHAS/prepare_data_corvallis.R")
 source("code/OHAS/compute_tcost.R")
-source("code/OHAS/plot_tcost.R")
+source("code/OHAS/plot_tcost_corvallis.R")
 
 ##clean up
 var_list.1 <- ls()
