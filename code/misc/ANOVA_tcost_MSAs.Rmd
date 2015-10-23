@@ -473,6 +473,10 @@ This script conducts ANOVA test to compare the travel costs of OHAS-Portland, WF
          theme(plot.title = element_text(face="bold", size=12, vjust=1))
        
        # ANOVA test for overall travel cost 
+       n.tcost.hh.msas.aov <- aov(tcost ~ msa, data=n.tcost.hh.msas)
+       summary(n.tcost.hh.msas.aov)
+       TukeyHSD(n.tcost.hh.msas.aov)
+       
        n.tcost.hh.tpurp.msas.aov <- aov(tcost ~ msa, data=n.tcost.hh.tpurp.msas)
        summary(n.tcost.hh.tpurp.msas.aov)
        TukeyHSD(n.tcost.hh.tpurp.msas.aov)
