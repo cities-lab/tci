@@ -1,0 +1,365 @@
+---
+title: "survey tcost comparison minutes dollars"
+author: "HuajieYang"
+date: "10/23/2015"
+output: html_document
+---
+
+# Calculate travel cost 
+```{r, results='hide', message=FALSE, warning=FALSE}
+
+setwd("~/tci")
+source("code/misc/calc_survey_tcost.R")
+
+```
+
+# Generate plots 
+```{r, message=FALSE}
+# settings 
+options(warn=-1)
+INPUT_DIR <- 'data/'
+
+IcNames <- c("Low Income", "Mid Income", "High Income")
+Ic <- c("lowInc", "midInc", "highInc")
+names(IcNames) <- Ic
+
+PrNames <- c("Work", "Shopping", "Recreation", "Other")
+Pr <- c("hbw", "hbs", "hbr", "hbo")
+names(PrNames) <- Pr
+
+# Load required packages
+require(dplyr)
+require(grid)
+require(gridExtra) #require(Rmisc)
+require(scales)
+require(ggplot2)
+require(ggmap)
+require(rgdal)
+
+# Defint plot functions
+
+pden.inc.f <- function(plot.data=NULL, unit.name=NULL) {
+  
+  xlim.max <- c(dollars=120, minutes=360)
+  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot(data=plot.data, aes(x = tcost, colour=inc.level, group=inc.level)) 
+  p + geom_density(fill=NA, size=0.4) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
+    scale_colour_discrete(name = 'Income Level') +
+    ggtitle("Household-level trip cost by trip purpose and income levels") +
+    theme(axis.text=element_text(size=4.5),
+          axis.title=element_text(size=5),
+          plot.title = element_text(face="bold", size=6, vjust=1),
+          legend.title = element_text(size=5),
+          legend.text = element_text(size =5),
+          legend.key.size=unit(0.25, "cm"))
+}
+
+
+pden.hhsiz.f <- function(plot.data=NULL, unit.name=NULL) {
+
+  xlim.max <- c(dollars=120, minutes=360)
+  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  plot.data <- plot.data %>% 
+    mutate(hhsiz.cat=cut(HHSIZ,
+                         breaks=c(1, 2, 3, 4, 9),
+                         labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                         include.lowest=T, right=F
+    ))
+  
+  p <- ggplot(data=plot.data, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) 
+  p + geom_density(fill=NA, size=0.4) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
+    scale_colour_discrete(name = 'Household Size')+ 
+    ggtitle("Household-level travel cost by household size") +
+    theme(axis.text=element_text(size=4.5),
+          axis.title=element_text(size=5),
+          plot.title = element_text(face="bold", size=6, vjust=1),
+          legend.title = element_text(size=5),
+          legend.text = element_text(size =5),
+          legend.key.size=unit(0.25, "cm"))
+}
+
+boxp.tpurp_inc.f <- function (plot.data=NULL, unit.name=NULL) {
+  
+  ylim.max <- c(dollars=100, minutes=250)
+  yaxis.label=paste("Generalized Travel Costs (", unit.name, ")", sep="")
+  
+  plot.data <- plot.data %>% 
+    mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
+           TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
+    )
+  
+  p <- ggplot(data=plot.data, aes(x=TripPurpose, y=tcost, fill=inc.level)) 
+  p + geom_boxplot(size=0.1, outlier.size =0.8)  + labs(y=yaxis.label) + xlab("Trip Purpose") + 
+    ylim(0, ylim.max[unit.name])  + scale_fill_discrete(name = 'Income Level') + 
+    ggtitle("Household-level travel cost by trip purpose and income levels") +
+    theme(axis.text=element_text(size=4.5),
+          axis.title=element_text(size=5),
+          plot.title = element_text(face="bold", size=6, vjust=1),
+          legend.title = element_text(size=5),
+          legend.text = element_text(size =5),
+          legend.key.size=unit(0.35, "cm"))
+}
+
+linep.tpurp.inc.f <- function (plot.data=NULL, unit.name=NULL) {
+  ylim.max <- c(dollars=60, minutes=120)
+  yaxis.label=paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot(data=plot.data, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose)) 
+  p + geom_line(fill=NA, size=0.4) + labs(x="Income Level") + labs(y=yaxis.label) + ylim(0, ylim.max[unit.name]) +
+    ggtitle("Trip-level travel cost by trip purpose and income levels") +
+    theme(axis.text=element_text(size=4.5),
+          axis.title=element_text(size=5),
+          plot.title = element_text(face="bold", size=6, vjust=1),
+          legend.title = element_text(size=5),
+          legend.text = element_text(size =5),
+          legend.key.size=unit(0.35, "cm"))
+}
+
+tcost.distr_all.f <- function(tcost.distr.tpurp.inc=NULL , tcost.distr.tpurp.all=NULL, 
+                              tcost.distr.all.inc=NULL,   tcost.distr.all.all=NULL) {
+  
+  tcost.distr_tpurp.inc <- expand.grid(district.id=1:20, TripPurpose=c(Pr), inc.level=c(Ic), stringsAsFactors = F) %>% 
+                             left_join(tcost.distr.tpurp.inc %>% ungroup() %>% mutate(inc.level=as.character(inc.level), TripPurpose=as.character(TripPurpose))) 
+  
+  tcost.distr_tpurp.all <- expand.grid(district.id=1:20, TripPurpose=c(Pr), inc.level=c("All"), stringsAsFactors = F) %>%
+                           left_join(mutate(ungroup(tcost.distr.tpurp.all), inc.level="All", TripPurpose=as.character(TripPurpose))) 
+  
+  tcost.distr_all.inc <- expand.grid(district.id=1:20, TripPurpose=c("All"), inc.level=c(Ic), stringsAsFactors = F) %>%
+                         left_join(mutate(ungroup(tcost.distr.all.inc), inc.level=as.character(inc.level), TripPurpose="All")) 
+  
+  tcost.distr_all.all <- expand.grid(district.id=1:20, TripPurpose=c("All"), inc.level=c("All"), stringsAsFactors = F) %>%
+                         left_join(mutate(ungroup(tcost.distr.all.all), inc.level="All", TripPurpose="All")) 
+  
+  tcost.distr_all <- rbind(tcost.distr_tpurp.inc, tcost.distr_tpurp.all, tcost.distr_all.inc, tcost.distr_all.all) %>%
+                     right_join(expand.grid(district.id=1:20, TripPurpose=c('All', Pr), inc.level=c(Ic, 'All'), stringsAsFactors = F))
+  
+  tcost.distr_all <- tcost.distr_all %>% 
+    mutate(id=as.character(district.id), 
+           value = tcost.wtavg,
+           inc.level = factor(inc.level, levels=c(Ic, 'All'), labels=c("Low Inc", "Mid Inc", "High Inc", "All Households")),
+           TripPurpose = factor(TripPurpose, levels=c('All', Pr), labels=c("All Trips", "HBW", "HB Shopping", "HB Recreation", "HB Other"))
+    )
+  
+  return(tcost.distr_all)
+}
+
+plot_map <- function(plot.Data=NULL, unit.name=NULL) {
+  
+  limits.max <- c(dollars= 100, minutes=200) 
+  legend.name <-  paste("Travel Costs\n(",  unit.name, ")", sep="")
+
+  p <- ggplot() +
+    geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
+                 color = NA, size = 0.1) +
+    scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, limits.max[unit.name]), 
+                         name = legend.name, na.value = "grey80") +
+    guides(fill = guide_legend(reverse = TRUE))  +
+    theme_nothing(legend = TRUE) +
+    theme(strip.text = element_text(size = 6),
+          legend.title = element_text(size=8),
+          legend.text = element_text(size =7),
+          legend.key.size=unit(0.5, "cm"))
+}
+
+
+plot.lists.f <- function (data.source=NULL, unit.name=NULL, districts.folder=NULL) {
+  
+  # Load travel cost by dollars 
+  setwd("~/tci")
+  
+  data.file <- file.path('output/Survey', data.source, unit.name, 'tcost.RData')
+  load(data.file)
+  
+   tcost.distr_all <- tcost.distr_all.f(tcost.distr.tpurp.inc=tcost.distr.tpurp.inc, tcost.distr.tpurp.all=tcost.distr.tpurp, 
+                                       tcost.distr.all.inc=tcost.distr.inc, tcost.distr.all.all=tcost.distr)
+  
+  if (!is.null(districts.folder)) {
+    districts.file <- file.path(INPUT_DIR, districts.folder) 
+    districts <- readOGR(dsn = districts.file, layer = "districts")
+    districts <- fortify(districts, region="DISTRICT")
+    
+    plot.data <- full_join(districts, tcost.distr_all)
+    maps <- plot_map(plot.data, unit.name=unit.name) + facet_grid(TripPurpose~inc.level) 
+    
+  } else {
+    maps <- NULL
+  }
+ 
+ 
+  
+  # Plot data 
+  pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
+  
+  pden.hhsiz  <- pden.hhsiz.f(plot.data=tcost.hh, unit.name=unit.name)
+
+  boxp.tpurp_inc <- boxp.tpurp_inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
+  
+  linep.tpurp.inc<- linep.tpurp.inc.f(plot.data=tcost.tpurp.inc, unit.name=unit.name)
+  
+  
+  plot.lists <- list(pden.inc=pden.inc, pden.hhsiz=pden.hhsiz, boxp.tpurp_inc=boxp.tpurp_inc,
+                     linep.tpurp.inc=linep.tpurp.inc, maps=maps)
+  
+}
+
+
+```
+
+
+## OHAS 2011 Portland 
+
+```{r, message=FALSE, warning=FALSE}
+plot.lists.dollars <- plot.lists.f(data.source="OHAS/Portland", unit.name="dollars", districts.folder="shp" )
+plot.lists.minutes <- plot.lists.f(data.source="OHAS/Portland", unit.name="minutes", districts.folder="shp" )
+
+plot.title<- "OHAS 2011 Portland"
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$pden.inc, plot.lists.dollars$pden.inc, 
+                          plot.lists.minutes$pden.hhsiz, plot.lists.dollars$pden.hhsiz),
+              ncol=2, 
+              top=plot.title)
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$boxp.tpurp_inc, plot.lists.dollars$boxp.tpurp_inc, 
+                          plot.lists.minutes$linep.tpurp.inc, plot.lists.dollars$linep.tpurp.inc), 
+              ncol=2, 
+              top=plot.title)
+   
+ grid.arrange(grobs=list(plot.lists.minutes$maps, plot.lists.dollars$maps), 
+              ncol=2, 
+              top=plot.title)
+
+```
+
+## OHAS 2011 Corvallis 
+```{r, message=FALSE, warning=FALSE}
+plot.lists.dollars <- plot.lists.f(data.source="OHAS/Corvallis", unit.name="dollars", districts.folder="shp/Corvallis")
+plot.lists.minutes <- plot.lists.f(data.source="OHAS/Corvallis", unit.name="minutes", districts.folder="shp/Corvallis")
+
+plot.title<- "OHAS 2011 Corvallis"
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$pden.inc, plot.lists.dollars$pden.inc, 
+                          plot.lists.minutes$pden.hhsiz, plot.lists.dollars$pden.hhsiz),
+              ncol=2, 
+              top=plot.title)
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$boxp.tpurp_inc, plot.lists.dollars$boxp.tpurp_inc, 
+                          plot.lists.minutes$linep.tpurp.inc, plot.lists.dollars$linep.tpurp.inc), 
+              ncol=2, 
+              top=plot.title)
+   
+ grid.arrange(grobs=list(plot.lists.minutes$maps, plot.lists.dollars$maps), 
+              ncol=2, 
+              top=plot.title)
+
+
+```
+
+
+## Portland 1994 survey
+```{r, message=FALSE, warning=FALSE}
+plot.lists.dollars <- plot.lists.f(data.source="Portland94", unit.name="dollars", districts.folder="shp")
+plot.lists.minutes <- plot.lists.f(data.source="Portland94", unit.name="minutes", districts.folder="shp")
+
+plot.title<- "Portland 1994"
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$pden.inc, plot.lists.dollars$pden.inc, 
+                          plot.lists.minutes$pden.hhsiz, plot.lists.dollars$pden.hhsiz),
+              ncol=2, 
+              top=plot.title)
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$boxp.tpurp_inc, plot.lists.dollars$boxp.tpurp_inc, 
+                          plot.lists.minutes$linep.tpurp.inc, plot.lists.dollars$linep.tpurp.inc), 
+              ncol=2, 
+              top=plot.title)
+   
+ grid.arrange(grobs=list(plot.lists.minutes$maps, plot.lists.dollars$maps), 
+              ncol=2, 
+              top=plot.title)
+
+
+```
+
+
+## WFRC_SaltLake
+```{r, message=FALSE, warning=FALSE}
+plot.lists.dollars <- plot.lists.f(data.source="WFRC_SaltLake", unit.name="dollars", districts.folder=NULL)
+plot.lists.minutes <- plot.lists.f(data.source="WFRC_SaltLake", unit.name="minutes", districts.folder=NULL)
+
+plot.title<- "WFRC_SaltLake"
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$pden.inc, plot.lists.dollars$pden.inc, 
+                          plot.lists.minutes$pden.hhsiz, plot.lists.dollars$pden.hhsiz),
+              ncol=2, 
+              top=plot.title)
+ 
+ grid.arrange(grobs= list(plot.lists.minutes$boxp.tpurp_inc, plot.lists.dollars$boxp.tpurp_inc, 
+                          plot.lists.minutes$linep.tpurp.inc, plot.lists.dollars$linep.tpurp.inc), 
+              ncol=2, 
+              top=plot.title)
+
+
+```
+
+# National household survey 
+## Portland 
+```{r, message=FALSE, warning=FALSE}
+plot.lists.dollars <- plot.lists.f(data.source="NHTS09/Portland", unit.name="dollars", districts.folder=NULL)
+plot.lists.minutes <- plot.lists.f(data.source="NHTS09/Portland", unit.name="minutes", districts.folder=NULL)
+
+plot.title<- "NHTS 2009 Portland"
+ 
+grid.arrange(grobs= list(plot.lists.minutes$pden.inc, plot.lists.dollars$pden.inc, 
+                          plot.lists.minutes$pden.hhsiz, plot.lists.dollars$pden.hhsiz),
+              ncol=2, 
+              top=plot.title)
+ 
+grid.arrange(grobs= list(plot.lists.minutes$boxp.tpurp_inc, plot.lists.dollars$boxp.tpurp_inc, 
+                          plot.lists.minutes$linep.tpurp.inc, plot.lists.dollars$linep.tpurp.inc), 
+              ncol=2, 
+              top=plot.title)
+
+
+```
+
+
+## Salt Lake City 
+```{r, message=FALSE, warning=FALSE}
+plot.lists.dollars <- plot.lists.f(data.source="NHTS09/SaltLakeCity", unit.name="dollars", districts.folder=NULL)
+plot.lists.minutes <- plot.lists.f(data.source="NHTS09/SaltLakeCity", unit.name="minutes", districts.folder=NULL)
+
+plot.title<- "NHTS 2009 Salt Lake City"
+ 
+grid.arrange(grobs= list(plot.lists.minutes$pden.inc, plot.lists.dollars$pden.inc, 
+                          plot.lists.minutes$pden.hhsiz, plot.lists.dollars$pden.hhsiz),
+              ncol=2, 
+              top=plot.title)
+ 
+grid.arrange(grobs= list(plot.lists.minutes$boxp.tpurp_inc, plot.lists.dollars$boxp.tpurp_inc, 
+                          plot.lists.minutes$linep.tpurp.inc, plot.lists.dollars$linep.tpurp.inc), 
+              ncol=2, 
+              top=plot.title)
+
+
+```
+
+## Tampa Bay 
+```{r, message=FALSE, warning=FALSE}
+plot.lists.dollars <- plot.lists.f(data.source="NHTS09/TampaBay", unit.name="dollars", districts.folder=NULL)
+plot.lists.minutes <- plot.lists.f(data.source="NHTS09/TampaBay", unit.name="minutes", districts.folder=NULL)
+
+plot.title<- "NHTS 2009 Tampa Bay"
+ 
+grid.arrange(grobs= list(plot.lists.minutes$pden.inc, plot.lists.dollars$pden.inc, 
+                          plot.lists.minutes$pden.hhsiz, plot.lists.dollars$pden.hhsiz),
+              ncol=2, 
+              top=plot.title)
+ 
+grid.arrange(grobs= list(plot.lists.minutes$boxp.tpurp_inc, plot.lists.dollars$boxp.tpurp_inc, 
+                          plot.lists.minutes$linep.tpurp.inc, plot.lists.dollars$linep.tpurp.inc), 
+              ncol=2, 
+              top=plot.title)
+
+
+```
