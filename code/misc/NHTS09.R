@@ -8,27 +8,59 @@
   setwd("~/tci")
   var_list.0 <- ls()
   INPUT_DIR <- 'data/'
-
   
+  # Define unit costs and data source for generating output and intermediate directory and unit costs data frame 
+ 
+  data.source <- "NHTS09"
+  unit.name <- "minutes" 
+  #unit.name <- "dollars"
+  source("code/settings.R")
+  unitcosts <- NHTS09.unitcosts.list[[unit.name]]
+   
   # Survey area
   # HHC_MSA: CMSA FIPS code for HH address
   # 6442 = Portland--Salem, OR--WA; 1637 trips
   # 8280 = Tampa--St. Petersburg--Clearwater, FL
   # 7160 = Salt Lake City--Ogden, UT
-  HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=7160)  
   
-  # make names for household income groups, trip purpose and calculation method
-  IcNames <- c("Low Income", "Mid Income", "High Income")
-  Ic <- c("lowInc", "midInc", "highInc")
-  names(IcNames) <- Ic
+  # Calculate three cities 
+  # HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=7160)  
   
-  PrNames <- c("Work", "Shopping", "Recreation", "Other")
-  Pr <- c("hbw", "hbs", "hbr", "hbo")
-  names(PrNames) <- Pr
+
+  HHC_MSAs <- c("Atlanta, GA"= 0520, "Austin--San Marcos, TX" = 0640, "Boston--Worcester--Lawrence, MA--NH--ME--CT"= 1122,
+      "Buffalo--Niagara Falls, NY"=1280, "Charlotte--Gastonia--Rock Hill, NC--SC" = 1520, 
+      "Chicago--Gary--Kenosha, IL--IN--WI"= 1602, "Cincinnati--Hamilton, OH--KY--IN"=1642, "Cleveland--Akron, OH"=1692, 
+      "Columbus, OH"=1840, "Dallas--Fort Worth, TX"=1922, "Denver--Boulder--Greeley, CO"=2082, 
+      "Detroit--Ann Arbor--Flint, MI"=2162, "Grand Rapids--Muskegon--Holland, MI"=3000, 
+      "Greensboro--Winston-Salem--High Point, NC"=3120,  "Hartford, CT"= 3280, "Houston--Galveston--Brazoria, TX"=3362, 
+      "Indianapolis, IN"=3480, "Jacksonville, FL" = 3600, "Kansas City, MO--KS"=3760, "Las Vegas, NV--AZ" = 4120, 
+      "Los Angeles--Riverside--Orange County, CA"=4472, "Louisville, KY--IN"=4520, "Memphis, TN--AR--MS"=4920, 
+      "Miami--Fort Lauderdale, FL"=4992, "Milwaukee--Racine, WI"=5082, "Minneapolis--St. Paul, MN--WI"=5120, 
+      "Nashville, TN"=5360, "New Orleans, LA"=5560, "New York--Northern New Jersey--Long Island,NY--NJ--CT--PA"=5602, 
+      "Norfolk--Virginia Beach--Newport News, VA--NC" = 5720, "Oklahoma City, OK"=5880, "Orlando, FL"=5960,
+      "Philadelphia--Wilmington--Atlantic City,PA--NJ--DE--MD"= 6162, "Phoenix--Mesa, AZ"=6200, "Pittsburgh, PA"=6280, 
+      "Portland--Salem, OR--WA"=6442, "Providence--Fall River--Warwick, RI--MA"=6480, "Raleigh--Durham--Chapel Hill, NC"=6640, 
+      "Rochester, NY" = 6840, "Sacramento--Yolo, CA"=6922, "St. Louis, MO--IL"=7040, 
+      "Salt Lake City--Ogden, UT"=7160, "San Antonio, TX"= 7240, "San Diego, CA"= 7320, 
+      "San Francisco--Oakland--San Jose, CA"=7362, "Seattle--Tacoma--Bremerton, WA"= 7602,
+      "8280 = Tampa--St. Petersburg--Clearwater, FL" = 8280, 
+      "Washington--Baltimore, DC--MD--VA--WV"=8872, "West Palm Beach--Boca Raton, FL"=8960
+    )  
   
-  CmNames <- c("mintcost", "avgtcost", "maxtcost")
-  Cm <- c("min", "avg", "max")
-  names(CmNames) <- Cm
+  
+  
+#   # make names for household income groups, trip purpose and calculation method
+#   IcNames <- c("Low Income", "Mid Income", "High Income")
+#   Ic <- c("lowInc", "midInc", "highInc")
+#   names(IcNames) <- Ic
+#   
+#   PrNames <- c("Work", "Shopping", "Recreation", "Other")
+#   Pr <- c("hbw", "hbs", "hbr", "hbo")
+#   names(PrNames) <- Pr
+#   
+#   CmNames <- c("mintcost", "avgtcost", "maxtcost")
+#   Cm <- c("min", "avg", "max")
+#   names(CmNames) <- Cm
 
   
 # Road and process data 
@@ -86,30 +118,34 @@
       filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo"))
     
     
-# Define unist cost 
-    # this configuration converts travel costs to $
-    hourly.wage <- 60
-    MODE <-sort(unique(day$MODE)) 
-    
-    MdNames <- c("Don't know", "Refused", "Appropriate skip", "Car", "Van", "SUV", "Pickup truck", "Other truck", "Motorcycle", "Light electric veh (golf cart)", 
-                 "Local public bus", "Commuter bus", "School bus", "Charter/tour bus", "Shuttle bus", "Taxicab", "Bicycle", "Walk", "Other")
-    
-    names(MODE) <- MdNames
-    
-    VOT <- rep(1, length(MODE)) * hourly.wage
-    
-    mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6)/(100 * 24.77)
-    
-    # rep(1, length(MODE))
-    unitcosts <- data.frame(MODE, VOT, mcpm)
-  
-    
+# # Define unist cost 
+#     # this configuration converts travel costs to $
+#     hourly.wage <- 60
+#     # hourly.wage <- 24.77
+#     MODE <-sort(unique(day$MODE)) 
+#     
+#     MdNames <- c("Don't know", "Refused", "Appropriate skip", "Car", "Van", "SUV", "Pickup truck", "Other truck", "Motorcycle", "Light electric veh (golf cart)", 
+#                  "Local public bus", "Commuter bus", "School bus", "Charter/tour bus", "Shuttle bus", "Taxicab", "Bicycle", "Walk", "Other")
+#     
+#     names(MODE) <- MdNames
+#     
+#      VOT <- c(NA, NA, NA, rep(1, (length(MODE) -3))) * hourly.wage
+#     # VOT <- c(NA, NA, NA, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
+#     
+#     mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6)/(100 * 24.77)
+#     # mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6)/100
+#     
+#     length(VOT)
+#     length(mcpm)
+#     # rep(1, length(MODE))
+#     unitcosts <- data.frame(MODE, VOT, mcpm)
+
 # Calculate and plot trip cost for Portland and Tampa Bay
 
     for (msa.id in HHC_MSAs) {
       
       # Set output directory 
-      OUTPUT_DIR <- file.path("output/NHTS09", names(HHC_MSAs)[HHC_MSAs==msa.id])
+      OUTPUT_DIR <- file.path("output/Survey/NHTS09", names(HHC_MSAs)[HHC_MSAs==msa.id], unit.name)
       dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
       
       # Select survery area
