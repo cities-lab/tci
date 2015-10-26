@@ -12,8 +12,8 @@
   # Define unit costs and data source for generating output and intermediate directory and unit costs data frame 
  
   data.source <- "NHTS09"
-  unit.name <- "minutes" 
-  #unit.name <- "dollars"
+  #unit.name <- "minutes" 
+  unit.name <- "dollars"
   source("code/settings.R")
   unitcosts <- NHTS09.unitcosts.list[[unit.name]]
    
@@ -27,24 +27,24 @@
   # HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=7160)  
   
 
-  HHC_MSAs <- c("Atlanta, GA"= 0520, "Austin--San Marcos, TX" = 0640, "Boston--Worcester--Lawrence, MA--NH--ME--CT"= 1122,
-      "Buffalo--Niagara Falls, NY"=1280, "Charlotte--Gastonia--Rock Hill, NC--SC" = 1520, 
-      "Chicago--Gary--Kenosha, IL--IN--WI"= 1602, "Cincinnati--Hamilton, OH--KY--IN"=1642, "Cleveland--Akron, OH"=1692, 
-      "Columbus, OH"=1840, "Dallas--Fort Worth, TX"=1922, "Denver--Boulder--Greeley, CO"=2082, 
-      "Detroit--Ann Arbor--Flint, MI"=2162, "Grand Rapids--Muskegon--Holland, MI"=3000, 
-      "Greensboro--Winston-Salem--High Point, NC"=3120,  "Hartford, CT"= 3280, "Houston--Galveston--Brazoria, TX"=3362, 
-      "Indianapolis, IN"=3480, "Jacksonville, FL" = 3600, "Kansas City, MO--KS"=3760, "Las Vegas, NV--AZ" = 4120, 
-      "Los Angeles--Riverside--Orange County, CA"=4472, "Louisville, KY--IN"=4520, "Memphis, TN--AR--MS"=4920, 
-      "Miami--Fort Lauderdale, FL"=4992, "Milwaukee--Racine, WI"=5082, "Minneapolis--St. Paul, MN--WI"=5120, 
-      "Nashville, TN"=5360, "New Orleans, LA"=5560, "New York--Northern New Jersey--Long Island,NY--NJ--CT--PA"=5602, 
-      "Norfolk--Virginia Beach--Newport News, VA--NC" = 5720, "Oklahoma City, OK"=5880, "Orlando, FL"=5960,
-      "Philadelphia--Wilmington--Atlantic City,PA--NJ--DE--MD"= 6162, "Phoenix--Mesa, AZ"=6200, "Pittsburgh, PA"=6280, 
-      "Portland--Salem, OR--WA"=6442, "Providence--Fall River--Warwick, RI--MA"=6480, "Raleigh--Durham--Chapel Hill, NC"=6640, 
-      "Rochester, NY" = 6840, "Sacramento--Yolo, CA"=6922, "St. Louis, MO--IL"=7040, 
-      "Salt Lake City--Ogden, UT"=7160, "San Antonio, TX"= 7240, "San Diego, CA"= 7320, 
-      "San Francisco--Oakland--San Jose, CA"=7362, "Seattle--Tacoma--Bremerton, WA"= 7602,
-      "8280 = Tampa--St. Petersburg--Clearwater, FL" = 8280, 
-      "Washington--Baltimore, DC--MD--VA--WV"=8872, "West Palm Beach--Boca Raton, FL"=8960
+  HHC_MSAs <- c("Atlanta, GA"= "0520", "Austin--San Marcos, TX" = "0640", "Boston--Worcester--Lawrence, MA--NH--ME--CT"= "1122",
+      "Buffalo--Niagara Falls, NY"="1280", "Charlotte--Gastonia--Rock Hill, NC--SC" = "1520", 
+      "Chicago--Gary--Kenosha, IL--IN--WI"= "1602", "Cincinnati--Hamilton, OH--KY--IN"="1642", "Cleveland--Akron, OH"="1692", 
+      "Columbus, OH" = "1840", "Dallas--Fort Worth, TX" = "1922", "Denver--Boulder--Greeley, CO" = "2082", 
+      "Detroit--Ann Arbor--Flint, MI" = "2162", "Grand Rapids--Muskegon--Holland, MI" = "3000", 
+      "Greensboro--Winston-Salem--High Point, NC" = "3120",  "Hartford, CT" = "3280", "Houston--Galveston--Brazoria, TX" = "3362", 
+      "Indianapolis, IN" = "3480", "Jacksonville, FL" = "3600", "Kansas City, MO--KS" = "3760", "Las Vegas, NV--AZ" = "4120", 
+      "Los Angeles--Riverside--Orange County, CA"="4472", "Louisville, KY--IN"="4520", "Memphis, TN--AR--MS"="4920", 
+      "Miami--Fort Lauderdale, FL" = "4992", "Milwaukee--Racine, WI" = "5082", "Minneapolis--St. Paul, MN--WI" = "5120", 
+      "Nashville, TN" = "5360", "New Orleans, LA" = "5560", "New York--Northern New Jersey--Long Island,NY--NJ--CT--PA" = "5602", 
+      "Norfolk--Virginia Beach--Newport News, VA--NC" = "5720", "Oklahoma City, OK" = "5880", "Orlando, FL" = "5960",
+      "Philadelphia--Wilmington--Atlantic City,PA--NJ--DE--MD" = "6162", "Phoenix--Mesa, AZ" = "6200", "Pittsburgh, PA" = "6280", 
+      "Portland--Salem, OR--WA" = "6442", "Providence--Fall River--Warwick, RI--MA" = "6480", "Raleigh--Durham--Chapel Hill, NC" = "6640", 
+      "Rochester, NY" = "6840", "Sacramento--Yolo, CA"= "6922", "St. Louis, MO--IL" = "7040", 
+      "Salt Lake City--Ogden, UT" = "7160", "San Antonio, TX" = "7240", "San Diego, CA" = "7320", 
+      "San Francisco--Oakland--San Jose, CA"= "7362", "Seattle--Tacoma--Bremerton, WA" = "7602",
+      "Tampa--St. Petersburg--Clearwater, FL" = "8280", 
+      "Washington--Baltimore, DC--MD--VA--WV" = "8872", "West Palm Beach--Boca Raton, FL" = "8960"
     )  
   
   
@@ -164,4 +164,5 @@
   var_list.1 <- ls()
   rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
   rm(var_list.1) 
+  
   
