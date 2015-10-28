@@ -46,7 +46,7 @@ TazPoly <- readShapePoly(TazFile)
 TazData <- TazPoly@data
 
 # make an index vector to the taz
-TazIndex <- as.character(TazData$newtaz)
+TazIndex <- as.character(TazData$TAZ)
 
 # get the location of the reference zone
 TazCentroids.ZiXy <- coordinates(TazPoly)

@@ -19,7 +19,7 @@
 
   source("code/settings.R")
 
-  #Override unitcosts
+  #Override unitcosts in settings.R
   MODE <- c(-8, -7, -1, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 22, 23, 97)
   MdNames <- c("Don't know", "Refused", "Appropriate skip", "Car", "Van", "SUV", "Pickup truck", "Other truck", "Motorcycle", "Light electric veh (golf cart)",
                "Local public bus", "Commuter bus", "School bus", "Charter/tour bus", "Shuttle bus", "Taxicab", "Bicycle", "Walk", "Other")
@@ -43,6 +43,7 @@
   unitcosts.list <- list(minutes=unitcosts.minutes, 
                          dollars=unitcosts.dollars)
   unitcosts <- unitcosts.list[[unit.name]]
+
    
   # Survey area
   # HHC_MSA: CMSA FIPS code for HH address
@@ -166,5 +167,3 @@
   var_list.1 <- ls()
   rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
   rm(var_list.1) 
-  
-  

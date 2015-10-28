@@ -10,7 +10,7 @@ var_list.0 <- ls()
 
 ## settings
 INPUT_DIR <- 'data/'
-OUTPUT_DIR <- 'output/saltlake_93'
+OUTPUT_DIR <- 'output/Survey/saltlake_93/Minutes'
 dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
 # whether to save intermediate results
 SAVE.INTERMEDIARIES <- TRUE
