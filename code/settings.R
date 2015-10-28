@@ -12,6 +12,10 @@ MdNames <- c("walk", "bike", "auto / van/ truck driver", "auto / van / truck pas
              "school bus", "carpool / vanpool", "other (specify)", "driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus")
 names(MODE) <- MdNames
 
+# tcost = constant + mcpm * tdist + VOT * ttime
+
+constant <- rep(0, length(MODE))
+
 #1  WALK
 #2  BIKE
 #3	AUTO / VAN/ TRUCK DRIVER
@@ -38,4 +42,4 @@ VOT <- rep(1, length(MODE)) * hourly.wage
 ## time-equivalent monetary cost per mile, which can be specific to income group
 mcpm <- c(0, 0, 59.2, 59.2, 101.0, 138.0, 0, 260.0, 0, 0, 29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / (100 * 24.77)
 
-unitcosts <- data.frame(MODE, VOT, mcpm)
+unitcosts <- data.frame(MODE, constant, VOT, mcpm)

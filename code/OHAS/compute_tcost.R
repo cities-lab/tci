@@ -10,14 +10,14 @@ tcost.trip <- tcost.trip %>%
   left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)
   mutate(t.cost=VOT*tripdur.hours,            #time costs
          m.cost=mcpm*tripdist.miles,          #monetary costs
-         tcost= t.cost + m.cost) %>%        #total costs
-  na.omit()                                 #exclude rows with unknown HTAZ, tpurp, or inc.level
+         tcost= constant + t.cost + m.cost) %>%        #total costs
+  na.omit()                                   #exclude rows with unknown HTAZ, tpurp, or inc.level
 
 # calculate household-level travel cost
 tcost.hh <- tcost.trip %>%
   group_by(SAMPN) %>%
   summarise(tcost=sum(tcost),
-            HTAZ=first(HTAZ),             #retain HTAZ, inc.level and HHWGT
+            HTAZ=first(HTAZ),                 #retain HTAZ, inc.level and HHWGT
             HHSIZ=first(HHSIZ),
             inc.level=first(inc.level),
             INCOME=first(INCOME),
