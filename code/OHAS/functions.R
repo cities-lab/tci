@@ -77,3 +77,67 @@ identifyTripPurpose <- function (df) {
   
   return(df)
 }
+
+
+
+# Define plot functions 
+pden.inc.f <- function(plot.data=NULL, unit.name=NULL) {
+  
+  xlim.max <- c(dollars=150, minutes=450)
+  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot(data=plot.data, aes(x = tcost, colour=inc.level, group=inc.level)) 
+  p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
+    scale_colour_discrete(name = 'Income Level') +
+    ggtitle("Household-level trip cost by income levels") +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+}
+
+
+pden.hhsiz.f <- function(plot.data=NULL, unit.name=NULL) {
+  
+  xlim.max <- c(dollars=150, minutes=450)
+  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  plot.data <- plot.data %>% 
+    mutate(hhsiz.cat=cut(HHSIZ,
+                         breaks=c(1, 2, 3, 4, max(HHSIZ)),
+                         labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+                         include.lowest=T, right=F
+    ))
+  
+  p <- ggplot(data=plot.data, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) 
+  p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
+    scale_colour_discrete(name = 'Household Size')+ 
+    ggtitle("Household-level travel cost by household size") +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+}
+
+boxp.tpurp_inc.f <- function (plot.data=NULL, unit.name=NULL) {
+  
+  ylim.max <- c(dollars=100, minutes=250)
+  yaxis.label=paste("Generalized Travel Costs (", unit.name, ")", sep="")
+  
+  plot.data <- plot.data %>% 
+    mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
+           TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
+    )
+  
+  p <- ggplot(data=plot.data, aes(x=TripPurpose, y=tcost, fill=inc.level)) 
+  p + geom_boxplot()  + labs(y=yaxis.label) + xlab("Trip Purpose") + 
+    ylim(0, ylim.max[unit.name])  + scale_fill_discrete(name = 'Income Level') + 
+    ggtitle("Household-level travel cost by trip purposes and income levels") +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+}
+
+linep.tpurp.inc.f <- function (plot.data=NULL, unit.name=NULL) {
+  ylim.max <- c(dollars=60, minutes=160)
+  yaxis.label=paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot(data=plot.data, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose)) 
+  p + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y=yaxis.label) + ylim(0, ylim.max[unit.name]) +
+    ggtitle("Trip-level travel cost by trip purpose and income levels") +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+}
+
+

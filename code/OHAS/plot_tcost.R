@@ -9,39 +9,45 @@ source("code/thirdparty/openGraphSaveGraph.R")
 require(ggplot2)
 require(ggmap)
 
-pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) +
-  geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
-  scale_colour_discrete(name = 'Income Level') + 
-  ggtitle("Household-level trip cost by trip purposes income groups") +
-  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+# pden.inc <- ggplot(tcost.hh, aes(x = tcost, colour=inc.level, group=inc.level)) +
+#   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+#   scale_colour_discrete(name = 'Income Level') + 
+#   ggtitle("Household-level trip cost by trip purposes income groups") +
+#   theme(plot.title = element_text(face="bold", size=12, vjust=1))
+
+pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_inc.png")
 ggsave(pden.inc, file=output_file, type="cairo-png")
 
-tcost.hh <- tcost.hh %>% 
-  mutate(hhsiz.cat=cut(HHSIZ,
-                       breaks=c(1, 2, 3, 4, 9),
-                       labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
-                       include.lowest=T, right=F
-  ))
-pden.hhsiz <- ggplot(tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
-  geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
-  scale_colour_discrete(name = 'Household Size')+ 
-  ggtitle("Household-level travel cost by household size") +
-  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+# tcost.hh <- tcost.hh %>% 
+#   mutate(hhsiz.cat=cut(HHSIZ,
+#                        breaks=c(1, 2, 3, 4, 9),
+#                        labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
+#                        include.lowest=T, right=F
+#   ))
+# pden.hhsiz <- ggplot(tcost.hh, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) +
+#   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 360) +
+#   scale_colour_discrete(name = 'Household Size')+ 
+#   ggtitle("Household-level travel cost by household size") +
+#   theme(plot.title = element_text(face="bold", size=12, vjust=1))
+
+pden.hhsiz  <- pden.hhsiz.f(plot.data=tcost.hh, unit.name=unit.name)
 pden.hhsiz
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_hhsiz.png")
 ggsave(pden.hhsiz, file=output_file, type="cairo-png")
 
-tcost.hh.tpurp <- tcost.hh.tpurp %>% 
-  mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
-         TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
-  )
+# tcost.hh.tpurp <- tcost.hh.tpurp %>% 
+#   mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
+#          TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
+#   )
+# 
+# boxp.tpurp_inc <- ggplot(tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
+#   geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
+#   scale_fill_discrete(name = 'Income Level') + 
+#   ggtitle("Household-level travel cost by trip purposes income groups") +
+#   theme(plot.title = element_text(face="bold", size=12, vjust=1))
 
-boxp.tpurp_inc <- ggplot(tcost.hh.tpurp, aes(x=TripPurpose, y=tcost, fill=inc.level)) +
-  geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
-  scale_fill_discrete(name = 'Income Level') + 
-  ggtitle("Household-level travel cost by trip purposes income groups") +
-  theme(plot.title = element_text(face="bold", size=12, vjust=1))
+boxp.tpurp_inc <- boxp.tpurp_inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
 boxp.tpurp_inc
 output_file = file.path(OUTPUT_DIR, "boxplot_tcost.hh_by_tpurp.inc.png")
 ggsave(file=output_file, type="cairo-png")
@@ -52,22 +58,20 @@ m.sp + geom_point(fill=NA, size=2, position = "jitter") + labs(y="Travel Costs (
 m.bp <- ggplot(tcost.hh, aes(inc.level, tcost, fill=inc.level))
 m.bp + geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + ylim(0, 250)
 
+
+# t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
+# t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120) +
+#   ggtitle("Trip-level travel cost by trip purposes income groups") +
+#   theme(plot.title = element_text(face="bold", size=12, vjust=1))
+
+linep.tpurp.inc<- linep.tpurp.inc.f(plot.data=tcost.tpurp.inc, unit.name=unit.name)
+linep.tpurp.inc
 output_file = file.path(OUTPUT_DIR, "linechart_tcost.hh_by_tpurp.inc.png")
-t.lc <- ggplot(tcost.tpurp.inc, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose))
-t.lc + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y="Travel Costs (minutes)") + ylim(0, 120) +
-  ggtitle("Trip-level travel cost by trip purposes income groups") +
-  theme(plot.title = element_text(face="bold", size=12, vjust=1))
 ggsave(file=output_file, type="cairo-png")
 #saveGraph(filename=output_file, type="pdf")
 
 t.bp <- ggplot(tcost.hh, aes(factor(INCOME), tcost, fill=inc.level))
 t.bp + geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + ylim(0, 250)
-
-require(ggmap)
-require(scales)
-
-districts <- readOGR(dsn = file.path(INPUT_DIR, "shp"), layer = "districts")
-districts <- fortify(districts, region="DISTRICT")
 
 #districts.data <- tcost.distr %>% mutate(id = as.character(district.id),
 #                                         value = tcost.wtavg)
