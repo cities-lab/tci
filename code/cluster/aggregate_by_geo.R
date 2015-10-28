@@ -48,7 +48,9 @@ results.exp <- data.frame(geo.id=1:4, costs=costs)
 
 results.ret <- aggregate_by_geo(costs.df, weights.df, mapping.df)
 results.ret <- as.data.frame(results.ret)
-stopifnot(all.equal(results.ret, results.exp))
+stopifnot(all(results.ret == results.exp))
+#results.ret == results.exp
+
 ## end test
 
 #Aggregate costs by geography
