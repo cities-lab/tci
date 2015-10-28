@@ -10,28 +10,57 @@
   setwd("~/tci")
   var_list.0 <- ls()
   
-  ## settings
-  INPUT_DIR <- 'data/'
-  OUTPUT_DIR <- 'output/WFRC_SaltLake'
-  dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
-  # whether to save intermediate results
-  SAVE.INTERMEDIARIES <- TRUE
-  INTERMEDIATE_DIR <- "output/intermediate/WFRC_SaltLake"
-  dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
+   # data.source <- "WFRC_SaltLake"
+   # unit <- "minutes" # "dollars"
+   source("code/settings.R")
+   
+  # Define unit costs for WFRC_Saltlake survey data
+  # mode
+  MODE <- c(1:6)
+  MdNames <- c("Auto/truck/motorcycle", "Transit", "Walked/wheelchair", "Bicycle", "Other", "School bus (only in independent child trips)") 
+  names(MODE) <- MdNames
+  constant <- rep(0, length(MODE))
   
+  # unit cost by minutes
+  hourly.wage <- 60
+  VOT <- rep(1, length(MODE)) * hourly.wage
+  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)*60/(100 * 24.77)
   
-  # Define names for household income groups, trip purpose and calculation method
-  IcNames <- c("Low Income", "Mid Income", "High Income")
-  Ic <- c("lowInc", "midInc", "highInc")
-  names(IcNames) <- Ic
+  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit="minutes")
   
-  PrNames <- c("Work", "Shopping", "Recreation", "Other")
-  Pr <- c("hbw", "hbs", "hbr", "hbo")
-  names(PrNames) <- Pr
+  # unit cost by dollars 
+  hourly.wage <- 24.77
+  VOT <- c(0.5, 0.35, 0.5, 0.5, 0.5, 0.35) * hourly.wage
+  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)/100
   
-  CmNames <- c("mintcost", "avgtcost", "maxtcost")
-  Cm <- c("min", "avg", "max")
-  names(CmNames) <- Cm  
+  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit="dollars")
+  
+  unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)  
+  
+  unitcosts <- unitcosts.list[[unit.name]]
+  
+#   ## settings
+#   INPUT_DIR <- 'data/'
+#   OUTPUT_DIR <- 'output/Survey/WFRC_SaltLake/Minutes'
+#   dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
+#   # whether to save intermediate results
+#   SAVE.INTERMEDIARIES <- TRUE
+#   INTERMEDIATE_DIR <- "output/intermediate/WFRC_SaltLake"
+#   dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
+#   
+#   
+#   # Define names for household income groups, trip purpose and calculation method
+#   IcNames <- c("Low Income", "Mid Income", "High Income")
+#   Ic <- c("lowInc", "midInc", "highInc")
+#   names(IcNames) <- Ic
+#   
+#   PrNames <- c("Work", "Shopping", "Recreation", "Other")
+#   Pr <- c("hbw", "hbs", "hbr", "hbo")
+#   names(PrNames) <- Pr
+#   
+#   CmNames <- c("mintcost", "avgtcost", "maxtcost")
+#   Cm <- c("min", "avg", "max")
+#   names(CmNames) <- Cm  
   
 # Load data
   # trip <- read.xls("data/WFRC/HouseholdDiary_TripData_clean.xls", sheet=1, header=TRUE)
@@ -92,17 +121,24 @@
   trip$d_purpose.f <- factor(trip$d_purpose, levels=levels, labels=purposes)
   
   
-# Defin unit cost 
-  # main_mode: Primary mode used on trip
-  hourly.wage <- 60
-  MODE <- sort(unique(trip$main_mode))
-  MdNames <- c("Auto/truck/motorcycle", "Transit", "Walked/wheelchair", "Bicycle", "Other", "School bus (only in independent child trips)") 
-  names(MODE) <- MdNames
-  
-  VOT <- rep(1, length(MODE)) * hourly.wage
-  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)/(100 * 24.77)
-  
-  unitcosts <- data.frame(MODE, VOT, mcpm)
+# # Defin unit cost 
+#   # main_mode: Primary mode used on trip
+# 
+#   MODE <- sort(unique(trip$main_mode))
+#   MdNames <- c("Auto/truck/motorcycle", "Transit", "Walked/wheelchair", "Bicycle", "Other", "School bus (only in independent child trips)") 
+#   names(MODE) <- MdNames
+#   
+#   # Convert between time and costs 
+#    hourly.wage <- 60
+#   # hourly.wage <- 24.77
+#   
+#    VOT <- rep(1, length(MODE)) * hourly.wage
+#   # VOT <- c(0.5, 0.35, 0.5, 0.5, 0.5, 0.35) * hourly.wage
+#   
+#    mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)/(100 * 24.77)
+#   #mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)/100
+#   
+#   unitcosts <- data.frame(MODE, VOT, mcpm)
   
 
 # 
