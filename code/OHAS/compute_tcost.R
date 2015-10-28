@@ -10,7 +10,7 @@ tcost.trip <- tcost.trip %>%
   left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)
   mutate(t.cost=VOT*tripdur.hours,            #time costs
          m.cost=mcpm*tripdist.miles,          #monetary costs
-         tcost= t.cost + m.cost) %>%        #total costs
+         tcost= constant + t.cost + m.cost) %>%        #total costs
   na.omit()                                 #exclude rows with unknown HTAZ, tpurp, or inc.level
 
 # calculate household-level travel cost
@@ -76,8 +76,8 @@ tcost.all <- compute_tcost(tcost.hh %>% mutate(all=1), by=c("all"), summarize_tc
 print(tcost.all)
 
 output.file <- file.path(OUTPUT_DIR, "tcost.RData")
-save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, tcost.hh.tpurp, tcost.tpurp.inc,tcost.trip,
-     file=output.file)
+save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, tcost.hh.tpurp, 
+     tcost.tpurp.inc,tcost.trip, tcost.distr.tpurp.inc, tcost.distr.tpurp, tcost.distr.inc, file=output.file)
 
 #reshape data frame into arrays for plotting
 #tcost by HTAZ, inc.level, and tpurp
