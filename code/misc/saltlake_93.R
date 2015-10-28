@@ -199,8 +199,8 @@ names(CmNames) <- Cm
                   
 # Source scripts  
     source("code/functions.R")
-    source("code/OHAS/compute.R")
-    source("code/OHAS/plot.R")
+    source("code/survey/compute.R")
+    source("code/survey/plot.R")
     
     
 ##clean up

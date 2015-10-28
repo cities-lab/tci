@@ -10,21 +10,21 @@
   var_list.0 <- ls()
 
   project.name <- 'Corvallis'
-  method.name <- 'OHAS'
+  method.name <- 'survey'
   year <- '2011'
 
 ##source common settings, which may be overrided below
   source("code/settings.R")
   # Define unit costs for OHAS
-  source("code/OHAS/settings_OHAS.R")
+  source("code/survey/settings_OHAS.R")
 
 ## settings (using default settings in code/settings.R)
-#   INPUT_DIR <- 'data/Survey/OHAS'
-#   OUTPUT_DIR <- file.path('output/Survey/OHAS/Corvallis', unit.name)
+#   INPUT_DIR <- 'data/survey/Corvallis'
+#   OUTPUT_DIR <- file.path('output/survey/Corvallis', unit.name)
 #   dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
 #   # # whether to save intermediate results
 #   # SAVE.INTERMEDIARIES <- TRUE
-#   INTERMEDIATE_DIR <- "output/intermediate/OHAS/Corvallis"
+#   INTERMEDIATE_DIR <- "output/intermediate/survey/Corvallis"
 #   dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
 
 ## read OHAS hh (household) and linkedTrip table
@@ -38,9 +38,9 @@
 
 ##start scripts
   source("code/functions.R")
-  source("code/OHAS/prepare_Corvallis2011.R")
-  source("code/OHAS/compute.R")
-  source("code/OHAS/plot.R")
+  source("code/survey/prepare_Corvallis2011.R")
+  source("code/survey/compute.R")
+  source("code/survey/plot.R")
 
 ##clean up
   var_list.1 <- ls()

@@ -8,7 +8,7 @@
   var_list.0 <- ls()
   
   project.name <- 'Portland'
-  method.name <- 'OHAS'
+  method.name <- 'survey'
   year <- '1994'
 
 # data.source <- "Portland94"
@@ -46,12 +46,12 @@
   unitcosts <- unitcosts.list[[unit.name]]
 
 ## path settings
-  #INPUT_DIR <- 'data/portland_94'
-  #OUTPUT_DIR <- file.path('output/Survey/portland_94', unit.name)
+  #INPUT_DIR <- 'data/Portland1994'
+  #OUTPUT_DIR <- file.path('output/survey/Portland1994', unit.name)
   #dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
   ## # whether to save intermediate results
   ## SAVE.INTERMEDIARIES <- TRUE
-  #INTERMEDIATE_DIR <- "output/intermediate/OHAS/portland_94"
+  #INTERMEDIATE_DIR <- "output/intermediate/survey/Portland1994"
   #dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
 
 ## Preload data files
@@ -65,9 +65,9 @@
 
 ## Define functions to calculate tcost 
   source("code/functions.R")
-  source("code/OHAS/prepare_Portland1994.R")
-  source("code/OHAS/compute.R")
-  source("code/OHAS/plot.R")
+  source("code/survey/prepare_Portland1994.R")
+  source("code/survey/compute.R")
+  source("code/survey/plot.R")
 
 ##clean up
   var_list.1 <- ls()
