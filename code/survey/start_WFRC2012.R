@@ -9,9 +9,12 @@
   setwd("~/tci")
   var_list.0 <- ls()
   
-   # data.source <- "WFRC_SaltLake"
-   # unit <- "minutes" # "dollars"
-   source("code/settings.R")
+  project.name <- 'WFRC'
+  method.name <- 'survey'
+  year <- '2012'
+  
+  # unit <- "minutes" # "dollars"
+  source("code/settings.R")
    
 # Define unit costs for WFRC_Saltlake survey data
   MODE <- c(1:6)
@@ -163,8 +166,8 @@
 
 ## Source scripts
   source("code/functions.R")
-  source("code/OHAS/compute.R")
-  source("code/OHAS/plot.R")
+  source("code/survey/compute.R")
+  source("code/survey/plot.R")
   
   
 ##clean up

@@ -9,7 +9,7 @@
   setwd("~/tci")
   var_list.0 <- ls()
   
-  method.name <- 'OHAS'
+  method.name <- 'survey'
   project.name <- 'NHTS'
   year <- '2009'
 
@@ -117,8 +117,8 @@
     
 ## Calculate and plot trip cost
   source("code/functions.R")
-  source("code/OHAS/compute.R")
-  #source("code/OHAS/plot.R")  
+  source("code/survey/compute.R")
+  #source("code/survey/plot.R")  
 
 ## post-process and plot    
   summary.table <- function(tcost.df) {
