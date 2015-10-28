@@ -163,8 +163,8 @@
 
 ## Source scripts
   source("code/functions.R")
-  source("code/OHAS/compute_tcost.R")
-  source("code/OHAS/plot_tcost.R")
+  source("code/OHAS/compute.R")
+  source("code/OHAS/plot.R")
   
   
 ##clean up

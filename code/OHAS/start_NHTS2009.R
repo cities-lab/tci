@@ -117,8 +117,8 @@
     
 ## Calculate and plot trip cost
   source("code/functions.R")
-  source("code/OHAS/compute_tcost.R")
-  #source("code/OHAS/plot_tcost.R")  
+  source("code/OHAS/compute.R")
+  #source("code/OHAS/plot.R")  
 
 ## post-process and plot    
   summary.table <- function(tcost.df) {

@@ -125,15 +125,16 @@ in.memory <- function(obj.names)
   all(obj.names %in% ls())
 
 # overlay x,y coordinate (longitude, lattitude) with a polygon shapefile (shpfile) to get polygon id (id_name)
-get_xy_polyid <- function(xy.df, shpfile, id_name) {
+get_xy_polyid <- function(xy.df, shpfile, id_name, xy.epsg='4326', shpfile.epsg='2913') {
   spdf = SpatialPointsDataFrame(xy.df[, c('x', 'y')], 
                                 xy.df, 
-                                proj4string=CRS("+init=epsg:4326"))
-  spdf.proj <- spTransform(spdf, CRS("+init=epsg:2913"))
+                                proj4string=CRS(paste0("+init=epsg:", xy.epsg)))
+  shpfile.CRS <- CRS(paste0("+init=epsg:", shpfile.epsg))
+  spdf.proj <- spTransform(spdf, shpfile.CRS)
   
   # spatial join with the shp polygon to get polygon id (id_name)
   TAZPoly <- readShapePoly(shpfile,
-                           proj4string=CRS("+init=epsg:2913"))
+                           proj4string=shpfile.CRS)
   id <- over(spdf.proj, TAZPoly)[, id_name]
   id
 }

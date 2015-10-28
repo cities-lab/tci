@@ -35,9 +35,9 @@
 
 ##start scripts
   source("code/functions.R")
-  source("code/OHAS/prepare_data.R")
-  source("code/OHAS/compute_tcost.R")
-  source("code/OHAS/plot_tcost.R")
+  source("code/OHAS/prepare_Portland2011.R")
+  source("code/OHAS/compute.R")
+  source("code/OHAS/plot.R")
 
 ##clean up
   var_list.1 <- ls()
