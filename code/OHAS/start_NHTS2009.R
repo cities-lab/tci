@@ -8,43 +8,46 @@
   # Set workspace
   setwd("~/tci")
   var_list.0 <- ls()
-  INPUT_DIR <- 'data/NHTS09'
+  
+  method.name <- 'OHAS'
+  project.name <- 'NHTS'
+  year <- '2009'
 
-  # Define unit costs and data source for generating output and intermediate directory and unit costs data frame 
-  #unit.name <- "minutes" 
-  unit.name <- "dollars"
-
-  OUTPUT_DIR <- file.path("output/NHTS09", unit.name)
-  dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
-
+## settings
   source("code/settings.R")
 
-  #Override unitcosts in settings.R
+  # Define unist cost for NHTS 2009 survey data 
+  # mode
   MODE <- c(-8, -7, -1, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 22, 23, 97)
-  MdNames <- c("Don't know", "Refused", "Appropriate skip", "Car", "Van", "SUV", "Pickup truck", "Other truck", "Motorcycle", "Light electric veh (golf cart)",
+  MdNames <- c("Don't know", "Refused", "Appropriate skip", "Car", "Van", "SUV", "Pickup truck", "Other truck", "Motorcycle", "Light electric veh (golf cart)", 
                "Local public bus", "Commuter bus", "School bus", "Charter/tour bus", "Shuttle bus", "Taxicab", "Bicycle", "Walk", "Other")
   names(MODE) <- MdNames
-
-  constant <- rep(0, length(MODE))
-    
-  # unit costs by minutes
-  hourly.wage <- 60
-  VOT <- c(NA, NA, NA, rep(1, (length(MODE) - 3))) * hourly.wage
-  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6)*60/(100 * 24.77)
-  unitcosts.minutes <- data.frame(MODE, VOT, mcpm, unit="minutes")
   
-  # unit costs by dollars
+  constant <- rep(0, length(MODE))
+  
+  # unit costs by minutes
+  VOT <- c(NA, NA, NA, rep(1, (length(MODE) -3))) * minutes.per.hour
+  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6) * minutes.per.cent
+  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit.name = "minutes")
+  
+  # unit costs by dollars 
   hourly.wage <- 24.77
   VOT <- c(NA, NA, NA, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
-  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6)/100
+  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6) / cents.per.dollar
   
-  unitcosts.dollars <- data.frame(MODE, VOT, mcpm, unit="dollars")
+  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit.name = "dollars")
   
-  unitcosts.list <- list(minutes=unitcosts.minutes, 
-                         dollars=unitcosts.dollars)
+  unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)  
   unitcosts <- unitcosts.list[[unit.name]]
+  
+## path settings (using default settings in code/settings.R)
+  #INPUT_DIR <- 'data/NHTS09'
+  
+  # Define unit costs and data source for generating output and intermediate directory and unit costs data frame 
+  #OUTPUT_DIR <- file.path("output/NHTS09", unit.name)
+  #dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
 
-   
+## load and prepare data   
   # Survey area
   # HHC_MSA: CMSA FIPS code for HH address
   # 6442 = Portland--Salem, OR--WA; 1637 trips
@@ -54,7 +57,6 @@
   # Calculate three cities 
   # HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=7160)  
 
-# load and process data 
   msa.names <- read.table(file.path(INPUT_DIR, "MSA_names.tab"), header=T, sep="\t", stringsAsFactors = F, colClasses="character")
   HHC_MSAs <- msa.names$FIPS
   
@@ -113,11 +115,12 @@
       ) %>%
       filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo"))
     
-# Calculate and plot trip cost
-  source("code/OHAS/functions.R")
+## Calculate and plot trip cost
+  source("code/functions.R")
   source("code/OHAS/compute_tcost.R")
   #source("code/OHAS/plot_tcost.R")  
-  
+
+## post-process and plot    
   summary.table <- function(tcost.df) {
     tcost.df %>%
       group_by(short.name) %>%

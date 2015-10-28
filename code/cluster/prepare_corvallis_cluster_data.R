@@ -31,7 +31,7 @@ cutoffs <- data.frame(hbw=c(.50, .50), hbs=c(.50, .50), hbr=c(.50, .50), hbo=c(.
 row.names(cutoffs) <- c("cutoff.percentile", 'sum.cutoff.percentile')
 
 # Source functions
-source("code/cluster/def_functions.R")
+source("code/functions.R")
 
 # Load required packages 
 require(foreign)
@@ -437,10 +437,10 @@ require(SDMTools)
 #       ggtitle("Household-level travel cost by trip purposes and income levels") +
 #       theme(plot.title = element_text(face="bold", size=12, vjust=1))
 
-    boxp.tpurp_inc <-boxp.tpurp_inc.f(plot.data=dwtcost.htaz_tpurp_inc) 
-    boxp.tpurp_inc
+    boxp.tpurp.inc <-boxp.tpurp.inc.f(plot.data=dwtcost.htaz_tpurp_inc) 
+    boxp.tpurp.inc
     output_file = file.path(OUTPUT_DIR, "boxplot_tcost.hh_by_tpurp.inc.png")
-    ggsave(boxp.tpurp_inc, file=output_file, type="cairo-png")
+    ggsave(boxp.tpurp.inc, file=output_file, type="cairo-png")
     
     
     dwtcost.htaz_inc %<>% select(-hhs)

@@ -6,7 +6,7 @@ setwd("~/tci")
 var_list.0 <- ls()
 
 source("code/cluster/settings.R")
-source("code/cluster/def_functions.R")
+source("code/functions.R")
 require(stargazer)
 # Load required functions
 all.df <- NULL

@@ -1,6 +1,6 @@
 # Part1 load data files 
   # load activity 1 data 
-  act1<- read.table(file.path(INPUT_DIR, "portland_94/act1.txt"), header=FALSE,  sep=",", as.is=TRUE)
+  act1<- read.table(file.path(INPUT_DIR, "act1.txt"), header=FALSE,  sep=",", as.is=TRUE)
   
   # change column names
   # colname is from http://www.surveyarchive.org/sda/Portland/doc/hcbk.htm
@@ -17,7 +17,7 @@
   colnames(act1) <- act1.colnames
   
   # Read geocode data 
-  geocode <- read.table(file.path(INPUT_DIR, "portland_94/geocode.raw"), header=FALSE, sep=",")  
+  geocode <- read.table(file.path(INPUT_DIR, "geocode.raw"), header=FALSE, sep=",")  
   
   colnames(geocode) <- c("UID", "XCORD", "YCORD", "CASE_ID", "FREQ", "RTZ", "SID", "TOTEMP94", "RETEMP94")
   
@@ -28,13 +28,13 @@
     left_join(geocode)
   
   # load activity 2 data
-  act2 <- read.table(file.path(INPUT_DIR, "portland_94/act2.txt"), header=FALSE,  sep=",")
+  act2 <- read.table(file.path(INPUT_DIR, "act2.txt"), header=FALSE,  sep=",")
   act2.colnames <- c("PHASE", "SAMPN", "PERNO", "DAYNO", "ACTNO", "OLOC", "ADDTYP") 
   names(act2.colnames) <- as.character(c(1:7))
   colnames(act2) <- act2.colnames
   
   # load household data
-  hh <- read.table(file.path(INPUT_DIR, "portland_94/hh.txt"), header=FALSE,  sep=",")
+  hh <- read.table(file.path(INPUT_DIR, "hh.txt"), header=FALSE,  sep=",")
   hh[9, 28] <- 0 #  hh[9, 28] input error
   
   
@@ -46,7 +46,7 @@
   colnames(hh) <- hh.colnames
   
   # load person data
-  per <- read.table(file.path(INPUT_DIR, "portland_94/per.txt"), header=FALSE,  sep=",")
+  per <- read.table(file.path(INPUT_DIR, "per.txt"), header=FALSE,  sep=",")
   per.colnames <- c("PHASE", "SAMPN", "PERNO", "RELATION", "GENDER", "AGE", "RACE", "HOMELANG",
                     "OTHLANG", "SPEAKENG", "LICENSED", "EMPLOYED", "WORKERS", "OCCUPAT", "INDUSTRY",
                     "WORKHOME", "HRSHOME", "SUBPARK", "SHIFTWRK", "PAY2PARK", "COST2PRK", "DRIVE", 
@@ -57,7 +57,7 @@
   colnames(per) <- per.colnames  
   
   # load recrited household file 
-  rhh <- read.table(file.path(INPUT_DIR, "portland_94/rhh.txt"), header=FALSE,  sep=",")
+  rhh <- read.table(file.path(INPUT_DIR, "rhh.txt"), header=FALSE,  sep=",")
   
   # is second column "comp" ?? only two values, while there are 16 values in codebook for "COMP"
   table(rhh[ , 2])
@@ -77,7 +77,7 @@
   
   
   # load recruited person file data
-  rper <- read.table(file.path(INPUT_DIR, "portland_94/rper.txt"), header=FALSE,  sep=",")
+  rper <- read.table(file.path(INPUT_DIR, "rper.txt"), header=FALSE,  sep=",")
   rper.colnames <- c("PHASE", "COMP", "SAMPN", "PERNO", "RELATION", "GENDER", "AGE", "RACE", "HOMELANG",
                      "OTHLANG", "SPEAKENG", "LICENSED", "EMPLOYED", "WORKHRS", "OCCUPAT", "INDUSTRY", 
                      "WORKHOME", "HRSHOME", "SUBPARK", "SHIFTWRK", "PAY2PARK", "COST2PPK", "DRIVE", "CARPOOL", 
@@ -88,7 +88,7 @@
   colnames(rper) <- rper.colnames
   
   # load vehicle file 
-  veh <- read.table(file.path(INPUT_DIR, "portland_94/veh.txt"), header=FALSE,  sep=",")
+  veh <- read.table(file.path(INPUT_DIR, "veh.txt"), header=FALSE,  sep=",")
   veh.colnames <- c("PHASE", "SAMPN", "VEHNUMBER", "VEHOWNER", "YEAR", "ACQUIRED", "REPLACE", "MAKE", "MODEL", 
                     "CLASS", "TPYE", "FUEL", "BEGOD", "ENDOD", "MILES")
   
@@ -96,7 +96,7 @@
 
   # load data
   require(foreign)
-  data<- read.dbf(file.path(INPUT_DIR, "portland_94/DATA94.DBF"), as.is=FALSE)
+  data<- read.dbf(file.path(INPUT_DIR, "DATA94.DBF"), as.is=FALSE)
 
 
 # Part2 generates linked trips
@@ -125,7 +125,7 @@
              filter(!is.na(XCORD))
   
   
-  TAZPoly1994 <- readShapePoly(TAZPoly1994.shapefile, proj4string=CRS("+init=epsg:2913"))
+  TAZPoly1994 <- readShapePoly(TAZPoly1994.shpfile, proj4string=CRS("+init=epsg:2913"))
   
   act1.spdf = SpatialPointsDataFrame(act1.xy[, c('XCORD', 'YCORD')], 
                                      act1.xy, 
@@ -231,7 +231,7 @@
                                        proj4string=CRS("+init=epsg:2913"))
   
   
-  districtsPoly <- readShapePoly(districtsPoly.shapefile, proj4string=CRS("+init=epsg:2913"))
+  districtsPoly <- readShapePoly(districtsPoly.shpfile, proj4string=CRS("+init=epsg:2913"))
   hhdist$district.id <- over(hhdist.spdf, districtsPoly)[,"DISTRICT"]
 
   hh.metro <- hh %>% 

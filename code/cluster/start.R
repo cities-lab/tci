@@ -9,7 +9,7 @@ source("code/settings.R")  #source project level settings first
 source("code/cluster/settings.R")
 
 # Load required functions
-source("code/cluster/def_functions.R")
+source("code/functions.R")
 #this step below takes a long time; skip it if its intermediate results have been saved
 #source("code/cluster/identify_centers.R") 
 source("code/cluster/compute_md_prob_trips.R")

@@ -198,7 +198,7 @@ names(CmNames) <- Cm
                                 HHWGT, HHSIZ, MODE, TripPurpose, tripdur.hours, tripdist.miles)
                   
 # Source scripts  
-    source("code/OHAS/functions.R")
+    source("code/functions.R")
     source("code/OHAS/compute_tcost.R")
     source("code/OHAS/plot_tcost.R")
     

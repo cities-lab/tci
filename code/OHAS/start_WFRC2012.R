@@ -3,8 +3,7 @@
 # Load required packages
   require(gdata)
   require(dplyr)
-  
-  
+
 # Settings
   # Set workspace
   setwd("~/tci")
@@ -14,55 +13,39 @@
    # unit <- "minutes" # "dollars"
    source("code/settings.R")
    
-  # Define unit costs for WFRC_Saltlake survey data
-  # mode
+# Define unit costs for WFRC_Saltlake survey data
   MODE <- c(1:6)
   MdNames <- c("Auto/truck/motorcycle", "Transit", "Walked/wheelchair", "Bicycle", "Other", "School bus (only in independent child trips)") 
   names(MODE) <- MdNames
+  
   constant <- rep(0, length(MODE))
   
   # unit cost by minutes
-  hourly.wage <- 60
-  VOT <- rep(1, length(MODE)) * hourly.wage
-  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)*60/(100 * 24.77)
+  VOT <- rep(1, length(MODE)) * minutes.per.hour
+  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0) * minutes.per.cent
   
-  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit="minutes")
+  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit.name = "minutes")
   
   # unit cost by dollars 
-  hourly.wage <- 24.77
   VOT <- c(0.5, 0.35, 0.5, 0.5, 0.5, 0.35) * hourly.wage
-  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)/100
+  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0) / cents.per.dollar
   
-  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit="dollars")
+  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit.name = "dollars")
   
-  unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)  
+  unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)
   
   unitcosts <- unitcosts.list[[unit.name]]
   
-#   ## settings
-#   INPUT_DIR <- 'data/'
-#   OUTPUT_DIR <- 'output/Survey/WFRC_SaltLake/Minutes'
-#   dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
-#   # whether to save intermediate results
-#   SAVE.INTERMEDIARIES <- TRUE
-#   INTERMEDIATE_DIR <- "output/intermediate/WFRC_SaltLake"
-#   dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
-#   
-#   
-#   # Define names for household income groups, trip purpose and calculation method
-#   IcNames <- c("Low Income", "Mid Income", "High Income")
-#   Ic <- c("lowInc", "midInc", "highInc")
-#   names(IcNames) <- Ic
-#   
-#   PrNames <- c("Work", "Shopping", "Recreation", "Other")
-#   Pr <- c("hbw", "hbs", "hbr", "hbo")
-#   names(PrNames) <- Pr
-#   
-#   CmNames <- c("mintcost", "avgtcost", "maxtcost")
-#   Cm <- c("min", "avg", "max")
-#   names(CmNames) <- Cm  
-  
-# Load data
+## settings
+  INPUT_DIR <- 'data/'
+  OUTPUT_DIR <- file.path('output/Survey/WFRC', unit.name)
+  dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
+  #   # whether to save intermediate results
+  #SAVE.INTERMEDIARIES <- TRUE
+  INTERMEDIATE_DIR <- "output/intermediate/WFRC"
+  dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
+
+## Load and prepare data
   # trip <- read.xls("data/WFRC/HouseholdDiary_TripData_clean.xls", sheet=1, header=TRUE)
   # trip <- read.xls("data/WFRC/HouseholdDiary_TripData_clean.xlsx", sheet=1, header=TRUE)
   trip  <- read.csv("data/WFRC/HouseholdDiary_TripData_clean.csv", header=TRUE, sep=",", as.is = TRUE)
@@ -119,28 +102,6 @@
   
   trip$o_purpose.f <- factor(trip$o_purpose, levels=levels, labels=purposes)
   trip$d_purpose.f <- factor(trip$d_purpose, levels=levels, labels=purposes)
-  
-  
-# # Defin unit cost 
-#   # main_mode: Primary mode used on trip
-# 
-#   MODE <- sort(unique(trip$main_mode))
-#   MdNames <- c("Auto/truck/motorcycle", "Transit", "Walked/wheelchair", "Bicycle", "Other", "School bus (only in independent child trips)") 
-#   names(MODE) <- MdNames
-#   
-#   # Convert between time and costs 
-#    hourly.wage <- 60
-#   # hourly.wage <- 24.77
-#   
-#    VOT <- rep(1, length(MODE)) * hourly.wage
-#   # VOT <- c(0.5, 0.35, 0.5, 0.5, 0.5, 0.35) * hourly.wage
-#   
-#    mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)/(100 * 24.77)
-#   #mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0)/100
-#   
-#   unitcosts <- data.frame(MODE, VOT, mcpm)
-  
-
 # 
   # trip_distance: Trip distance Google, assumes mode is auto (miles)
   # District
@@ -200,8 +161,8 @@
     dplyr::select(SAMPN, PERNO, TRIPNO, HTAZ, INCOME, inc.level, district.id,
                   HHWGT, HHSIZ, MODE, TripPurpose, tripdur.hours, tripdist.miles)
 
-# Source scripts  
-  source("code/OHAS/functions.R")
+## Source scripts
+  source("code/functions.R")
   source("code/OHAS/compute_tcost.R")
   source("code/OHAS/plot_tcost.R")
   
@@ -210,20 +171,3 @@
   var_list.1 <- ls()
   rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
   rm(var_list.1) 
-      
-    
-    
-    
-    
-    
-  
-  
-  
-  
-  
-  
-  
-  
-        
-          
-  

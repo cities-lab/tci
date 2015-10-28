@@ -1,7 +1,7 @@
 # plot maps and descriptives of travel time cost
 
 # load saveGraph function
-source("code/thirdparty/openGraphSaveGraph.R")
+#source("code/thirdparty/openGraphSaveGraph.R")
 
 #load(file.path(OUTPUT_DIR, "tcost.RData"))
 
@@ -47,10 +47,10 @@ ggsave(pden.hhsiz, file=output_file, type="cairo-png")
 #   ggtitle("Household-level travel cost by trip purposes income groups") +
 #   theme(plot.title = element_text(face="bold", size=12, vjust=1))
 
-boxp.tpurp_inc <- boxp.tpurp_inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
-boxp.tpurp_inc
+boxp.tpurp.inc <- boxp.tpurp.inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
+boxp.tpurp.inc
 output_file = file.path(OUTPUT_DIR, "boxplot_tcost.hh_by_tpurp.inc.png")
-ggsave(file=output_file, type="cairo-png")
+ggsave(boxp.tpurp.inc, file=output_file, type="cairo-png")
 
 m.sp <- ggplot(tcost.hh, aes(x = INCOME, y = tcost, colour=inc.level, group=inc.level))
 m.sp + geom_point(fill=NA, size=2, position = "jitter") + labs(y="Travel Costs (minutes)") + ylim(0, 250)
@@ -128,35 +128,3 @@ maps <- plot_map(plot.data) + facet_grid(TripPurpose~inc.level)
 
 output_file = file.path(OUTPUT_DIR, "map_districts_all.png")
 ggsave(maps, file = output_file, width = 8.5, height = 11, type = "cairo-png")
-
-#p.all <- plot_map(districts)
-
-#library(gridExtra)
-#grid.arrange(p1, p2, ncol=2, main = "Main title")
-
-# maps <- list()
-# i <- 1 #keep track rows
-# for (tpurp in c('All', Pr)) {
-#   j <- 1 #keep track columns
-#   for (inc in c(Ic, 'All')) {
-#     attrs <- tcost.distr_all %>% 
-#       filter_(interp(~TripPurpose==tpurp, tpurp=tpurp), 
-#               interp(~inc.level==inc, inc=inc))
-#     plot.Data <- left_join(districts, attrs)
-#     map <- plot_map(plot.Data)
-#     if (i==1) { #add header for the first row
-#       map <- map + labs(title = inc, fill = "")
-#     }
-#     if (j==1) { #add header for the first col
-#       map <- map +  annotate("text", x = min(districts$long) - 6000, y = median(districts$lat), label = tpurp, angle=90)
-#     }
-#     maps[[(i-1)*4+j]] <- map
-#     j <- j + 1
-#   }
-#   i <- i + 1
-# }
-# grid.arrange(maps, ncol=j-1)
-# 
-# output_file = file.path(OUTPUT_DIR, "map_districts_all.png")
-# ggsave(p1, file = output_file, width = 7.5, height = 4.5, type = "cairo-png")
-

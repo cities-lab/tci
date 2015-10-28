@@ -37,131 +37,7 @@ require(ggmap)
 require(rgdal)
 
 # Defint plot functions
-
-pden.inc.f <- function(plot.data=NULL, unit.name=NULL) {
-  
-  xlim.max <- c(dollars=120, minutes=360)
-  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
-  
-  p <- ggplot(data=plot.data, aes(x = tcost, colour=inc.level, group=inc.level)) 
-  p + geom_density(fill=NA, size=0.4) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
-    scale_colour_discrete(name = 'Income Level') +
-    ggtitle("Household-level trip cost by trip purpose and income levels") +
-    theme(axis.text=element_text(size=4.5),
-          axis.title=element_text(size=5),
-          plot.title = element_text(face="bold", size=6, vjust=1),
-          legend.title = element_text(size=5),
-          legend.text = element_text(size =5),
-          legend.key.size=unit(0.25, "cm"))
-}
-
-
-pden.hhsiz.f <- function(plot.data=NULL, unit.name=NULL) {
-
-  xlim.max <- c(dollars=120, minutes=360)
-  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
-  
-  plot.data <- plot.data %>% 
-    mutate(hhsiz.cat=cut(HHSIZ,
-                         breaks=c(1, 2, 3, 4, 9),
-                         labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
-                         include.lowest=T, right=F
-    ))
-  
-  p <- ggplot(data=plot.data, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) 
-  p + geom_density(fill=NA, size=0.4) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
-    scale_colour_discrete(name = 'Household Size')+ 
-    ggtitle("Household-level travel cost by household size") +
-    theme(axis.text=element_text(size=4.5),
-          axis.title=element_text(size=5),
-          plot.title = element_text(face="bold", size=6, vjust=1),
-          legend.title = element_text(size=5),
-          legend.text = element_text(size =5),
-          legend.key.size=unit(0.25, "cm"))
-}
-
-boxp.tpurp_inc.f <- function (plot.data=NULL, unit.name=NULL) {
-  
-  ylim.max <- c(dollars=100, minutes=250)
-  yaxis.label=paste("Generalized Travel Costs (", unit.name, ")", sep="")
-  
-  plot.data <- plot.data %>% 
-    mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
-           TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
-    )
-  
-  p <- ggplot(data=plot.data, aes(x=TripPurpose, y=tcost, fill=inc.level)) 
-  p + geom_boxplot(size=0.1, outlier.size =0.8)  + labs(y=yaxis.label) + xlab("Trip Purpose") + 
-    ylim(0, ylim.max[unit.name])  + scale_fill_discrete(name = 'Income Level') + 
-    ggtitle("Household-level travel cost by trip purpose and income levels") +
-    theme(axis.text=element_text(size=4.5),
-          axis.title=element_text(size=5),
-          plot.title = element_text(face="bold", size=6, vjust=1),
-          legend.title = element_text(size=5),
-          legend.text = element_text(size =5),
-          legend.key.size=unit(0.35, "cm"))
-}
-
-linep.tpurp.inc.f <- function (plot.data=NULL, unit.name=NULL) {
-  ylim.max <- c(dollars=60, minutes=120)
-  yaxis.label=paste("Travel Costs (", unit.name, ")", sep="")
-  
-  p <- ggplot(data=plot.data, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose)) 
-  p + geom_line(fill=NA, size=0.4) + labs(x="Income Level") + labs(y=yaxis.label) + ylim(0, ylim.max[unit.name]) +
-    ggtitle("Trip-level travel cost by trip purpose and income levels") +
-    theme(axis.text=element_text(size=4.5),
-          axis.title=element_text(size=5),
-          plot.title = element_text(face="bold", size=6, vjust=1),
-          legend.title = element_text(size=5),
-          legend.text = element_text(size =5),
-          legend.key.size=unit(0.35, "cm"))
-}
-
-tcost.distr_all.f <- function(tcost.distr.tpurp.inc=NULL , tcost.distr.tpurp.all=NULL, 
-                              tcost.distr.all.inc=NULL,   tcost.distr.all.all=NULL) {
-  
-  tcost.distr_tpurp.inc <- expand.grid(district.id=1:20, TripPurpose=c(Pr), inc.level=c(Ic), stringsAsFactors = F) %>% 
-                             left_join(tcost.distr.tpurp.inc %>% ungroup() %>% mutate(inc.level=as.character(inc.level), TripPurpose=as.character(TripPurpose))) 
-  
-  tcost.distr_tpurp.all <- expand.grid(district.id=1:20, TripPurpose=c(Pr), inc.level=c("All"), stringsAsFactors = F) %>%
-                           left_join(mutate(ungroup(tcost.distr.tpurp.all), inc.level="All", TripPurpose=as.character(TripPurpose))) 
-  
-  tcost.distr_all.inc <- expand.grid(district.id=1:20, TripPurpose=c("All"), inc.level=c(Ic), stringsAsFactors = F) %>%
-                         left_join(mutate(ungroup(tcost.distr.all.inc), inc.level=as.character(inc.level), TripPurpose="All")) 
-  
-  tcost.distr_all.all <- expand.grid(district.id=1:20, TripPurpose=c("All"), inc.level=c("All"), stringsAsFactors = F) %>%
-                         left_join(mutate(ungroup(tcost.distr.all.all), inc.level="All", TripPurpose="All")) 
-  
-  tcost.distr_all <- rbind(tcost.distr_tpurp.inc, tcost.distr_tpurp.all, tcost.distr_all.inc, tcost.distr_all.all) %>%
-                     right_join(expand.grid(district.id=1:20, TripPurpose=c('All', Pr), inc.level=c(Ic, 'All'), stringsAsFactors = F))
-  
-  tcost.distr_all <- tcost.distr_all %>% 
-    mutate(id=as.character(district.id), 
-           value = tcost.wtavg,
-           inc.level = factor(inc.level, levels=c(Ic, 'All'), labels=c("Low Inc", "Mid Inc", "High Inc", "All Households")),
-           TripPurpose = factor(TripPurpose, levels=c('All', Pr), labels=c("All Trips", "HBW", "HB Shopping", "HB Recreation", "HB Other"))
-    )
-  
-  return(tcost.distr_all)
-}
-
-plot_map <- function(plot.Data=NULL, unit.name=NULL) {
-  
-  limits.max <- c(dollars= 100, minutes=200) 
-  legend.name <-  paste("Travel Costs\n(",  unit.name, ")", sep="")
-
-  p <- ggplot() +
-    geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
-                 color = NA, size = 0.1) +
-    scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, limits.max[unit.name]), 
-                         name = legend.name, na.value = "grey80") +
-    guides(fill = guide_legend(reverse = TRUE))  +
-    theme_nothing(legend = TRUE) +
-    theme(strip.text = element_text(size = 6),
-          legend.title = element_text(size=8),
-          legend.text = element_text(size =7),
-          legend.key.size=unit(0.5, "cm"))
-}
+source("code/functions.R")
 
 
 plot.lists.f <- function (data.source=NULL, unit.name=NULL, districts.folder=NULL) {
@@ -194,7 +70,7 @@ plot.lists.f <- function (data.source=NULL, unit.name=NULL, districts.folder=NUL
   
   pden.hhsiz  <- pden.hhsiz.f(plot.data=tcost.hh, unit.name=unit.name)
 
-  boxp.tpurp_inc <- boxp.tpurp_inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
+  boxp.tpurp_inc <- boxp.tpurp.inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
   
   linep.tpurp.inc<- linep.tpurp.inc.f(plot.data=tcost.tpurp.inc, unit.name=unit.name)
   

@@ -145,7 +145,7 @@ var_list.0 <- ls()
     
     
     # Source scripts  
-#     source("code/OHAS/functions.R")
+#     source("code/functions.R")
 #     source("code/OHAS/compute_tcost.R")
 #     source("code/OHAS/plot_tcost.R")
     

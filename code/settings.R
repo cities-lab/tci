@@ -12,7 +12,7 @@ Pr <- c("hbw", "hbs", "hbr", "hbo")
 Md <- c("driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus", "bike", "walk")
 
 # Define time period 
-Tp <- c("peak", "offpeak")  
+Tp <- c("peak", "offpeak")
 
 #TOD factors from 2013 Trip-Based Travel Demand Model Methodology Report
 
@@ -20,7 +20,11 @@ Tp <- c("peak", "offpeak")
 # Define calculate method 
 Cm <- c("min", "weighted")
 
+unit.name <- ifelse(exists('unit.name'), unit.name, 'dollars')
+#unit.name <- ifelse(exists('unit.name'), unit.name, 'minutes')
 
+year <- ifelse(exists('year'), year, '')
+  
 # define unit travel costs by mode
 # unit travel costs may be differentiated by income 
 # by adding an "inc.level" column to the data.frame
@@ -38,47 +42,49 @@ minutes.per.cent <- minutes.per.hour / (hourly.wage * cents.per.dollar)
 
 stopifnot((100 * hourly.wage) * minutes.per.cent == minutes.per.hour)
 
-MODE <- c(1:10,97, 21, 22, 23, 24, 25) # 1:10 and 97 are coded in OHAS; 1:2 and 21:25 are coded for TDM
-MdNames <- c("walk", "bike", "auto / van/ truck driver", "auto / van / truck passenger", "bus", "rail", "dial-a-ride/paratransit", "taxi",  
-             "school bus", "carpool / vanpool", "other (specify)", "driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus")
-names(MODE) <- MdNames
- 
-# #1  WALK
-# #2  BIKE
-# #3	AUTO / VAN/ TRUCK DRIVER
-# #4	AUTO / VAN / TRUCK PASSENGER
-# #5	BUS
-# #6	RAIL
-# #7	DIAL-A-RIDE/PARATRANSIT
-# #8	TAXI
-# #9	SCHOOL BUS
-# #10	CARPOOL / VANPOOL
-# #97	OTHER (SPECIFY)
+## TODO: move this into data
+# Sample unit.costs settings
+# MODE <- c(1:10,97, 21, 22, 23, 24, 25) # 1:10 and 97 are coded in OHAS; 1:2 and 21:25 are coded for TDM
+# MdNames <- c("walk", "bike", "auto / van/ truck driver", "auto / van / truck passenger", "bus", "rail", "dial-a-ride/paratransit", "taxi",  
+#              "school bus", "carpool / vanpool", "other (specify)", "driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus")
+# names(MODE) <- MdNames
+#  
+# # #1  WALK
+# # #2  BIKE
+# # #3	AUTO / VAN/ TRUCK DRIVER
+# # #4	AUTO / VAN / TRUCK PASSENGER
+# # #5	BUS
+# # #6	RAIL
+# # #7	DIAL-A-RIDE/PARATRANSIT
+# # #8	TAXI
+# # #9	SCHOOL BUS
+# # #10	CARPOOL / VANPOOL
+# # #97	OTHER (SPECIFY)
+# # 
+# # 
+# # # distance-based monetary cost per mile
+# # #http://newsroom.aaa.com/tag/driving-cost-per-mile/
+# # #http://www.portlandfacts.com/cost_of_transit_&_cars.html
+# # #http://portlandtaxi.net/rates.php
+#   constant <- rep(0, length(MODE))
 # 
-# 
-# # distance-based monetary cost per mile
-# #http://newsroom.aaa.com/tag/driving-cost-per-mile/
-# #http://www.portlandfacts.com/cost_of_transit_&_cars.html
-# #http://portlandtaxi.net/rates.php
-  constant <- rep(0, length(MODE))
-
-  # unit cost by minutes
-  VOT <- rep(1, length(MODE)) * minutes.per.hour  # hours to minutes
-  # mcpm (monetary cost per mile) in minute/mile
-  # conversion from cent/mile to minute/mile, as cent/mile x minute/cent = minute/mile
-  mcpm <- c(0, 0, 59.2, 59.2, 101.0, 138.0, 0, 260.0, 0, 0, 29.6, 59.2, 59.2, 59.2, 101.0, 101.0) * minutes.per.cent
-  
-  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit="minutes")
-  
-  # unit cost by dollars
-  # VOT in $/hour
-  VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35) * hourly.wage
-  # mcpm in $/mile
-  mcpm <- c(0, 0, 59.2, 59.2, 101.0, 138.0, 0, 260.0, 0, 0, 29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / cents.per.dollar
-  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit="dollars")
-  
-  # Combine unitcosts of different units   
-  OHAS.unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)
+#   # unit cost by minutes
+#   VOT <- rep(1, length(MODE)) * minutes.per.hour  # hours to minutes
+#   # mcpm (monetary cost per mile) in minute/mile
+#   # conversion from cent/mile to minute/mile, as cent/mile x minute/cent = minute/mile
+#   mcpm <- c(0, 0, 59.2, 59.2, 101.0, 138.0, 0, 260.0, 0, 0, 29.6, 59.2, 59.2, 59.2, 101.0, 101.0) * minutes.per.cent
+#   
+#   unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit.name = "minutes")
+#   
+#   # unit cost by dollars
+#   # VOT in $/hour
+#   VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35) * hourly.wage
+#   # mcpm in $/mile
+#   mcpm <- c(0, 0, 59.2, 59.2, 101.0, 138.0, 0, 260.0, 0, 0, 29.6, 59.2, 59.2, 59.2, 101.0, 101.0) / cents.per.dollar
+#   unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit.name = "dollars")
+#   
+#   # Combine unitcosts of different units   
+#   OHAS.unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)
 
 # define unit cost for Portland 1994 survey data
 # distance-based monetary cost per mile
@@ -86,77 +92,12 @@ names(MODE) <- MdNames
 # http://portlandtaxi.net/rates.php
 ## time-equivalent monetary cost per mile, which can be specific to income group
   
-  # mode
-  MODE <- c(1:8) 
-  MdNames <- c("other", "walk", "bicycle", "schol bus", "public bus", "MAX", "personal vehicle", "non-personal vehicle") 
-  names(MODE) <- MdNames
-  
-  constant <- rep(0, length(MODE))
-  
-  # minutes unit cost 
-  VOT <- rep(1, length(MODE)) * minutes.per.hour
-  mcpm <- c(29.6, 0, 0, 0, 101.0, 138.0, 59.2, 59.2) * minutes.per.cent
-  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit="minutes")
-  
-  # dollars unit cost 
-  VOT <- c(0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
-  mcpm <- c(29.6, 0, 0, 0, 101.0, 138.0, 59.2, 59.2) / cents.per.dollar
-  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit="dollars")
-  
-  # Combine unitcosts of different units   
-  Portland94.unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)
-
-# Define unit costs for WFRC_Saltlake survey data
-  # mode
-  MODE <- c(1:6)
-  MdNames <- c("Auto/truck/motorcycle", "Transit", "Walked/wheelchair", "Bicycle", "Other", "School bus (only in independent child trips)") 
-  names(MODE) <- MdNames
-  
-  constant <- rep(0, length(MODE))
-  
-  # unit cost by minutes
-  VOT <- rep(1, length(MODE)) * minutes.per.hour
-  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0) * minutes.per.cent
-  
-  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit="minutes")
-  
-  # unit cost by dollars 
-  VOT <- c(0.5, 0.35, 0.5, 0.5, 0.5, 0.35) * hourly.wage
-  mcpm <- c(59.2, 101.0, 0, 0, 29.6, 0) / cents.per.dollar
-  
-  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit="dollars")
-  
-  WFRC_SaltLake.unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)
-  
-# Define unist cost for NHTS 2009 survey data 
-  # mode
-  MODE <- c(-8, -7, -1, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 22, 23, 97)
-  MdNames <- c("Don't know", "Refused", "Appropriate skip", "Car", "Van", "SUV", "Pickup truck", "Other truck", "Motorcycle", "Light electric veh (golf cart)", 
-               "Local public bus", "Commuter bus", "School bus", "Charter/tour bus", "Shuttle bus", "Taxicab", "Bicycle", "Walk", "Other")
-  names(MODE) <- MdNames
-  
-  constant <- rep(0, length(MODE))
-  
-  # unit costs by minutes
-  VOT <- c(NA, NA, NA, rep(1, (length(MODE) -3))) * minutes.per.hour
-  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6) * minutes.per.cent
-  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit="minutes")
-  
-  # unit costs by dollars 
-  hourly.wage <- 24.77
-  VOT <- c(NA, NA, NA, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
-  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6) / cents.per.dollar
-  
-  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit="dollars")
-  
-  NHTS09.unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)  
-  
-  
 # Define directory 
-  # setting 
-  INPUT_DIR <- 'data/'
+  # setting
+  project.subdir <- paste0(project.name, year)
+  INPUT_DIR <- file.path('data', project.subdir)
   SAVE.INTERMEDIARIES <- TRUE
-  INTERMEDIATE_DIR <- file.path("output/intermediate", approach.name, data.source,  unit.name)
+  INTERMEDIATE_DIR <- file.path("output/intermediate", method.name, project.subdir, unit.name)
   dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)  
-  OUTPUT_DIR = file.path("output",approach.name, data.source, unit.name)
+  OUTPUT_DIR = file.path("output", method.name, project.subdir, unit.name)
   dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
