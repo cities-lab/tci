@@ -90,7 +90,8 @@ for(pr in Pr){
             
       # combine trips into array
       Trips.ZiZiMd[,,md] <- TripsMd
-      TotTrips.ZiMd[,md] <- rowSums(TripsMd[,Centers$TAZ])
+      dimnames(TripsMd) <- list(Zi, Zi)
+      TotTrips.ZiMd[,md] <- rowSums(TripsMd[, as.character(Centers$TAZ)])
       
       if (SAVE.INTERMEDIARIES) {
         # Description of trip matrices
