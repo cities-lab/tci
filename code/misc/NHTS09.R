@@ -15,6 +15,31 @@
   #unit.name <- "minutes" 
   unit.name <- "dollars"
   source("code/settings.R")
+  
+  
+  # Define unist cost for NHTS 2009 survey data 
+  # mode
+  MODE <- c(-8, -7, -1, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 22, 23, 97)
+  MdNames <- c("Don't know", "Refused", "Appropriate skip", "Car", "Van", "SUV", "Pickup truck", "Other truck", "Motorcycle", "Light electric veh (golf cart)", 
+               "Local public bus", "Commuter bus", "School bus", "Charter/tour bus", "Shuttle bus", "Taxicab", "Bicycle", "Walk", "Other")
+  names(MODE) <- MdNames
+  constant <- rep(0, length(MODE))
+  
+  # unit costs by minutes
+  hourly.wage <- 60
+  VOT <- c(NA, NA, NA, rep(1, (length(MODE) -3))) * hourly.wage
+  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6)*60/(100 * 24.77)
+  unitcosts.minutes <- data.frame(MODE, constant, VOT, mcpm, unit="minutes")
+  
+  # unit costs by dollars 
+  hourly.wage <- 24.77
+  VOT <- c(NA, NA, NA, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.5, 0.5) * hourly.wage
+  mcpm <- c(NA, NA, NA, 59.2, 59.2, 59.2, 59.2, 59.2, 29.6, 29.6, 101.0, 101.0, 0, 101.0, 0, 260.0, 0, 0, 29.6)/100
+  
+  unitcosts.dollars <- data.frame(MODE, constant, VOT, mcpm, unit="dollars")
+  
+  unitcosts.list <- list(minutes=unitcosts.minutes, dollars=unitcosts.dollars)  
+  
   unitcosts <- NHTS09.unitcosts.list[[unit.name]]
    
   # Survey area
