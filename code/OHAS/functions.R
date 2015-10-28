@@ -81,7 +81,7 @@ identifyTripPurpose <- function (df) {
 
 
 # Define plot functions 
-pden.inc.f <- function(plot.data=NULL, unit.name=NULL) {
+pden.inc.f <- function(plot.data=NULL) {
   
   xlim.max <- c(dollars=150, minutes=450)
   xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
@@ -94,7 +94,7 @@ pden.inc.f <- function(plot.data=NULL, unit.name=NULL) {
 }
 
 
-pden.hhsiz.f <- function(plot.data=NULL, unit.name=NULL) {
+pden.hhsiz.f <- function(plot.data=NULL) {
   
   xlim.max <- c(dollars=150, minutes=450)
   xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
@@ -113,7 +113,7 @@ pden.hhsiz.f <- function(plot.data=NULL, unit.name=NULL) {
     theme(plot.title = element_text(face="bold", size=12, vjust=1))
 }
 
-boxp.tpurp_inc.f <- function (plot.data=NULL, unit.name=NULL) {
+boxp.tpurp_inc.f <- function (plot.data=NULL) {
   
   ylim.max <- c(dollars=100, minutes=250)
   yaxis.label=paste("Generalized Travel Costs (", unit.name, ")", sep="")
@@ -130,7 +130,7 @@ boxp.tpurp_inc.f <- function (plot.data=NULL, unit.name=NULL) {
     theme(plot.title = element_text(face="bold", size=12, vjust=1))
 }
 
-linep.tpurp.inc.f <- function (plot.data=NULL, unit.name=NULL) {
+linep.tpurp.inc.f <- function (plot.data=NULL) {
   ylim.max <- c(dollars=60, minutes=160)
   yaxis.label=paste("Travel Costs (", unit.name, ")", sep="")
   
@@ -138,6 +138,21 @@ linep.tpurp.inc.f <- function (plot.data=NULL, unit.name=NULL) {
   p + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y=yaxis.label) + ylim(0, ylim.max[unit.name]) +
     ggtitle("Trip-level travel cost by trip purpose and income levels") +
     theme(plot.title = element_text(face="bold", size=12, vjust=1))
+}
+
+
+plot_map <- function(plot.Data=NULL) {
+  
+  limits.max <- c(dollars=100, minutes=200)
+  name.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot() +
+    geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
+                 color = NA, size = 0.1) +
+    scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, limits.max[unit.name]), 
+                         name = name.label, na.value = "grey80") +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    theme_nothing(legend = TRUE)
 }
 
 

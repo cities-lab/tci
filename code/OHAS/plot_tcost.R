@@ -77,15 +77,15 @@ t.bp + geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + ylim(0, 2
 #                                         value = tcost.wtavg)
 #districts <- left_join(districts, districts.data)
 
-plot_map <- function(plot.Data) {
-  p <- ggplot() +
-       geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
-                    color = NA, size = 0.1) +
-       scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, 200), 
-                            name = "Travel Costs\n(Minutes)", na.value = "grey80") +
-       guides(fill = guide_legend(reverse = TRUE)) +
-       theme_nothing(legend = TRUE)
-}
+# plot_map <- function(plot.Data) {
+#   p <- ggplot() +
+#        geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
+#                     color = NA, size = 0.1) +
+#        scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, 200), 
+#                             name = "Travel Costs\n(Minutes)", na.value = "grey80") +
+#        guides(fill = guide_legend(reverse = TRUE)) +
+#        theme_nothing(legend = TRUE)
+# }
 
 #transform data for plotting
 #  no applicable method for 'right_join' applied to an object of class "list"

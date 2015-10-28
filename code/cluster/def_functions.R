@@ -130,3 +130,54 @@ nd.weighted.mean <- function(X, W, dims) {
 
 in.memory <- function(obj.names)
   all(obj.names %in% ls())
+
+# Defint plot function 
+pden.inc.f <- function(plot.data=NULL) {
+  xlim.max <- c(dollars=100, minutes=200)
+  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <-  ggplot(plot.data, aes(x = tcost.wt, colour=inc.level, group=inc.level)) 
+  p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
+    scale_colour_discrete(name = 'Income Level')+
+    ggtitle("Household-level travel cost by income groups") +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+}
+
+pden.tpurp.f <- function(plot.data=NULL) {
+  xlim.max <- c(dollars=50, minutes=100)
+  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot(plot.data, aes(x = tcost.wt, colour=TripPurpose, group=TripPurpose))
+  p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max[unit.name]) +
+    scale_colour_discrete(name = 'Trip Purpose')+
+    ggtitle("Household-level travel cost by trip purposes") +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+}
+
+boxp.tpurp_inc.f <- function(plot.data=NULL){
+  ylim.max <- c(dollars=50, minutes=100)
+  yaxis.label=paste("Generalized Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot(dwtcost.htaz_tpurp_inc, aes(x=TripPurpose, y=tcost.wt, fill=inc.level))
+  p +  geom_boxplot() + labs(y=yaxis.label) + xlab("Trip Purpose") + ylim(0, ylim.max[unit.name])  +
+    scale_fill_discrete(name = 'Income Level') +
+    ggtitle("Household-level travel cost by trip purposes and income levels") +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+  
+}
+
+plot_map <- function(plot.Data=NULL) {
+  
+  limits.max <- c(dollars=100, minutes=200)
+  name.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  
+  p <- ggplot() +
+    geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
+                 color = NA, size = 0.1) +
+    scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, limits.max[unit.name]), 
+                         name = name.label, na.value = "grey80") +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    theme_nothing(legend = TRUE)
+}
+
+
