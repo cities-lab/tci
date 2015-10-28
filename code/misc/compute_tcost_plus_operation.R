@@ -4,10 +4,10 @@
 # set setting
 source("code/cluster/settings.R")
 # define a constant for converting time to cost 
-cost.conversion <- hourly.wage/60 
+#cost.conversion <- hourly.wage/60 
 
 # define operation cost per mile by mode
-modedistancecost.Md <- c(driveAlone = 59.2, drivePass=59.2, pass=59.2, busWalk=101.0, parkAndRideBus=101.0, bike=0, walk=0)
+#modedistancecost.Md <- c(driveAlone = 59.2, drivePass=59.2, pass=59.2, busWalk=101.0, parkAndRideBus=101.0, bike=0, walk=0)
 
 # define hourly wage by income group
 wage.Ic <- c(lowInc = 10, midInc = 20, highInc =30)
@@ -38,7 +38,6 @@ for (pr in Pr) {
       
       TOperationcost.ZiMdCm <- array(0, dim=(c(length(Zi), length(Md), length(Cm))), 
                                 dimnames=list(Zi,Md,Cm))
-      
       
       # Begin iteration by mode 
       for (md in Md ) {
@@ -75,11 +74,12 @@ for (pr in Pr) {
         for (cm in Cm) {
           func <- get(paste(cm, '_tt', sep=""))
           TTime <- func(Centers$TAZ, TTime.mx, TripsMd)
-          TCost <- TTime * modecosttrans.Md[md] * wage.Ic[ic]/60
+          TCost <- TTime * unitcosts[md, "VOT"] * wage.Ic[ic]/60
           paste("min", pr, ic, md, "time", sep="")
           
+          
           TDistance <- func(Centers$TAZ, TDistance.mx, TripsMd)
-          TOperationcost <- TDistance*modedistancecost.Md[md]/(100*wage.Ic[ic])
+          TOperationcost <- TDistance*unitcosts[md, "mcpm"]/(100*wage.Ic[ic])
           
           TTimecost.ZiMdCm[, md, cm] <- TCost
           TOperationcost.ZiMdCm[, md, cm] <- TOperationcost
