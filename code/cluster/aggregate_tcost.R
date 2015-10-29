@@ -39,7 +39,7 @@ for (cm in Cm) {
         
         #get trips array 
         TotTripsArray.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
-        if (!in.memory(c(TotTripsArray.name)))
+        if (!exists(c(TotTripsArray.name)))
           load(file.path(INTERMEDIATE_DIR, paste("trips/", TotTripsArray.name, ".RData", sep="")))
         TotTripsArray <- get(TotTripsArray.name)
         
@@ -48,7 +48,7 @@ for (cm in Cm) {
         
         #get full travel cost attay
         FullCostArray.name <- paste(pr, ic, tp, "FullCost.ZiMdCm", sep="")
-        if (!in.memory(c(FullCostArray.name)))
+        if (!exists(c(FullCostArray.name)))
           load(file.path(INTERMEDIATE_DIR, paste("costs/", FullCostArray.name, ".RData", sep="")))
         FullCostArray<- get(FullCostArray.name)
         
@@ -148,7 +148,7 @@ for (cm in Cm) {
       
       #get trips array 
       TotTripsArray.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
-      if (!in.memory(c(TotTripsArray.name)))
+      if (!exists(c(TotTripsArray.name)))
         load(file.path(INTERMEDIATE_DIR, paste("trips/", TotTripsArray.name, ".RData", sep="")))
       TotTripsArray <- get(TotTripsArray.name)
       
@@ -157,13 +157,13 @@ for (cm in Cm) {
       
       #get peak travel time cost array
       peakFullCostArray.name <- paste(pr, ic, "peak", "FullCost.ZiMdCm", sep="")
-      if (!in.memory(c(peakFullCostArray.name)))
+      if (!exists(c(peakFullCostArray.name)))
         load(file.path(INTERMEDIATE_DIR, paste("costs/", peakFullCostArray.name, ".RData", sep="")))
       peakFullCostArray<- get(peakFullCostArray.name)
       
       #get offpeak travel time cost array
       offpeakFullCostArray.name <- paste(pr, ic, "offpeak", "FullCost.ZiMdCm", sep="")
-      if (!in.memory(c(offpeakFullCostArray.name)))
+      if (!exists(c(offpeakFullCostArray.name)))
         load(file.path(INTERMEDIATE_DIR, paste("costs/", offpeakFullCostArray.name, ".RData", sep="")))
       offpeakFullCostArray<- get(offpeakFullCostArray.name)
       

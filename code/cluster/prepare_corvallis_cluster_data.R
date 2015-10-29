@@ -168,7 +168,7 @@ require(SDMTools)
           for (md in Md ) {
             # load trip matrices
             TripsMdObjName <- paste(pr, ic, md, "trips", sep="")
-            if (! in.memory(TripsMdObjName)) {
+            if (! exists(TripsMdObjName)) {
               TripsMd <- readMatrixOMX(file.path(INTERMEDIATE_DIR, "ModeTrips.omx"), TripsMdObjName)
               dimnames(TripsMd) <- list(Zi, Zi)
               assign(TripsMdObjName, TripsMd)
@@ -189,13 +189,13 @@ require(SDMTools)
               
             }
             
-            if (! in.memory(TTimeObjName)) {
+            if (! exists(TTimeObjName)) {
               TTime.mx <- readMatrixOMX(file.path(INPUT_DIR, "TDM/Skims.omx"), TTimeObjName)
               dimnames(TTime.mx) <- list(Zi, Zi)
               assign(TTimeObjName, TTime.mx)
             }        
             
-            if (! in.memory(TDistanceObjName)) {
+            if (! exists(TDistanceObjName)) {
               TDistance.mx <- readMatrixOMX(file.path(INPUT_DIR, "TDM/DistanceSkims.omx"), TDistanceObjName)
               assign(TDistanceObjName, TDistance.mx)
               dimnames(TDistance.mx) <- list(Zi, Zi)
@@ -282,7 +282,7 @@ require(SDMTools)
           
           #get trips array 
           TotTripsArray.name <- paste(pr, ic, "TotTrips.ZiMd", sep="")
-          if (!in.memory(c(TotTripsArray.name)))
+          if (!exists(c(TotTripsArray.name)))
             load(file.path(INTERMEDIATE_DIR, paste("trips/", TotTripsArray.name, ".RData", sep="")))
           TotTripsArray <- get(TotTripsArray.name)
           
@@ -291,7 +291,7 @@ require(SDMTools)
           
           #get full travel cost attay
           FullCostArray.name <- paste(pr, ic, tp, "FullCost.ZiMdCm", sep="")
-          if (!in.memory(c(FullCostArray.name)))
+          if (!exists(c(FullCostArray.name)))
             load(file.path(INTERMEDIATE_DIR, paste("costs/", FullCostArray.name, ".RData", sep="")))
           FullCostArray<- get(FullCostArray.name)
           
@@ -529,7 +529,7 @@ require(SDMTools)
     
     
 #     # Plot centers     
-#     if (!in.memory(paste(Pr, "ci", sep="")))
+#     if (!exists(paste(Pr, "ci", sep="")))
 #       load(file.path(INTERMEDIATE_DIR, "centers.RData"))
 #     
 #     for (pr in Pr) {

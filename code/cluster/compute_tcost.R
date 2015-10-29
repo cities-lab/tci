@@ -5,7 +5,7 @@
 wage.Ic <- c(lowInc = 10, midInc = 20, highInc =30)
 
 # load taz index of centers 
-if (!in.memory(paste(Pr, "ci", sep="")))
+if (!exists(paste(Pr, "ci", sep="")))
   load(file.path(INTERMEDIATE_DIR, "centers.RData"))
 
 # loaded in 4_cal_md_trips_probs.R
@@ -35,7 +35,7 @@ for (pr in Pr) {
       for (md in Md ) {
         # load trip matrices
         TripsMdObjName <- paste(pr, ic, md, "trips", sep="")
-        if (! in.memory(TripsMdObjName)) {
+        if (! exists(TripsMdObjName)) {
           TripsMd <- readMatrixOMX(file.path(INTERMEDIATE_DIR, "ModeTrips.omx"), TripsMdObjName)
           assign(TripsMdObjName, TripsMd)
         }
@@ -53,12 +53,12 @@ for (pr in Pr) {
           TDistanceObjName <- paste(md, tp, "Distance", sep = "")
         }
         
-        if (! in.memory(TripsMdObjName)) {
+        if (! exists(TripsMdObjName)) {
           TTime.mx <- readMatrixOMX(file.path(INPUT_DIR, "TDM/Skims.omx"), TTimeObjName)
           assign(TTimeObjName, TTime.mx)
         }        
         
-        if (! in.memory(TDistanceObjName)) {
+        if (! exists(TDistanceObjName)) {
           TDistance.mx <- readMatrixOMX(file.path(INPUT_DIR, "TDM/DistanceSkims.omx"), TDistanceObjName)
           assign(TDistanceObjName, TDistance.mx)
         } 

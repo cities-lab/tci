@@ -122,6 +122,7 @@ nd.weighted.mean <- function(X, W, dims) {
 }
 
 in.memory <- function(obj.names)
+  print("use exists() instead.")
   all(obj.names %in% ls())
 
 # overlay x,y coordinate (longitude, lattitude) with a polygon shapefile (shpfile) to get polygon id (id_name)

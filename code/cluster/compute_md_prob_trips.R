@@ -16,7 +16,7 @@ if (SAVE.INTERMEDIARIES) {
 }
 
 load(file.path(INPUT_DIR, 'Zi.RData'))
-if (!in.memory(paste(Pr, "ci", sep="")))
+if (!exists(paste(Pr, "ci", sep="")))
   load(file.path(INTERMEDIATE_DIR, "centers.RData"))
 
 # Calculate travel time by bike and walk from bike/walk trip distance

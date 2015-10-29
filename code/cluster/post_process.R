@@ -120,7 +120,7 @@ maps
 output_file = file.path(OUTPUT_DIR, "map_taz_all.png")
 ggsave(maps, file = output_file, width = 8.5, height = 11, type = "cairo-png")
 
-if (!in.memory(paste(Pr, "ci", sep="")))
+if (!exists(paste(Pr, "ci", sep="")))
   load(file.path(INTERMEDIATE_DIR, "centers.RData"))
   
 for (pr in Pr) {
