@@ -12,12 +12,12 @@
   project.name <- 'Corvallis'
   method.name <- 'survey'
   year <- '2011'
-
+  
 ##source common settings, which may be overrided below
   source("code/settings.R")
   # Define unit costs for OHAS
   source("code/survey/settings_OHAS.R")
-
+  
 ## settings (using default settings in code/settings.R)
 #   INPUT_DIR <- 'data/survey/Corvallis'
 #   OUTPUT_DIR <- file.path('output/survey/Corvallis', unit.name)
@@ -30,10 +30,10 @@
 ## read OHAS hh (household) and linkedTrip table
   load(file.path(INPUT_DIR, "OHAS_Final.Rdata"))
   ##TODO: needs to filter Corvallis data
-  TAZ.shpfile <- file.path(INPUT_DIR, "Corvallis/shp/TAZ.shp")
+  TAZ.shpfile <- file.path(INPUT_DIR, "shp/TAZ.shp")
   TAZ.id_name <- "TAZ"
   
-  districts <- readOGR(dsn = file.path(INPUT_DIR, "Corvallis/shp"), layer = "districts")
+  districts <- readOGR(dsn = file.path(INPUT_DIR, "shp"), layer = "districts")
   districts <- fortify(districts, region="DISTRICT")
 
 ##start scripts
