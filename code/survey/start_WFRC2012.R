@@ -39,20 +39,20 @@
   
   unitcosts <- unitcosts.list[[unit.name]]
   
-## settings
-  INPUT_DIR <- 'data/'
-  OUTPUT_DIR <- file.path('output/Survey/WFRC', unit.name)
-  dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
-  #   # whether to save intermediate results
-  #SAVE.INTERMEDIARIES <- TRUE
-  INTERMEDIATE_DIR <- "output/intermediate/WFRC"
-  dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
+# ## settings
+#   INPUT_DIR <- 'data/'
+#   OUTPUT_DIR <- file.path('output/Survey/WFRC', unit.name)
+#   dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
+#   #   # whether to save intermediate results
+#   #SAVE.INTERMEDIARIES <- TRUE
+#   INTERMEDIATE_DIR <- "output/intermediate/WFRC"
+#   dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
 
 ## Load and prepare data
   # trip <- read.xls("data/WFRC/HouseholdDiary_TripData_clean.xls", sheet=1, header=TRUE)
   # trip <- read.xls("data/WFRC/HouseholdDiary_TripData_clean.xlsx", sheet=1, header=TRUE)
-  trip  <- read.csv("data/WFRC/HouseholdDiary_TripData_clean.csv", header=TRUE, sep=",", as.is = TRUE)
-  hh <-  read.csv("data/WFRC/HouseholdDiary_HouseholdData.csv", header=TRUE, sep=",", as.is = TRUE)
+  trip  <- read.csv(file.path(INPUT_DIR, "HouseholdDiary_TripData_clean.csv"), header=TRUE, sep=",", as.is = TRUE)
+  hh <-  read.csv(file.path(INPUT_DIR, "HouseholdDiary_HouseholdData.csv"), header=TRUE, sep=",", as.is = TRUE)
  
   # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
   # hh_income: Total household income; password: household ID
