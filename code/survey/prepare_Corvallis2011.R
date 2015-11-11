@@ -19,7 +19,7 @@ tcost.trip <- linkedTrip %>%
 
 # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
 # low <- (1,2); median <- (3,4); high <- 5:8
-hh.metro <- hh %>% 
+hh.ready <- hh %>% 
   mutate(inc.level=cut(INCOME,
                        breaks=c(1, 3, 5, 9),
                        labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
@@ -30,22 +30,22 @@ hh.metro <- hh %>%
   as.data.frame() 
 
 
-hh.metro$HTAZ <- get_xy_polyid(hh.metro, TAZ.shpfile, TAZ.id_name, xy.epsg='4326', shpfile.epsg="2992")
+hh.ready$HTAZ <- get_xy_polyid(hh.ready, TAZ.shpfile, TAZ.id_name, xy.epsg='4326', shpfile.epsg="2992")
 TAZPoly <- readShapePoly(TAZ.shpfile, proj4string=CRS("+init=epsg:2992"))
 
 TAZ.DISTRICT <- TAZPoly@data %>%
                 dplyr::select(TAZ, DISTRICT)%>%
                 dplyr::rename(HTAZ=TAZ,
                               district.id=DISTRICT)
-hh.metro <- hh.metro %>% 
+hh.ready <- hh.ready %>% 
             left_join(TAZ.DISTRICT)
 tcost.trip <- tcost.trip %>%
-  left_join(hh.metro, by="SAMPN") #%>%
+  left_join(hh.ready, by="SAMPN") #%>%
 #left_join(districts, by=c("HTAZ"="zone")) %>%
 #dplyr::rename(district.id=ugb)
 
 
 if(SAVE.INTERMEDIARIES) {
-  intm_file = file.path(INTERMEDIATE_DIR, "linkedTrip.RData")
-  save(linkedTrip, file=intm_file)
+  intm_file = file.path(INTERMEDIATE_DIR, "linkedTrip_tcost.RData")
+  save(linkedTrip, tcost.trip, file=intm_file)
 }

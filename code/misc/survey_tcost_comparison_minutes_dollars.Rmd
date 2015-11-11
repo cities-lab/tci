@@ -57,7 +57,9 @@ plot.lists.f <- function (data.source=NULL, unit.name=NULL, districts.folder=NUL
     districts <- fortify(districts, region="DISTRICT")
     
     plot.data <- full_join(districts, tcost.distr_all)
-    maps <- plot_map(plot.data, unit.name=unit.name) + facet_grid(TripPurpose~inc.level) 
+    maps <- plot_map(plot.data, name="Travel Cost", 
+                   group="group", fill="value", 
+                   unit.name=unit.name) + facet_grid(TripPurpose~inc.level) 
     
   } else {
     maps <- NULL
@@ -66,17 +68,32 @@ plot.lists.f <- function (data.source=NULL, unit.name=NULL, districts.folder=NUL
  
   
   # Plot data 
-  pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
+  #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
+  pden.ic <- plot_density(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
+                          group="inc.level", legend.title="Income Level", 
+                          unit.name=unit.name)
   
-  pden.hhsiz  <- pden.hhsiz.f(plot.data=tcost.hh, unit.name=unit.name)
+  #pden.hhsiz  <- pden.hhsiz.f(plot.data=tcost.hh, unit.name=unit.name)
+  pden.hhsize <- plot_density(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
+                          group="hhsiz.cat", legend.title="Household Size", 
+                          unit.name=unit.name)
 
-  boxp.tpurp_inc <- boxp.tpurp.inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
+  #boxp.tpurp_inc <- boxp.tpurp.inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
+  pbox.pr.ic <- plot_boxplot(plot.data=tcost.hh.tpurp, 
+                             x="TripPurpose", xlab="Trip Purpose",
+                             y="tcost", ylab="Travel Costs",
+                             fill="inc.level", legend.title="Income Level",
+                             unit.name=unit.name)
   
-  linep.tpurp.inc<- linep.tpurp.inc.f(plot.data=tcost.tpurp.inc, unit.name=unit.name)
+  #linep.tpurp.inc<- linep.tpurp.inc.f(plot.data=tcost.tpurp.inc, unit.name=unit.name)
+  pline.pr.ic <- plot_line(plot.data=tcost.tpurp.inc, 
+                           x="inc.level", xlab="Income",
+                           y="tcost.wtavg", ylab="Travel Cost",
+                           group="TripPurpose",
+                           unit.name=unit.name)
   
-  
-  plot.lists <- list(pden.inc=pden.inc, pden.hhsiz=pden.hhsiz, boxp.tpurp_inc=boxp.tpurp_inc,
-                     linep.tpurp.inc=linep.tpurp.inc, maps=maps)
+  plot.lists <- list(pden.inc=pden.ic, pden.hhsiz=pden.hhsize, boxp.tpurp_inc=pbox.pr.ic,
+                     linep.tpurp.inc=pline.pr.ic, maps=maps)
   
 }
 

@@ -199,91 +199,94 @@ identifyTripPurpose <- function (df) {
   return(df)
 }
 
-# Define plot functions for tcost.hh, density curve by income levels
-pden.inc.f <- function(plot.data=NULL, unit.name="dollars", xlim.max=NULL) {
+# Density plots
+plot_density <- function(plot.data=NULL, 
+                         x=NULL, xlab="", xlim.max=NULL, 
+                         group=NULL, legend.title="",
+                         unit.name="dollars", 
+                         title="") {
   
   default.xlim.max <- c(dollars=150, minutes=450)
   xlim.max <- ifelse(is.null(xlim.max), default.xlim.max[[unit.name]], xlim.max)
   
-  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
-  p <- ggplot(data=plot.data, aes(x = tcost, colour=inc.level, group=inc.level)) 
+  xaxis.label <- paste(xlab, " (", unit.name, ")", sep="")
+  p <- ggplot(data=plot.data, aes_string(x = x, colour=group, group=group)) 
   p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max) +
-    scale_colour_discrete(name = 'Income Level') +
-    ggtitle("Household-level trip cost by income levels") +
+    scale_colour_discrete(name = legend.title) +
+    ggtitle(title) +
     theme(plot.title = element_text(face="bold", size=12, vjust=1))
 }
 
-# Define plot functions for tcost.hh, density curve by hhsize
-pden.hhsiz.f <- function(plot.data=NULL, unit.name="dollars", xlim.max=NULL) {
+# Box plots
+plot_boxplot <- function(plot.data=NULL, 
+                         x=NULL, xlab="",
+                         y=NULL, ylab="", ylim.max=NULL,
+                         fill=NULL, legend.title="",
+                         unit.name="dollars", 
+                         title="") {
   
-  default.xlim.max <- c(dollars=150, minutes=450)
-  xlim.max <- ifelse(is.null(xlim.max), default.xlim.max[[unit.name]], xlim.max)
-  
-  xaxis.label <- paste("Travel Costs (", unit.name, ")", sep="")
-  
-  plot.data <- plot.data %>% 
-    mutate(hhsiz.cat=cut(HHSIZ,
-                         breaks=c(1, 2, 3, 4, max(HHSIZ)),
-                         labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
-                         include.lowest=T, right=F
-    ))
-  
-  p <- ggplot(data=plot.data, aes(x = tcost, colour=hhsiz.cat, group=hhsiz.cat)) 
-  p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max) +
-    scale_colour_discrete(name = 'Household Size')+ 
-    ggtitle("Household-level travel cost by household size") +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1))
-}
-
-# box plot for trip costs by income level
-boxp.tpurp.inc.f <- function (plot.data=NULL, unit.name="dollars", ylim.max=NULL) {
-
   default.ylim.max <- c(dollars=100, minutes=250)
   ylim.max <- ifelse(is.null(ylim.max), default.ylim.max[[unit.name]], ylim.max)
   
-  yaxis.label=paste("Generalized Travel Costs (", unit.name, ")", sep="")
+  yaxis.label=paste(ylab, " (", unit.name, ")", sep="")
   
-  #TODO: this should be done before plot.data is passed to the func
-  plot.data <- plot.data %>% 
-    mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),
-           TripPurpose = factor(TripPurpose, levels=Pr, labels=c("HBW", "HB Shopping", "HB Recreation", "HB Other"))
-    )
-  
-  p <- ggplot(data=plot.data, aes(x=TripPurpose, y=tcost, fill=inc.level)) 
-  p + geom_boxplot()  + labs(y=yaxis.label) + xlab("Trip Purpose") + 
-    ylim(0, ylim.max)  + scale_fill_discrete(name = 'Income Level') + 
-    ggtitle("Household-level travel cost by trip purposes and income levels") +
+  p <- ggplot(data=plot.data, aes_string(x=x, y=y, fill=fill)) + 
+    geom_boxplot()  + labs(y=yaxis.label) + xlab(xlab) + 
+    ylim(0, ylim.max)  + scale_fill_discrete(name = legend.title) + 
+    ggtitle(title) +
     theme(plot.title = element_text(face="bold", size=12, vjust=1))
+  p
 }
 
-# line plot for trip costs by income level
-linep.tpurp.inc.f <- function (plot.data=NULL, unit.name="dollars", ylim.max=NULL) {
 
+# Line plots
+plot_line <- function (plot.data=NULL, 
+                       x=NULL, xlab="",
+                       y=NULL, ylab="", ylim.max=NULL,
+                       group=NULL,
+                       unit.name="dollars", 
+                       title="") {
+  
   default.ylim.max <- c(dollars=60, minutes=160)
   ylim.max <- ifelse(is.null(ylim.max), default.ylim.max[[unit.name]], ylim.max)
   
-  yaxis.label=paste("Travel Costs (", unit.name, ")", sep="")
+  yaxis.label=paste(ylab, " (", unit.name, ")", sep="")
   
-  p <- ggplot(data=plot.data, aes(x = inc.level, y = tcost.wtavg, colour=TripPurpose, group=TripPurpose)) 
-  p + geom_line(fill=NA, size=1) + labs(x="Income Level") + labs(y=yaxis.label) + ylim(0, ylim.max) +
-    ggtitle("Trip-level travel cost by trip purpose and income levels") +
+  p <- ggplot(data=plot.data, aes_string(x = x, y = y, colour=group, group=group)) +
+    geom_line(fill=NA, size=1) + labs(x=xlab) + labs(y=yaxis.label) + ylim(0, ylim.max) +
+    ggtitle(title) +
     theme(plot.title = element_text(face="bold", size=12, vjust=1))
+  p
 }
 
+# ggplot() +
+#   geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
+#                color = NA, size = 0.1) +
+#   scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, 600), 
+#                        name = "Travel Costs\n(Minutes)", na.value = "grey80") +
+#   guides(fill = guide_legend(reverse = TRUE)) +
+#   theme_nothing(legend = TRUE)
 
-plot_map <- function(plot.Data=NULL, unit.name="dollars", limits.max=NULL) {
+
+# Maps
+plot_map <- function(plot.data=NULL,
+                     name="",
+                     group=NULL,
+                     fill=NULL,
+                     unit.name="dollars", 
+                     limits.max=NULL
+                     ) {
   default.limits.max <- c(dollars=100, minutes=200)
   limits.max <- ifelse(is.null(limits.max), default.limits.max[[unit.name]], limits.max)
   
-  name.label <- paste("Travel Costs (", unit.name, ")", sep="")
+  name.label <- paste(name, " (", unit.name, ")", sep="")
   
   p <- ggplot() +
-    geom_polygon(data = plot.Data, aes(x = long, y = lat, group = group, fill = value), 
+    geom_polygon(data = plot.data, aes_string(x = "long", y = "lat", group = group, fill = fill), 
                  color = NA, size = 0.1) +
     scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, limits.max), 
                          name = name.label, na.value = "grey80") +
     guides(fill = guide_legend(reverse = TRUE)) +
     theme_nothing(legend = TRUE)
+  p
 }
-
-

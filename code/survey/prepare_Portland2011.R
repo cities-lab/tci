@@ -40,5 +40,5 @@ tcost.trip <- tcost.trip %>%
 
 if(SAVE.INTERMEDIARIES) {
   intm_file = file.path(INTERMEDIATE_DIR, "linkedTrip.RData")
-  save(linkedTrip, file=intm_file)
+  save(linkedTrip, tcost.trip, file=intm_file)
 }
