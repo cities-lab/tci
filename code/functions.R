@@ -290,3 +290,10 @@ plot_map <- function(plot.data=NULL,
     theme_nothing(legend = TRUE)
   p
 }
+
+clean.up <- function(preserve.list=NULL) {
+  var.list <- ls()
+  rm.list <- ifelse(is.null(preserve.list), var.list, var.list[!(var.list %in% preserve.list)])
+  rm(list=rm.list)
+  rm(var.list, rm.list)
+}

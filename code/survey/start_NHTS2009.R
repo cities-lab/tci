@@ -167,6 +167,4 @@
   ggsave(bplot, file= output_file)
   
 ##clean up
-  var_list.1 <- ls()
-  rm(list=var_list.1[!(var_list.1 %in% var_list.0)])
-  rm(var_list.1) 
+  if (CLEAN.UP) clean.up(var_list.0)

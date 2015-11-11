@@ -1,29 +1,29 @@
 # settings that are common to all methods
 
-# Define income group abbreviation
-Ic <- c("lowInc", "midInc", "highInc")
-
-# Define trip purpose abbreviation
-# The purposes for this study (now) are limited to the home-based trips
-# They exclude nonhome-based trips, school trips and college trips
-Pr <- c("hbw", "hbs", "hbr", "hbo")
-
-# Define the travel modes
-Md <- c("driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus", "bike", "walk")
-
-# Define time period 
-Tp <- c("peak", "offpeak")
-
-#TOD factors from 2013 Trip-Based Travel Demand Model Methodology Report
-
-
-# Define calculate method 
-Cm <- c("min", "weighted")
-
-unit.name <- ifelse(exists('unit.name'), unit.name, 'dollars')
-#unit.name <- ifelse(exists('unit.name'), unit.name, 'minutes')
-
-year <- ifelse(exists('year'), year, '')
+  # Define income group abbreviation
+  Ic <- c("lowInc", "midInc", "highInc")
+  
+  # Define trip purpose abbreviation
+  # The purposes for this study (now) are limited to the home-based trips
+  # They exclude nonhome-based trips, school trips and college trips
+  Pr <- c("hbw", "hbs", "hbr", "hbo")
+  
+  # Define the travel modes
+  Md <- c("driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus", "bike", "walk")
+  
+  # Define time period 
+  Tp <- c("peak", "offpeak")
+  
+  #TOD factors from 2013 Trip-Based Travel Demand Model Methodology Report
+  
+  
+  # Define calculate method 
+  Cm <- c("min", "weighted")
+  
+  unit.name <- ifelse(exists('unit.name'), unit.name, 'dollars')
+  #unit.name <- ifelse(exists('unit.name'), unit.name, 'minutes')
+  
+  year <- ifelse(exists('year'), year, '')
   
 # define unit travel costs by mode
 # unit travel costs may be differentiated by income 
@@ -31,16 +31,16 @@ year <- ifelse(exists('year'), year, '')
 # with value "lowInc", "midInc", "highInc"
 
 # # this configuration converts travel costs to $
-minutes.per.hour <- 60
-cents.per.dollar <- 100
-#hourly wage in dollars ($/hour)
-hourly.wage <- 24.77
-#minutes that are equivalent to 1 cent monetary costs of travel (minutes/cent)
-#by default, hourly wage is used to get the quantity
-#alternative VOT can be used here
-minutes.per.cent <- minutes.per.hour / (hourly.wage * cents.per.dollar)
-
-stopifnot((100 * hourly.wage) * minutes.per.cent == minutes.per.hour)
+  minutes.per.hour <- 60
+  cents.per.dollar <- 100
+  #hourly wage in dollars ($/hour)
+  hourly.wage <- 24.77
+  #minutes that are equivalent to 1 cent monetary costs of travel (minutes/cent)
+  #by default, hourly wage is used to get the quantity
+  #alternative VOT can be used here
+  minutes.per.cent <- minutes.per.hour / (hourly.wage * cents.per.dollar)
+  
+  stopifnot((100 * hourly.wage) * minutes.per.cent == minutes.per.hour)
 
 ## TODO: move this into data
 # Sample unit.costs settings
@@ -101,3 +101,5 @@ stopifnot((100 * hourly.wage) * minutes.per.cent == minutes.per.hour)
   dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)  
   OUTPUT_DIR = file.path("output", method.name, project.subdir, unit.name)
   dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
+  
+  CLEAN.UP <- ifelse(exists('CLEAN.UP'), CLEAN.UP, FALSE) # clean up memory before exiting

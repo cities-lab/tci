@@ -5,7 +5,7 @@ install.packages(c("dplyr",
                    "pscl",
                    "RColorBrewer", "reshape2", "rgdal", "rgeos", 
                    "SDMTools", "stargazer",
-                   "tidyr"
+                   "testthat", "tidyr"
                    ))
 
 #install dependencies "rhdf5" package for omx.r
