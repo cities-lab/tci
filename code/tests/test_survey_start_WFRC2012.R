@@ -1,3 +1,5 @@
+require(testthat)
+
 context("Test running the WFRC2012 project with the survey-based approach")
 
 CLEAN.UP <- FALSE

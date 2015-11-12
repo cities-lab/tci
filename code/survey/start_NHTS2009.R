@@ -3,19 +3,41 @@
 # Load required packages
   require(dplyr)
   require(ggplot2)
+  require(kimisc)
   
+# Set workspace  
+  get_dirs <- function(my.path, WD, rel.dir) {
+    if (!is.null(my.path)){
+      this.dir <- normalizePath(dirname(my.path))
+      WD <- strsplit(this.dir, rel.dir)[[1]]
+      setwd(WD)
+      cat("Set working directory:", getwd())
+    } else {
+      # this file is not being sourced or invoked as a R script
+      if(!WD) stop("source() this file or manually setwd() to the parent directory of 'code'.")
+      this.dir <- file.path(WD, rel.dir)
+    }
+    parent.dir <- normalizePath(file.path(this.dir, ".."))
+    
+    return(list(this=this.dir, parent=parent.dir))
+  }
+
 # Settings
-  # Set workspace
-  setwd("~/tci")
   var_list.0 <- ls()
   
   method.name <- 'survey'
   project.name <- 'NHTS'
   year <- '2009'
 
+  rel.dir <- file.path('code', method.name) #my path relative to WD
+  dirs <- get_dirs(my.path = thisfile(),
+                   WD = getwd(),
+                   rel.dir = rel.dir)  
+  
 ## settings
-  source("code/settings.R")
-
+  source(file.path(dirs$parent, "settings.R"))
+  source(file.path(dirs$parent, "functions.R"))
+  
   # Define unist cost for NHTS 2009 survey data 
   # mode
   MODE <- c(-8, -7, -1, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 22, 23, 97)
@@ -116,11 +138,10 @@
       filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo"))
     
 ## Calculate and plot trip cost
-  source("code/functions.R")
-  source("code/survey/compute.R")
-  #source("code/survey/plot.R")  
-
-## post-process and plot    
+  source(file.path(dirs$this, "compute.R"))
+  #source(file.path(dirs$this, "plot.R"))
+  
+## post-process and plot
   summary.table <- function(tcost.df) {
     tcost.df %>%
       group_by(short.name) %>%

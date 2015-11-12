@@ -2,20 +2,43 @@
 # There are three parts: part1 loads data file; part2 generate linedk trips; part3 calculate trip cost 
   require(ggmap)
   require(scales)
-
+  require(kimisc)
+  
 # Set workspace
-  setwd("~/tci")
+  get_dirs <- function(my.path, WD, rel.dir) {
+    if (!is.null(my.path)){
+      this.dir <- normalizePath(dirname(my.path))
+      WD <- strsplit(this.dir, rel.dir)[[1]]
+      setwd(WD)
+      cat("Set working directory:", getwd())
+    } else {
+      # this file is not being sourced or invoked as a R script
+      if(!WD) stop("source() this file or manually setwd() to the parent directory of 'code'.")
+      this.dir <- file.path(WD, rel.dir)
+    }
+    parent.dir <- normalizePath(file.path(this.dir, ".."))
+    
+    return(list(this=this.dir, parent=parent.dir))
+  }
+
+# Setting    
   var_list.0 <- ls()
   
   project.name <- 'Portland'
   method.name <- 'survey'
   year <- '1994'
 
+  rel.dir <- file.path('code', method.name) #my path relative to WD
+  dirs <- get_dirs(my.path = thisfile(),
+                   WD = getwd(),
+                   rel.dir = rel.dir)  
+  
 # data.source <- "Portland94"
 #unit.name <- "minutes" # "dollars"
 
 ##source common settings, which may be overrided below
-  source("code/settings.R")
+  source(file.path(dirs$parent, "settings.R"))
+  source(file.path(dirs$parent, "functions.R"))
 
 ## define unit cost for Portland 1994 survey data
   # distance-based monetary cost per mile
@@ -64,10 +87,9 @@
   load(file.path(INPUT_DIR, "portland_94.RData"))
 
 ## Define functions to calculate tcost 
-  source("code/functions.R")
-  source("code/survey/prepare_Portland1994.R")
-  source("code/survey/compute.R")
-  source("code/survey/plot.R")
+  #source(file.path(dirs$this, "prepare_Portland1994.R"))
+  source(file.path(dirs$this, "compute.R"))
+  source(file.path(dirs$this, "plot.R"))
 
 ##clean up
   if (CLEAN.UP) clean.up(var_list.0)

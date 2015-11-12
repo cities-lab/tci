@@ -1,3 +1,5 @@
+require(rhdf5)
+
 #=====
 #omx.r
 #=====

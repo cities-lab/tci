@@ -23,6 +23,7 @@
   unit.name <- ifelse(exists('unit.name'), unit.name, 'dollars')
   #unit.name <- ifelse(exists('unit.name'), unit.name, 'minutes')
   
+  scenario.name <- ifelse(exists('scenario.name'), scenario.name, '')
   year <- ifelse(exists('year'), year, '')
   
 # define unit travel costs by mode
@@ -94,12 +95,13 @@
   
 # Define directory 
   # setting
-  project.subdir <- paste0(project.name, year)
+  subdir <- paste0(scenario.name, year)
+  project.subdir <- ifelse(nchar(subdir)>0, file.path(project.name, subdir), project.name)
   INPUT_DIR <- file.path('data', project.subdir)
   SAVE.INTERMEDIARIES <- TRUE
-  INTERMEDIATE_DIR <- file.path("output/intermediate", method.name, project.subdir, unit.name)
-  dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)  
-  OUTPUT_DIR = file.path("output", method.name, project.subdir, unit.name)
+  INTERMEDIATE_DIR <- file.path("output/intermediate", project.subdir, method.name, unit.name)
+  dir.create(file.path(INTERMEDIATE_DIR), recursive=TRUE, showWarnings = FALSE)
+  OUTPUT_DIR = file.path("output", project.subdir, method.name, unit.name)
   dir.create(file.path(OUTPUT_DIR), recursive=TRUE, showWarnings = FALSE)
   
   CLEAN.UP <- ifelse(exists('CLEAN.UP'), CLEAN.UP, FALSE) # clean up memory before exiting

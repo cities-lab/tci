@@ -1,8 +1,12 @@
+require(testthat)
+
 context("Test running the Corvallis2011 project with the survey-based approach")
 
 CLEAN.UP <- FALSE
 #disable stdout
-capture.output(source("../survey/start_Corvallis2011.R"))
+capture.output(
+  source("../survey/start_Corvallis2011.R")
+)
 
 test_that("Expected results is produced", {
   #results data

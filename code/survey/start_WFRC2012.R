@@ -3,18 +3,40 @@
 # Load required packages
   require(gdata)
   require(dplyr)
+  require(kimisc)
+  
+# Set workspace
+  get_dirs <- function(my.path, WD, rel.dir) {
+    if (!is.null(my.path)){
+      this.dir <- normalizePath(dirname(my.path))
+      WD <- strsplit(this.dir, rel.dir)[[1]]
+      setwd(WD)
+      cat("Set working directory:", getwd())
+    } else {
+      # this file is not being sourced or invoked as a R script
+      if(!WD) stop("source() this file or manually setwd() to the parent directory of 'code'.")
+      this.dir <- file.path(WD, rel.dir)
+    }
+    parent.dir <- normalizePath(file.path(this.dir, ".."))
+    
+    return(list(this=this.dir, parent=parent.dir))
+  }
 
 # Settings
-  # Set workspace
-  setwd("~/tci")
   var_list.0 <- ls()
   
   project.name <- 'WFRC'
   method.name <- 'survey'
   year <- '2012'
   
+  rel.dir <- file.path('code', method.name) #my path relative to WD
+  dirs <- get_dirs(my.path = thisfile(),
+                   WD = getwd(),
+                   rel.dir = rel.dir)  
+  
   # unit <- "minutes" # "dollars"
-  source("code/settings.R")
+  source(file.path(dirs$parent, "functions.R"))
+  source(file.path(dirs$parent, "settings.R"))
    
 # Define unit costs for WFRC_Saltlake survey data
   MODE <- c(1:6)
@@ -165,9 +187,8 @@
                   HHWGT, HHSIZ, MODE, TripPurpose, tripdur.hours, tripdist.miles)
 
 ## Source scripts
-  source("code/functions.R")
-  source("code/survey/compute.R")
-  source("code/survey/plot.R")
+  source(file.path(dirs$this, "compute.R"))
+  source(file.path(dirs$this, "plot.R"))
   
 ##clean up
   if (CLEAN.UP) clean.up(var_list.0)
