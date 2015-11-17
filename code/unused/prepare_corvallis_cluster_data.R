@@ -1,7 +1,7 @@
 # This script prepare the data for applying cluster-based approach in Corvallis 
 
 # Set workplace
-setwd("~/tci")
+#setwd("~/tci") ## now set in code/settings.R
 var_list.0 <- ls()
 
 # # Setting 

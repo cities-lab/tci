@@ -2,7 +2,7 @@
 # and travel cost with employment centres methods 
 
 # Set workspace
-setwd("~/tci")
+#setwd("~/tci") ## now set in code/settings.R
 var_list.0 <- ls()
 
 source("code/settings.R")  #source project level settings first
