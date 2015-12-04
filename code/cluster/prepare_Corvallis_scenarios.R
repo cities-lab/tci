@@ -12,10 +12,11 @@
   method.name <- "cluster"
   project.name <- "CALM"
   year <- ""
-  unit.name <- 'minutes'  
+  # unit.name <- 'minutes'  
+  unit.name <- 'dolloars'
   
-  scenario.names <- c('2010')
-  #scenario.names <- c('2010', '2030Preferred', '2030Preferred_Scen1')
+  # scenario.names <- c('2010')
+  scenario.names <- c('2010', '2030Preferred', '2030Preferred_Scen1')
   
   #default settings
   source("code/settings.R")
@@ -33,46 +34,86 @@
   names(Md.tdist) <- Md
   
   prepare_data <- function() {
+    
+    ## TAZ shp file
+    path.shp <- file.path(INPUT_DIR, "TAZ")
+    dir.create(file.path(OUTPUT_DIR, 'shp'), recursive = TRUE, showWarnings = FALSE)
+    files.shp <- Sys.glob(file.path(path.shp, "TAZ*"))
+    for (file.from in files.shp) {
+      file.to <- file.path(OUTPUT_DIR, 'shp', paste0('TAZ.', tolower(file_ext(file.from))))
+      file.copy(file.from, file.to)
+    }
+    TAZ.id_name <- "TAZ"
+    TAZPoly <- readShapePoly(file.path(OUTPUT_DIR, 'shp/TAZ.shp'),
+                             proj4string=CRS("+init=epsg:2992"))
+    
     # init Zi
-    #Zi <- as.character(sort(TAZPoly@data[, TAZ.id_name]))
+    Zi <- as.character(sort(TAZPoly@data[, TAZ.id_name]))
     
+    # Get both external and internal TAZs 
+    # file.path(INPUT_DIR, paste(substr(scenario.name, 1, 4), "Dist Mat.csv", sep=" "))
+    
+    tripDist.df <- read.csv(file.path(INPUT_DIR, paste(substr(scenario.name, 1, 4), "Dist Mat.csv", sep=" ")), 
+                            sep=",", header=FALSE, skip=5)
+    
+    
+    # tripDist.df <- read.csv(file.path(INPUT_DIR, "2010 Dist Mat.csv"), sep=",", header=FALSE, skip=5)
+    colnames(tripDist.df) <- c("OTAZ", "DTAZ", "Dist")
+    Zo <- as.character(unique(tripDist.df$OTAZ))  
+    
+    # Transform trip distance data.frame into matrix  
+    tripDist <- matrix(tripDist.df[ , 3], nrow=length(Zo), dimnames=list(Zo, Zo))
+    tripDist <- tripDist[Zi, Zi]
     #alternatively
-    
-    #Get Zi from matrix dimnames
-    pr <- 'hbw'; ic <- 'lowInc'; tp <- 'peak'
-    obj.name <- paste0(tp, "Trips")
-    file.mtx <-
-      file.path(INPUT_DIR, "modec", pr, ic, paste0(obj.name, ".RData"))
-    load(file.mtx)
-    obj.data <- get(obj.name)
-    Zi <- dimnames(obj.data)[[1]]
+    #     #Get Zi from matrix dimnames
+    #     pr <- 'hbw'; ic <- 'lowInc'; tp <- 'peak'
+    #     obj.name <- paste0(tp, "Trips")
+    #     file.mtx <-
+    #       file.path(INPUT_DIR, "modec", pr, ic, paste0(obj.name, ".RData"))
+    #     load(file.mtx)
+    #     obj.data <- get(obj.name)
+    #     Zi <- dimnames(obj.data)[[1]]
     
     Zi.n <- length(Zi)
     save(Zi, file = file.path(OUTPUT_DIR, "Zi.RData"))
     
-    ## District mapping from TAZ
-    #  districts <- TAZPoly@data[, c("TAZ", "DISTRICT")] %>%
-    #    arrange(TAZ) %>%
-    #    dplyr::rename(zone=TAZ,
-    #                  ugb=DISTRICT)
-    
-    #  save(districts, file=file.path(OUTPUT_DIR, "districts.RData"))
-    
     ## District shp file (for creating maps)
+    ## District mapping from TAZ
+    districts <- TAZPoly@data[, c("TAZ", "DISTRICT")] %>%
+      arrange(TAZ) #%>%
+    #      dplyr::rename(zone=TAZ,
+    #                    ugb=DISTRICT)
     
-    ## hhs by TAZ & income level
-    taz_census <-
-      read.csv(file.path(INPUT_DIR, "inputs/taz_census.csv"), header = TRUE, sep =
-                 ",")
+    save(districts, file=file.path(OUTPUT_DIR, "districts.RData"))
     
-    hhs.ZiIc <- taz_census %>%
-      filter(TAZ %in% as.numeric(Zi)) %>%
-      mutate(lowInc = HHI1BASE,
-             midInc = HHI2BASE + HHI3BASE,
-             highInc = HHI4BASE)  %>%
-      mutate(htaz = TAZ) %>%
-      dplyr::select(htaz, lowInc, midInc, highInc) %>%
-      gather(ic, hhs, lowInc:highInc,-htaz)
+    
+#     ## hhs by TAZ & income level
+#     taz_census <-
+#       read.csv(file.path("data/Corvallis_cluster", "input/taz_census.csv"), header = TRUE, sep =
+#                  ",")
+#     
+#     hhs.ZiIc <- taz_census %>%
+#       filter(TAZ %in% as.numeric(Zi)) %>%
+#       mutate(lowInc = HHI1BASE,
+#              midInc = HHI2BASE + HHI3BASE,
+#              highInc = HHI4BASE)  %>%
+#       mutate(htaz = TAZ) %>%
+#       dplyr::select(htaz, lowInc, midInc, highInc) %>%
+#       gather(ic, hhs, lowInc:highInc,-htaz)
+#     
+#     head(hhs.ZiIc)
+    
+    load(file.path(INPUT_DIR, "inputs/RData/hiazAry.RData"))
+    hhs.ZiIc <- apply(hiazAry, c(4, 2), sum) %>% 
+                as.data.frame() %>%
+                mutate(htaz = Zo) %>%
+                filter(htaz %in% Zi) %>%
+                mutate(lowInc = i1,
+                       midInc = i2 + i3, 
+                       highInc = i4,
+                       htaz=as.numeric(htaz)) %>%
+                dplyr::select(htaz, lowInc, midInc, highInc) %>% 
+                gather(ic, hhs, lowInc:highInc,-htaz)
     
     save(hhs.ZiIc, file = file.path(OUTPUT_DIR, "hhs.ZiIc.RData"))
     
@@ -107,6 +148,10 @@
             file.path(INPUT_DIR, "modec", pr, ic, paste0(obj.name, ".RData"))
           load(file.name)
           obj.data <- get(obj.name)
+          
+          # Subset trip matrix 
+          dimnames(obj.data) <- list(Zo, Zo, Md)
+          obj.data <- obj.data[Zi, Zi, ]
           
           for (md in Md) {
             print(paste(pr, ic, tp, md, sep = "->"))
@@ -154,6 +199,11 @@
           else
             ttskims + obj.data
         }
+        
+        # Subset trip matrix 
+        dimnames(ttskims) <- list(Zo, Zo)
+        ttskims <- ttskims[Zi, Zi]
+        
         mtx.name <- paste0(tp, md, "Time")
         mtx.descr <- paste(tp, "Travel Time Skims for", md, sep = " ")
         writeMatrixOMX(out.file, ttskims, mtx.name, Description = mtx.descr)
@@ -173,9 +223,10 @@
     
     for (md in Md) {
       obj.name <- paste0(Md.tdist[[md]], "Dist")
-      file.name <- file.path(path.skims, paste0(obj.name, ".RData"))
-      load(file.name)
-      obj.data <- get(obj.name)
+#       file.name <- file.path(path.skims, paste0(obj.name, ".RData"))
+#       load(file.name)
+#       obj.data <- get(obj.name)
+      obj.data <- tripDist
       mtx.name <- paste0(md, "Distance")
       mtx.descr <- paste("Travel distance skims for", md, sep = " ")
       writeMatrixOMX(out.file, obj.data, mtx.name, Description = mtx.descr)
@@ -191,18 +242,6 @@
     prepare_data()
   }
   
-## TAZ shp file
-  path.shp <- file.path(INPUT_DIR, "TAZ")
-  dir.create(file.path(OUTPUT_DIR, 'shp'), recursive = TRUE, showWarnings = FALSE)
-  files.shp <- Sys.glob(file.path(path.shp, "TAZ*"))
-  for (file.from in files.shp) {
-    file.to <- file.path(OUTPUT_DIR, 'shp', paste0('TAZ.', tolower(file_ext(file.from))))
-    file.copy(file.from, file.to)
-  }
-  TAZ.id_name <- "TAZ"
-  TAZPoly <- readShapePoly(file.path(OUTPUT_DIR, 'shp/TAZ.shp'),
-                           proj4string=CRS("+init=epsg:2992"))
-
 ## create artificial scenarios for CALM (scenario A - halve driving time; scenario B - halve transit travel time)
   base.dir <- file.path('data', project.name, "2010/")
   
@@ -232,59 +271,62 @@
   
   Md.drive <- c("driveAlone", "drivePass", "pass")
   Md.transit <- c("busWalk", "parkAndRideBus")
-  skims.path.scenA <- file.path(scenA.dir, "TDM/travelTimeSkims.omx")
-  skims.path.scenB <- file.path(scenB.dir, "TDM/travelTimeSkims.omx")
+  # skims.path.scenA <- file.path(scenA.dir, "TDM/travelTimeSkims.omx")
+  skims.path.scenA <- file.path(scenA.dir, "2010/TDM/travelTimeSkims.omx")
+  # skims.path.scenB <- file.path(scenB.dir, "TDM/travelTimeSkims.omx")
+  skims.path.scenB <- file.path(scenB.dir, "2010/TDM/travelTimeSkims.omx")
   
   halve_skims(skims.path.scenA, Md.drive)
   halve_skims(skims.path.scenB, Md.transit)
   
-## create data for the CAMPO scenario testing (solution B - subsetting from CALM)
-  CAMPO.dir <- file.path('data', project.name, scenario.name)
-  CALM.dir <- file.path('data', "CALM/2010")
-  
-  load(file.path(CAMPO.dir, "Zi.RData"))
-  Zi.CAMPO <- Zi
-  load(file.path(CALM.dir, "Zi.RData"))
-  Zi.CALM <- Zi
-  
-  load(file.path(CALM.dir, "districts.RData"))
-  
-  ## ad hoc processing of TAZ/districts shp file from CALM
-  library(rgdal)
-  
-  TAZ_shp.CALM <-  readOGR(dsn = file.path(CALM.dir, "shp"), layer = "TAZ")
-  TAZ_shp.CAMPO <- TAZ_shp.CALM[TAZ_shp.CALM$TAZ %in% as.integer(Zi.CAMPO), ]
-  writeOGR(TAZ_shp.CAMPO, file.path(CAMPO.dir, "shp"), "TAZ", driver="ESRI Shapefile")
-  
-  distr.CAMPO <- districts[districts$TAZ %in% as.integer(Zi.CAMPO), ]
-  districts <- distr.CAMPO
-  save(districts, file=file.path(CAMPO.dir, 'districts.RData'))
-  
-  distr_shp.CALM <-  readOGR(dsn = file.path(CALM.dir, "shp"), layer = "districts")
-  distr_shp.CAMPO <- distr_shp.CALM[distr_shp.CALM$DISTRICT %in% distr.CAMPO$DISTRICT, ]
-  writeOGR(distr_shp.CAMPO, file.path(CAMPO.dir, "shp"), "districts", driver="ESRI Shapefile")
-  
-  ## ad hoc processing of hhs.ZiIc from CALM
-  load(file.path(CALM.dir, "hhs.ZiIc.RData"))
-  hhs.ZiIc.CALM <- hhs.ZiIc
-  hhs.ZiIc <- hhs.ZiIc.CALM[hhs.ZiIc.CALM$htaz %in% as.integer(Zi.CAMPO), ]
-  save(hhs.ZiIc, file=file.path(CAMPO.dir, 'hhs.ZiIc.RData'))
-  
-  ## ad hoc processing of travelDistanceSkims.omx from CALM
-  H5close()
-  file.dist <- file.path(CALM.dir, 'TDM/travelDistanceSkims.omx')
-  out.file <- file.path(CAMPO.dir, "TDM/travelDistanceSkims.omx")
-  Zi.n <- length(Zi.CAMPO)
-  createFileOMX(out.file, Zi.n, Zi.n, Replace = TRUE)
-  
-  Zi.in <- which(Zi.CALM %in% Zi.CAMPO)
-  omx.names <- listOMX(file.dist)
-  mtx.info <- omx.names$Matrices
-  for (mtx.i in 1:nrow(mtx.info)) {
-    mtx.name <- mtx.info$name[mtx.i]
-    mtx.descr <- mtx.info$description[mtx.i]
-    mtx <- readMatrixOMX(file.dist, mtx.name)
-    obj.data <- mtx[Zi.in, Zi.in]
-    writeMatrixOMX(out.file, obj.data, mtx.name, Description = mtx.descr)
-  }
+# Unnecessary   
+# ## create data for the CAMPO scenario testing (solution B - subsetting from CALM)
+#   CAMPO.dir <- file.path('data', project.name, scenario.name)
+#   CALM.dir <- file.path('data', "CALM/2010")
+#   
+#   load(file.path(CAMPO.dir, "Zi.RData"))
+#   Zi.CAMPO <- Zi
+#   load(file.path(CALM.dir, "Zi.RData"))
+#   Zi.CALM <- Zi
+#   
+#   load(file.path(CALM.dir, "districts.RData"))
+#   
+#   ## ad hoc processing of TAZ/districts shp file from CALM
+#   library(rgdal)
+#   
+#   TAZ_shp.CALM <-  readOGR(dsn = file.path(CALM.dir, "shp"), layer = "TAZ")
+#   TAZ_shp.CAMPO <- TAZ_shp.CALM[TAZ_shp.CALM$TAZ %in% as.integer(Zi.CAMPO), ]
+#   writeOGR(TAZ_shp.CAMPO, file.path(CAMPO.dir, "shp"), "TAZ", driver="ESRI Shapefile")
+#   
+#   distr.CAMPO <- districts[districts$TAZ %in% as.integer(Zi.CAMPO), ]
+#   districts <- distr.CAMPO
+#   save(districts, file=file.path(CAMPO.dir, 'districts.RData'))
+#   
+#   distr_shp.CALM <-  readOGR(dsn = file.path(CALM.dir, "shp"), layer = "districts")
+#   distr_shp.CAMPO <- distr_shp.CALM[distr_shp.CALM$DISTRICT %in% distr.CAMPO$DISTRICT, ]
+#   writeOGR(distr_shp.CAMPO, file.path(CAMPO.dir, "shp"), "districts", driver="ESRI Shapefile")
+#   
+#   ## ad hoc processing of hhs.ZiIc from CALM
+#   load(file.path(CALM.dir, "hhs.ZiIc.RData"))
+#   hhs.ZiIc.CALM <- hhs.ZiIc
+#   hhs.ZiIc <- hhs.ZiIc.CALM[hhs.ZiIc.CALM$htaz %in% as.integer(Zi.CAMPO), ]
+#   save(hhs.ZiIc, file=file.path(CAMPO.dir, 'hhs.ZiIc.RData'))
+#   
+#   ## ad hoc processing of travelDistanceSkims.omx from CALM
+#   H5close()
+#   file.dist <- file.path(CALM.dir, 'TDM/travelDistanceSkims.omx')
+#   out.file <- file.path(CAMPO.dir, "TDM/travelDistanceSkims.omx")
+#   Zi.n <- length(Zi.CAMPO)
+#   createFileOMX(out.file, Zi.n, Zi.n, Replace = TRUE)
+#   
+#   Zi.in <- which(Zi.CALM %in% Zi.CAMPO)
+#   omx.names <- listOMX(file.dist)
+#   mtx.info <- omx.names$Matrices
+#   for (mtx.i in 1:nrow(mtx.info)) {
+#     mtx.name <- mtx.info$name[mtx.i]
+#     mtx.descr <- mtx.info$description[mtx.i]
+#     mtx <- readMatrixOMX(file.dist, mtx.name)
+#     obj.data <- mtx[Zi.in, Zi.in]
+#     writeMatrixOMX(out.file, obj.data, mtx.name, Description = mtx.descr)
+#   }
   
