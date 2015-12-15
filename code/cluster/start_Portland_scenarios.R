@@ -3,7 +3,7 @@
   require(scales)
   require(kimisc)
   
-  stop("refactoring yet to be finished")
+ # stop("refactoring yet to be finished")
   
 # Define functions
   get_dirs <- function(my.path, WD, rel.dir) {
