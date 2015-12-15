@@ -212,9 +212,9 @@ plot_density <- function(plot.data=NULL,
   xaxis.label <- paste(xlab, " (", unit.name, ")", sep="")
   p <- ggplot(data=plot.data, aes_string(x = x, colour=group, group=group)) 
   p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max) +
-    scale_colour_discrete(name = legend.title) +
+    scale_colour_grey(name = legend.title) +
     ggtitle(title) +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + theme_bw()
 }
 
 # Box plots
@@ -232,9 +232,9 @@ plot_boxplot <- function(plot.data=NULL,
   
   p <- ggplot(data=plot.data, aes_string(x=x, y=y, fill=fill)) + 
     geom_boxplot()  + labs(y=yaxis.label) + xlab(xlab) + 
-    ylim(0, ylim.max)  + scale_fill_discrete(name = legend.title) + 
+    ylim(0, ylim.max)  + scale_fill_grey(name = legend.title) + 
     ggtitle(title) +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + theme_bw()
   p
 }
 
@@ -255,7 +255,7 @@ plot_line <- function (plot.data=NULL,
   p <- ggplot(data=plot.data, aes_string(x = x, y = y, colour=group, group=group)) +
     geom_line(fill=NA, size=1) + labs(x=xlab) + labs(y=yaxis.label) + ylim(0, ylim.max) +
     ggtitle(title) +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1))
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + scale_color_grey() + theme_bw()
   p
 }
 
@@ -276,7 +276,7 @@ plot_map <- function(plot.data=NULL,
                      unit.name="dollars", 
                      limits.max=NULL
                      ) {
-  default.limits.max <- c(dollars=100, minutes=200)
+  default.limits.max <- c(dollars=100, minutes=410)
   limits.max <- ifelse(is.null(limits.max), default.limits.max[[unit.name]], limits.max)
   
   name.label <- paste(name, " (", unit.name, ")", sep="")
@@ -285,7 +285,7 @@ plot_map <- function(plot.data=NULL,
     geom_polygon(data = plot.data, aes_string(x = "long", y = "lat", group = group, fill = fill), 
                  color = NA, size = 0.1) +
     scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, limits.max), 
-                         name = name.label, na.value = "grey80") +
+                         name = name.label, na.value = "grey95") +
     guides(fill = guide_legend(reverse = TRUE)) +
     theme_nothing(legend = TRUE)
   p

@@ -12,6 +12,7 @@ require(SDMTools)
     mutate(t.cost=VOT*tripdur.hours,            #time costs
            m.cost=mcpm*tripdist.miles,          #monetary costs
            tcost= constant + t.cost + m.cost) %>%        #total costs
+    filter(HHWGT!=0) %>%                        # select HHWGT!= 0
     na.omit()                                   #exclude rows with unknown HTAZ, tpurp, or inc.level
 
 # calculate household-level travel cost
