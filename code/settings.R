@@ -20,8 +20,8 @@
   # Define calculate method 
   Cm <- c("min", "weighted")
   
-  unit.name <- ifelse(exists('unit.name'), unit.name, 'dollars')
-  #unit.name <- ifelse(exists('unit.name'), unit.name, 'minutes')
+  # unit.name <- ifelse(exists('unit.name'), unit.name, 'dollars')
+  unit.name <- ifelse(exists('unit.name'), unit.name, 'minutes')
   
   scenario.name <- ifelse(exists('scenario.name'), scenario.name, '')
   year <- ifelse(exists('year'), year, '')
