@@ -19,9 +19,14 @@ tcost.trip <- linkedTrip %>%
 
 # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
 # low <- (1,2); median <- (3,4); high <- 5:8
+
+# Adjust 1994 income to 2011
+# lowInc: $0 ~ $34,999; midInc: $35,000 ~ $74,999; hignInc:75,000 ~ or more
+# low <- (1,3); median <- (4,5); high <- 6:8
+
 hh.ready <- hh %>% 
   mutate(inc.level=cut(INCOME,
-                       breaks=c(1, 3, 5, 9),
+                       breaks=c(1, 4, 6, 9),
                        labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
                        include.lowest=T, right=F
   )) %>%
