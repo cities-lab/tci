@@ -1,5 +1,7 @@
 #plot results from cluster-based approach
 require(reshape2)
+load("output/cluster/aggcostCm/weightedAggCost.ZiIcPr.RData") # This data is calcuated by first version of cluster method
+
 dtcost.htaz_tpurp_inc <- melt(weightedAggCost.ZiIcPr, 
                              varnames = c('htaz', 'inc.level', 'TripPurpose'),
                              value.name = "tcost")
@@ -46,21 +48,21 @@ dwtcost.htaz <- dwtcost.htaz_inc %>%
 # prepare data for plotting
 pden.inc <- ggplot(dwtcost.htaz_inc, aes(x = tcost.wt, colour=inc.level, group=inc.level)) +
   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 480) +
-  scale_colour_discrete(name = 'Income Level')
+  scale_colour_grey(name = 'Income Level') + theme_bw()
 pden.inc
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_inc.png")
 ggsave(pden.inc, file=output_file, type="cairo-png")
 
 pden.tpurp <- ggplot(dwtcost.htaz_tpurp, aes(x = tcost.wt, colour=TripPurpose, group=TripPurpose)) +
   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 180) +
-  scale_colour_discrete(name = 'Trip Purpose')
+  scale_colour_grey(name = 'Income Level') + theme_bw()
 pden.tpurp
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_tpurp.png")
 ggsave(pden.tpurp, file=output_file, type="cairo-png")
 
 boxp.tpurp_inc <- ggplot(dwtcost.htaz_tpurp_inc, aes(x=TripPurpose, y=tcost.wt, fill=inc.level)) +
   geom_boxplot() + labs(y="Generalized Travel Costs (minutes)") + xlab("Trip Purpose") + ylim(0, 250)  +
-  scale_fill_discrete(name = 'Income Level')
+  scale_fill_grey(name = 'Income Level')  + theme_bw() 
 boxp.tpurp_inc
 output_file = file.path(OUTPUT_DIR, "boxplot_tcost.hh_by_tpurp.inc.png")
 ggsave(boxp.tpurp_inc, file=output_file, type="cairo-png")

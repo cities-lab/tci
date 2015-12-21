@@ -19,7 +19,8 @@
   ## 
   pbox.htaz.pr.ic <- plot_boxplot(tcost.htaz.pr.ic, x="pr", xlab="Trip Purpose",
                                   y="tcost", ylab="Travel Cost", ylim.max=100,
-                                  fill="ic", legend.title="Income Level")
+                                  fill="ic", legend.title="Income Level",
+                                  unit.name=unit.name)
   output_file = file.path(OUTPUT_DIR, "boxplot_tcost_by_pr.png")
   ggsave(pbox.htaz.pr.ic, file=output_file, type="cairo-png")
 
@@ -91,6 +92,6 @@
     maps.distr
     output_file = file.path(OUTPUT_DIR, "map_district_by_ic_pr.png")
     ggsave(
-      maps.taz, file = output_file, width = 8.5, height = 11, type = "cairo-png"
+      maps.distr, file = output_file, width = 8.5, height = 11, type = "cairo-png"
     )
   }

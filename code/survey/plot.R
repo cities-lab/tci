@@ -19,7 +19,7 @@ require(ggmap)
   
   pden.hhsize <- plot_density(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
                           group="hhsiz.cat", legend.title="Household Size", 
-                          unit.name=unit.name)
+                          unit.name=unit.name) 
   
   #pden.hhsiz  <- pden.hhsiz.f(plot.data=tcost.hh, unit.name=unit.name)
   pden.hhsize
@@ -36,7 +36,7 @@ require(ggmap)
                              x="TripPurpose", xlab="Trip Purpose",
                              y="tcost", ylab="Travel Costs",
                              fill="inc.level", legend.title="Income Level",
-                             unit.name=unit.name)
+                             unit.name=unit.name) 
   
   #boxp.tpurp.inc <- boxp.tpurp.inc.f(plot.data=tcost.hh.tpurp, unit.name=unit.name)
   pbox.pr.ic
@@ -68,7 +68,7 @@ require(ggmap)
                            x="inc.level", xlab="Income",
                            y="tcost.wtavg", ylab="Travel Cost",
                            group="TripPurpose",
-                           unit.name=unit.name)
+                           unit.name=unit.name) 
   
   #linep.tpurp.inc<- linep.tpurp.inc.f(plot.data=tcost.tpurp.inc, unit.name=unit.name)
   pline.pr.ic
@@ -92,7 +92,6 @@ require(ggmap)
   tcost.distr_all <- rbind(tcost.distr_tpurp.inc, tcost.distr_tpurp.all, tcost.distr_all.inc, tcost.distr_all.all) %>%
                      right_join(expand.grid(district.id=1:20, TripPurpose=c('All', Pr), inc.level=c(Ic, 'All'), stringsAsFactors = F))
   
-  
   #prepare data for plotting
   tcost.distr_all <- tcost.distr_all %>% 
     mutate(id=as.character(district.id), 
@@ -105,7 +104,7 @@ require(ggmap)
   #maps <- plot_map(plot.data) + facet_grid(TripPurpose~inc.level)
   maps <- plot_map(plot.data, name="Travel Cost", 
                    group="group", fill="value", 
-                   unit.name=unit.name) + facet_grid(TripPurpose~inc.level)
+                   unit.name=unit.name) + facet_grid(TripPurpose~inc.level) 
   
   output_file = file.path(OUTPUT_DIR, "map_districts_all.png")
   ggsave(maps, file = output_file, width = 8.5, height = 11, type = "cairo-png")

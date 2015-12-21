@@ -160,8 +160,12 @@
     group_by(SAMPN) %>%
     summarize(DAYNO=first(DAYNO))
 
-  act1.test <- act1 %>%
-    inner_join(hh.dayno,by=c("SAMPN", "DAYNO"))
+  # act1.test <- act1 %>%
+  #  inner_join(hh.dayno,by=c("SAMPN", "DAYNO"))
+  
+   act1 <- act1 %>%
+          inner_join(hh.dayno,by=c("SAMPN", "DAYNO"))
+  
   
   # identify trip purpose
   linkedTrip <- identifyTripPurpose(act1)
@@ -241,8 +245,10 @@
                          include.lowest=T, right=F)
     ) %>%
     left_join(hhdist, by="SAMPN") %>%
-    dplyr::select(SAMPN, inc.level, HHSIZE, INCOME, district.id) %>%
-    rename(HHSIZ=HHSIZE) %>%
+    dplyr::select(SAMPN, inc.level, HHSIZE, INCOME, HXCORD, HYCORD, district.id) %>%
+    rename(HHSIZ=HHSIZE,
+           x=HXCORD,
+           y=HYCORD) %>%
     as.data.frame() 
   
   
