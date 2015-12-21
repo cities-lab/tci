@@ -23,7 +23,8 @@ require(SDMTools)
               inc.level=first(inc.level),
               INCOME=first(INCOME),
               HHWGT=first(HHWGT),
-              district.id=first(district.id)
+              district.id=first(district.id),
+              tcost.per.person=tcost/HHSIZ
     )
   
   tcost.hh.tpurp <- tcost.trip %>%
