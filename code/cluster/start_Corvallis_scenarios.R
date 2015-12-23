@@ -44,8 +44,9 @@
   # scenario.names <- c('2010')
   # scenario.names <- c('2010', 'scenarioA', 'scenarioB')
   # scenario.names <- c('2010', 'scenarioA/2010', 'scenarioB/2010')
-  scenario.names <- c('2010', 'scenarioA/2010', 'scenarioB/2010', '2030Preferred', '2030Preferred_Scen1')
 
+  scenario.names <- c('2010', 'scenarioA/2010', 'scenarioB/2010', '2030Preferred', '2030Preferred_Scen1')
+  
   for (scenario.name in scenario.names) {
     source(file.path(dirs$parent, "settings.R"))
     source(file.path(dirs$this, "settings.R")) #unitcosts
