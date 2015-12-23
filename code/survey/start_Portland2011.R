@@ -57,9 +57,9 @@
   districts <- fortify(districts, region="DISTRICT")
 
 ##start scripts
-  #source(file.path(dirs$this, "prepare_Portland2011.R"))
+  source(file.path(dirs$this, "prepare_Portland2011.R"))
   source(file.path(dirs$this, "compute.R"))
   source(file.path(dirs$this, "plot.R"))
 
 ##clean up
-  if (CLEAN.UP) clean.up(var_list.0)
+   if (CLEAN.UP) clean.up(var_list.0)
