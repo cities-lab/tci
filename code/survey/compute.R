@@ -20,6 +20,8 @@ require(SDMTools)
     group_by(SAMPN) %>%
     summarise(tcost=sum(tcost),
               HTAZ=first(HTAZ),                 #retain HTAZ, inc.level and HHWGT
+              x=first(x),
+              y=first(y),
               HHSIZ=first(HHSIZ),
               inc.level=first(inc.level),
               INCOME=first(INCOME),
