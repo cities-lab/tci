@@ -38,8 +38,13 @@ districts.shpfile <- file.path(INPUT_DIR, "shp/districts.shp")
 districts.id_name <- "DISTRICT"
 hh.metro$district.id <- get_xy_polyid(hh.metro, districts.shpfile, districts.id_name)
 
+per.child <- per %>%
+  group_by(SAMPN) %>%
+  summarize(has.child=ifelse(sum(AGE<=16) > 0, T, F))
+  
 tcost.trip <- tcost.trip %>%
-  left_join(hh.metro, by="SAMPN") #%>%
+  left_join(hh.metro, by="SAMPN") %>%
+  left_join(per.child, by="SAMPN")
   #left_join(districts, by=c("HTAZ"="zone")) %>%
   #dplyr::rename(district.id=ugb)
 

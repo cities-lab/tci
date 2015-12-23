@@ -11,6 +11,27 @@ require(ggmap)
   output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_inc.png")
   ggsave(pden.ic, file=output_file, type="cairo-png")
   
+  pden.pp.ic <- plot_density(plot.data=tcost.pp, x="tcost", xlab="Travel Costs", 
+                          group="inc.level", legend.title="Income Level", 
+                          unit.name=unit.name)
+  #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
+  output_file = file.path(OUTPUT_DIR, "density_tcost.pp_by_inc.png")
+  ggsave(pden.pp.ic, file=output_file, type="cairo-png")
+  
+  pden.hh.child <- plot_density(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
+                          group="has.child", legend.title="Presence of Children", 
+                          unit.name=unit.name)
+  #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
+  output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_child.png")
+  ggsave(pden.hh.child, file=output_file, type="cairo-png")
+  
+  pden.pp.child <- plot_density(plot.data=tcost.pp, x="tcost", xlab="Travel Costs", 
+                             group="has.child", legend.title="Presence of Children", 
+                             unit.name=unit.name)
+  #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
+  output_file = file.path(OUTPUT_DIR, "density_tcost.pp_by_child.png")
+  ggsave(pden.pp.child, file=output_file, type="cairo-png")  
+  
   tcost.hh <- tcost.hh %>% 
     mutate(hhsiz.cat=cut(HHSIZ,
                          breaks=c(1, 2, 3, 4, max(HHSIZ)),
@@ -26,6 +47,9 @@ require(ggmap)
   output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_hhsize.png")
   ggsave(pden.hhsize, file=output_file, type="cairo-png")
 
+  
+  
+  
 ## boxplot
   tcost.hh.tpurp <- tcost.hh.tpurp %>% 
     mutate(inc.level = factor(inc.level, levels=Ic, labels=c("Low Inc", "Mid Inc", "High Inc")),

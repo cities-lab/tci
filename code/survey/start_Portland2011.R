@@ -57,7 +57,7 @@
   districts <- fortify(districts, region="DISTRICT")
 
 ##start scripts
-  #source(file.path(dirs$this, "prepare_Portland2011.R"))
+  source(file.path(dirs$this, "prepare_Portland2011.R"))
   source(file.path(dirs$this, "compute.R"))
   source(file.path(dirs$this, "plot.R"))
 

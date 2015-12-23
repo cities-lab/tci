@@ -44,8 +44,14 @@ TAZ.DISTRICT <- TAZPoly@data %>%
                               district.id=DISTRICT)
 hh.ready <- hh.ready %>% 
             left_join(TAZ.DISTRICT)
+
+per.child <- per %>%
+  group_by(SAMPN) %>%
+  summarize(has.child=ifelse(sum(AGE<=16) > 0, T, F))
+
 tcost.trip <- tcost.trip %>%
-  left_join(hh.ready, by="SAMPN") #%>%
+  left_join(hh.ready, by="SAMPN") %>%
+  left_join(per.child, by="SAMPN")
 #left_join(districts, by=c("HTAZ"="zone")) %>%
 #dplyr::rename(district.id=ugb)
 

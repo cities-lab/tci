@@ -1,6 +1,7 @@
 # This script organizes Portland_94 data
 # There are three parts: part1 loads data file; part2 generate linedk trips; part3 calculate trip cost 
   require(ggmap)
+  require(tidyr)
   require(scales)
   require(kimisc)
   
@@ -87,7 +88,7 @@
   load(file.path(INPUT_DIR, "portland_94.RData"))
 
 ## Define functions to calculate tcost 
-  #source(file.path(dirs$this, "prepare_Portland1994.R"))
+  source(file.path(dirs$this, "prepare_Portland1994.R"))
   source(file.path(dirs$this, "compute.R"))
   source(file.path(dirs$this, "plot.R"))
 

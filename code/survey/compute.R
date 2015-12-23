@@ -20,13 +20,19 @@ require(SDMTools)
     group_by(SAMPN) %>%
     summarise(tcost=sum(tcost),
               HTAZ=first(HTAZ),                 #retain HTAZ, inc.level and HHWGT
+              x=first(x),
+              y=first(y),
               HHSIZ=first(HHSIZ),
               inc.level=first(inc.level),
+              has.child=first(has.child),
               INCOME=first(INCOME),
               HHWGT=first(HHWGT),
-              district.id=first(district.id),
-              tcost.per.person=tcost/HHSIZ
+              district.id=first(district.id)
     )
+  
+  #hh tcost per person
+  tcost.pp <- tcost.hh %>%
+    mutate(tcost=tcost/HHSIZ)
   
   tcost.hh.tpurp <- tcost.trip %>%
     group_by(SAMPN, TripPurpose) %>%
@@ -37,7 +43,6 @@ require(SDMTools)
               HHWGT=first(HHWGT),
               district.id=first(district.id)
     )
-  
   
   # summarize trip-level tcost
   tcost.HTAZ.tpurp.inc <- compute_tcost(tcost.hh.tpurp, by=c("HTAZ", "TripPurpose", "inc.level"), summarize_tcost)
@@ -58,7 +63,15 @@ require(SDMTools)
   
   tcost.inc <- compute_tcost(tcost.hh, by="inc.level", summarize_tcost, w="HHWGT")
   print(tcost.inc)
+
+  tcost.hh.child <- compute_tcost(tcost.hh, by="has.child", summarize_tcost, w="HHWGT")
+  print(tcost.hh.child)
   
+  tcost.pp.inc <- compute_tcost(tcost.pp, by="inc.level", summarize_tcost, w="HHWGT")
+  print(tcost.pp.inc)  
+  
+  tcost.pp.child <- compute_tcost(tcost.pp, by="has.child", summarize_tcost, w="HHWGT")
+  print(tcost.pp.child)
   
   # summarize household-level travel cost by district, TripPurpose and income level
   tcost.distr.tpurp.inc <- compute_tcost(tcost.hh.tpurp, by=c("district.id", "TripPurpose", "inc.level"), summarize_tcost, w="HHWGT")
@@ -79,8 +92,9 @@ require(SDMTools)
   print(tcost.all)
   
   output.file <- file.path(OUTPUT_DIR, "tcost.RData")
-  save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, tcost.hh.tpurp, 
-       tcost.tpurp.inc,tcost.trip, tcost.distr.tpurp.inc, tcost.distr.tpurp, tcost.distr.inc, file=output.file)
+  save(tcost.HTAZ.tpurp.inc, tcost.hh, tcost.inc, tcost.HTAZ.inc, tcost.HTAZ, tcost.distr, tcost.all, tcost.hh.tpurp, 
+       tcost.pp, tcost.pp.inc, tcost.tpurp.inc, tcost.trip, tcost.distr.tpurp.inc, tcost.distr.tpurp, tcost.distr.inc, 
+       file=output.file)
 
 #reshape data frame into arrays for plotting
 #tcost by HTAZ, inc.level, and tpurp

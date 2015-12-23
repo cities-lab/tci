@@ -1,5 +1,8 @@
+require(dplyr)
+require(tidyr)
+
 # Part1 load data files 
-  # load activity 1 data 
+  # load activity 1 data
   act1<- read.table(file.path(INPUT_DIR, "act1.txt"), header=FALSE,  sep=",", as.is=TRUE)
   
   # change column names
@@ -95,9 +98,8 @@
   colnames(veh) <- veh.colnames
 
   # load data
-  require(foreign)
-  data<- read.dbf(file.path(INPUT_DIR, "DATA94.DBF"), as.is=FALSE)
-
+  #require(foreign)
+  #data<- read.dbf(file.path(INPUT_DIR, "DATA94.DBF"), as.is=FALSE)
 
 # Part2 generates linked trips
 
@@ -201,10 +203,9 @@
   # Identify Route Distance
   linkedTrip$DistanceRoute <- with(linkedTrip, tdist[cbind(LastTAZ, TAZ)] * 5280) 
   linkedTrip <- as.data.frame(linkedTrip)
-  
+
   
 # Part3 calculate travel cost 
-  
   # prepare data -> a data.frame for linked trips with columns
   # SAMPN, HHWGT,  HTAZ, inc.level, TripPurpose, MODE, tripdur.hours, tripdist.miles
   
@@ -251,11 +252,14 @@
            y=HYCORD) %>%
     as.data.frame() 
   
+  per.child <- per %>%
+    group_by(SAMPN) %>%
+    summarize(has.child=ifelse(sum(AGE<=16) > 0, T, F))
   
   # Join trip cost and houseld income level, district 
   tcost.trip <- tcost.trip%>%
-    left_join(hh.metro) 
-  
+    left_join(hh.metro) %>%
+    left_join(per.child, by="SAMPN")
 
 if(SAVE.INTERMEDIARIES) {
     intm_file = file.path(INTERMEDIATE_DIR, "linkedTrip.RData")
