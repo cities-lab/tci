@@ -128,7 +128,7 @@ require(ggmap)
   #maps <- plot_map(plot.data) + facet_grid(TripPurpose~inc.level)
   maps <- plot_map(plot.data, name="Travel Cost", 
                    group="group", fill="value", 
-                   unit.name=unit.name) + facet_grid(TripPurpose~inc.level) 
-  
+                   unit.name=unit.name, limits.max = 350) + facet_grid(TripPurpose~inc.level) 
+  maps
   output_file = file.path(OUTPUT_DIR, "map_districts_all.png")
   ggsave(maps, file = output_file, width = 8.5, height = 11, type = "cairo-png")

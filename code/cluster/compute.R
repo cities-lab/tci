@@ -17,15 +17,29 @@ source("code/thirdparty/omx.r")
     # mode (md) filter is not being used for now
     factors.df[(factors.df$purpose==pr) & (factors.df$direction==direction), colname]
   }
-  
-  get_PA_from_OD <- function(factors.df, pr, md, OD_peak.mtx, OD_offPeak.mtx) {
-    pa.peak <- get_factor(factors.df, pr, md, 'pa', 'peak')
-    pa.offPeak <- get_factor(factors.df, pr, md, 'pa', 'offPeak')
-    ap.peak <- get_factor(factors.df, pr, md, 'ap', 'peak')
-    ap.offPeak <- get_factor(factors.df, pr, md, 'ap', 'offPeak')
-    ratio <- ap.peak / ap.offPeak
-    (OD_peak.mtx - OD_offPeak.mtx * ratio) / (pa.peak - pa.offPeak * ratio)
+
+  get_PA_from_OD <- function(factors.df, pr, md, OD.mtx, Tp) {
+    pa <- list()
+    ap <- list()
+    OD_Tp.mtx <- list() 
+    for (tp in Tp) {
+      pa[[tp]] <- get_factor(factors.df, pr, md, 'pa', tp)
+      ap[[tp]] <- get_factor(factors.df, pr, md, 'ap', tp)
+    }
+    
+    tp.1 <- Tp[1]; tp.2 <- Tp[2]
+    ratio <- ap[[tp.1]] / ap[[tp.2]]
+    (OD.mtx[[tp.1]] - OD.mtx[[tp.2]] * ratio) / (pa[[tp.1]] - pa[[tp.2]] * ratio)
   }
+    
+#   get_PA_from_OD <- function(factors.df, pr, md, OD_peak.mtx, OD_offPeak.mtx) {
+#     pa.peak <- get_factor(factors.df, pr, md, 'pa', 'peak')
+#     pa.offPeak <- get_factor(factors.df, pr, md, 'pa', 'offPeak')
+#     ap.peak <- get_factor(factors.df, pr, md, 'ap', 'peak')
+#     ap.offPeak <- get_factor(factors.df, pr, md, 'ap', 'offPeak')
+#     ratio <- ap.peak / ap.offPeak
+#     (OD_peak.mtx - OD_offPeak.mtx * ratio) / (pa.peak - pa.offPeak * ratio)
+#   }
 
   # efficiently set data.table values 
   set_dt <- function(dt, idx.start, df) {
@@ -65,13 +79,18 @@ source("code/thirdparty/omx.r")
                             tcost.sum=0.0)
   
   idx.start <- 1
+  basket.args$Zi <- Zi
+  basket <- list()
+  
   for (ic in Ic) {
     trips.pr <- list()
     tcost.pr <- list()
     for (pr in Pr) {
       #matrix for centers/travel market baskets
       #basket <- define_basket() #return a Zi.n * Zi.n matrix with 1/0
-      basket <- dummy_basket(Zi)
+      basket.args$pr <- pr
+      #basket <- get(basket.func)(basket.args)
+      basket[[pr]] <- if (exists(pr, where=basket)) basket[[pr]] else get(basket.func)(basket.args)
       
       for (md in Md) {
         trips.tp <- list()
@@ -103,7 +122,7 @@ source("code/thirdparty/omx.r")
           ttime.mtx[is.na(ttime.mtx)] <- 0
           tdist.mtx[is.na(tdist.mtx)] <- 0
           
-          trips.tp[[tp]] <- trips.mtx * basket
+          trips.tp[[tp]] <- trips.mtx * basket[[pr]]
           # total tcost of all trips made in period tp
           tcost.tp[[tp]] <- with(unitcost, constant + VOT * ttime.mtx / ttime.convertor + mcpm * tdist.mtx) * trips.tp[[tp]]
         }
@@ -111,12 +130,15 @@ source("code/thirdparty/omx.r")
         # total tcost of all trips using mode md in all periods, reversed to PA matrix
         #stopifnot()
         if (get.PA.from.OD) {
-          .trips.md <- get_PA_from_OD(period.factors, pr, md, trips.tp[["peak"]], trips.tp[["offPeak"]])
-          .tcost.md <- get_PA_from_OD(period.factors, pr, md, tcost.tp[["peak"]], tcost.tp[["offPeak"]])
+          .trips.md <- get_PA_from_OD(period.factors, pr, md, trips.tp, Tp)
+          .tcost.md <- get_PA_from_OD(period.factors, pr, md, tcost.tp, Tp)
         } else {
         # naive combination
-          .trips.md <- trips.tp[["peak"]] + trips.tp[["offPeak"]]
-          .tcost.md <- tcost.tp[["peak"]] + tcost.tp[["offPeak"]]
+          .trips.md <- NULL; .tcost.md <- NULL
+          for (tp in Tp) {
+            .trips.md <- if(is.null(.trips.md)) trips.tp[[tp]] else .trips.md + trips.tp[[tp]]
+            .tcost.md <- if(is.null(.tcost.md)) tcost.tp[[tp]] else .tcost.md + tcost.tp[[tp]]
+          }
         }
         # total tcost of all trips for the purpose of pr with the same production TAZ
         trips.pr[[pr]] <- if (exists(pr, where=trips.pr)) trips.pr[[pr]] + .trips.md else .trips.md
@@ -228,6 +250,11 @@ source("code/thirdparty/omx.r")
     left_join(hhs.htaz) %>%
     mutate(tcost=tcost.sum/hhs)
 
+  output.file <- file.path(OUTPUT_DIR, "tcost.RData")
+  save(tcost_trip.htaz.pr.ic, tcost_trip.pr.ic, tcost_trip.pr, tcost_trip.ic, tcost_trip.all,
+       tcost.htaz.pr.ic, tcost.htaz.ic, tcost.htaz.pr, tcost.pr.ic, tcost.pr, tcost.ic, tcost.all, tcost.htaz, 
+       file=output.file)
+  
   if (exists('districts')) {
     tcost.trip <- tcost.trip %>%
       left_join(districts, by=c("htaz"="TAZ"))

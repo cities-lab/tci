@@ -12,7 +12,7 @@
   ## this is trip level, as there is no way to aggregate trips to households
   pden.htaz.pr <- plot_density(tcost.htaz.pr, x="tcost", xlab="Travel Cost", 
                                 group="pr", legend.title="Trip Purpose", 
-                                unit.name=unit.name)
+                                unit.name=unit.name, xlim.max=180)
   output_file = file.path(OUTPUT_DIR, "density_tcost_by_pr.png")
   ggsave(pden.htaz.pr, file=output_file, type="cairo-png")
   
@@ -41,13 +41,18 @@
            pr = factor(pr, levels=c('All Trips', "HBW", "HB Shopping", "HB Recreation", "HB Other") )#, labels=c("All Trips", "HBW", "HB Shopping", "HB Recreation", "HB Other"))         
     )
   
-  plot.data <- full_join(taz, tcost.htaz.mapdata)
+  tcost.htaz.mapdata <- tcost.htaz.mapdata %>% select(id, pr, ic, hhs, value)
+  
+  taz.spdf <- fortify(taz, region="TAZ")
+  plot.data <- full_join(taz.spdf, tcost.htaz.mapdata)
   
   maps.taz <- plot_map(plot.data=plot.data,
                    name="Travel Cost",
                    group="group",
                    fill="value",
-                   unit.name=unit.name)
+                   unit.name=unit.name,
+                   filter.col='hhs',
+                   filter.min=3)
   
   maps.taz <- maps.taz + facet_grid(pr~ic)
   maps.taz
@@ -78,14 +83,19 @@
         )#, labels=c("All Trips", "HBW", "HB Shopping", "HB Recreation", "HB Other"))
       )
     
-    plot.data <- full_join(districts.geo, tcost.distr.mapdata)
+    tcost.distr.mapdata <- tcost.distr.mapdata %>% select(id, pr, ic, hhs, value)
+    
+    districts.spdf <- fortify(districts.geo, region=district.id)
+    plot.data <- full_join(districts.spdf, tcost.distr.mapdata)
     
     maps.distr <- plot_map(
       plot.data = plot.data,
       name = "Travel Cost",
       group = "group",
       fill = "value",
-      unit.name = unit.name
+      unit.name = unit.name,
+      filter.col='hhs',
+      filter.min=3
     )
     
     maps.distr <- maps.distr + facet_grid(pr ~ ic)
@@ -95,3 +105,31 @@
       maps.distr, file = output_file, width = 8.5, height = 11, type = "cairo-png"
     )
   }
+
+if (plot.centers) {
+  if ((!exists("basket")) | (length(basket) ==0)) stop("basket is undefined or empty")
+  taz.spdf <- fortify(taz, region="TAZ")
+  
+  centers.df <- NULL
+  for (pr in names(basket)){
+    is.center <- (basket[[pr]])[1, ]
+    .df <- data.frame(id=dimnames(basket[[pr]])[[2]], is.center=(basket[[pr]])[1, ], pr=pr, 
+                      stringsAsFactors=FALSE)
+    centers.df <- if(is.null(centers.df)) .df else rbind(centers.df, .df) 
+  }
+  
+  plot.data <- full_join(taz.spdf, centers.df)
+    
+  p <- ggplot() +
+       geom_polygon(data = plot.data, aes_string(x = "long", y = "lat", group="group", fill = "is.center"),  
+                   alpha = 0.75, color = "grey50", size = 0.25) + 
+    scale_fill_manual(values = c("TRUE" = "black","FALSE" = "white"), name="Center") +
+    guides(fill=FALSE) +
+    theme_nothing(legend = TRUE)
+    
+  maps.centers <- p + facet_wrap(~ pr, ncol=2)
+  maps.centers
+
+  output_file = file.path(OUTPUT_DIR, "map_centers.png")
+  ggsave(maps.centers, file = output_file, width = 8.5, height = 11, type = "cairo-png")    
+}

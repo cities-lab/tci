@@ -37,7 +37,14 @@
   
   ## default settings
   source(file.path(dirs$parent, "functions.R"))
-
+  
+  #parameters defining market baskets
+  #basket.func <- 'dummy_basket'
+  basket.func <- 'cluster_basket'
+  
+  basket.args <- list()
+  plot.centers <- TRUE
+  
 # run through scenarios
   ## default input directory structure: data/project.name/scenario.name[year]/
   ## default ouput directory structure: output/project.name/scenario.name[year]/method.name/unit.name
@@ -49,8 +56,11 @@
   
   for (scenario.name in scenario.names) {
     source(file.path(dirs$parent, "settings.R"))
-    source(file.path(dirs$this, "settings.R")) #unitcosts
+    source(file.path(dirs$this, "settings.R"))    #unitcosts
 
+    basket.args$centers.file <- file.path(INTERMEDIATE_DIR, 'centers.RData')
+    basket.args$cutoffs <- cutoffs
+    
     # Define time period (override what's been defined in settings.R)
     Tp <- c("peak", "offPeak")
     
@@ -71,18 +81,24 @@
     load(file.path(INPUT_DIR, "Zi.RData"))
     load(file.path(INPUT_DIR, "hhs.ZiIc.RData"))
     
+    taz.id <- 'TAZ'
+    taz.area <- 'f_area'
+    district.id <- 'DISTRICT'
     taz <- readOGR(dsn = file.path(INPUT_DIR, "shp"), layer = "TAZ")
-    taz <- fortify(taz, region="TAZ")
+    #taz <- fortify(taz, region="TAZ")
+    if (taz.id != "TAZ") taz@data <- taz@data %>% rename_(TAZ=taz.id)
     
     distr.file <- file.path(INPUT_DIR, "districts.RData")
     if (file.exists(distr.file)) {
       load(distr.file)
       districts.geo <- readOGR(dsn = file.path(INPUT_DIR, "shp"), layer = "districts")
-      districts.geo <- fortify(districts.geo, region="DISTRICT")
+      #districts.geo <- fortify(districts.geo, region="DISTRICT")
     }
+    basket.args$taz <- taz
     
     ##start scripts
     source(file.path(dirs$this, "define_basket.R"))
+    source(file.path(dirs$this, "prepare_Corvallis_scenarios.R"))
     source(file.path(dirs$this, "compute.R"))
     source(file.path(dirs$this, "plot.R"))
     

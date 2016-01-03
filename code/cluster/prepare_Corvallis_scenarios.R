@@ -10,28 +10,29 @@
 # Settings    
   setwd("~/tci") ## now set in code/settings.R
   method.name <- "cluster"
-  project.name <- "CALM"
+  project.name <- "Corvallis"
   year <- ""
-  # unit.name <- 'minutes'  
-  unit.name <- 'dolloars'
+  unit.name <- 'minutes'  
+  #unit.name <- 'dolloars'
   
   # scenario.names <- c('2010')
-  scenario.names <- c('2010', '2030Preferred', '2030Preferred_Scen1')
+  #scenario.names <- c('2010', '2030Preferred', '2030Preferred_Scen1')
+  scenario.names <- c()
   
-  #default settings
-  source("code/settings.R")
-  #  Inc levels
-  #Ic <- c("lowInc", "midInc", "highInc")
-  # Trip Purpose
-  #Pr <- c("hbw", "hbs", "hbr", "hbo")
-  # Define the travel modes
-  #Md <- c("driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus", "bike", "walk")
-  # Define time period 
-  Tp <- c("peak", "offPeak")
-  
-  # modes used for distance skims
-  Md.tdist <- c("auto", "auto", "auto", "tran", "tran", "bike", "walk")
-  names(Md.tdist) <- Md
+#   #default settings
+#   source("code/settings.R")
+#   #  Inc levels
+#   #Ic <- c("lowInc", "midInc", "highInc")
+#   # Trip Purpose
+#   #Pr <- c("hbw", "hbs", "hbr", "hbo")
+#   # Define the travel modes
+#   #Md <- c("driveAlone", "drivePass", "pass", "busWalk", "parkAndRideBus", "bike", "walk")
+#   # Define time period 
+#   Tp <- c("peak", "offPeak")
+#   
+#   # modes used for distance skims
+#   Md.tdist <- c("auto", "auto", "auto", "tran", "tran", "bike", "walk")
+#   names(Md.tdist) <- Md
   
   prepare_data <- function() {
     
@@ -243,90 +244,113 @@
   }
   
 ## create artificial scenarios for CALM (scenario A - halve driving time; scenario B - halve transit travel time)
-  base.dir <- file.path('data', project.name, "2010/")
-  
-  scenA.dir <- file.path('data', project.name, "scenarioA")
-  dir.create(scenA.dir, recursive = TRUE, showWarnings = FALSE)
-  file.copy(base.dir, scenA.dir, recursive = TRUE)
-  
-  scenB.dir <- file.path('data', project.name, "scenarioB")
-  dir.create(scenB.dir, recursive = TRUE, showWarnings = FALSE)
-  file.copy(base.dir, scenB.dir, recursive = TRUE)
-  
-  halve_skims <- function(skims.path, Md.subset) {
-    omx <- listOMX(skims.path)
-    mtx.info <- omx$Matrices
-    require(stringr)
-    for (mtx.i in 1:nrow(mtx.info)) {
-      mtx.name <- mtx.info$name[mtx.i]
-      mtx.descr <- mtx.info$description[mtx.i]
-      mtx <- readMatrixOMX(skims.path, mtx.name)
-      if (any(str_detect(mtx.name, Md.subset))) {
-        print(mtx.name)
-        mtx <- mtx / 2
+  create.hypothetical.scenarios <- FALSE
+  if (create.hypothetical.scenarios) {
+    base.dir <- file.path('data', project.name, "2010/")
+    
+    scenA.dir <- file.path('data', project.name, "scenarioA")
+    dir.create(scenA.dir, recursive = TRUE, showWarnings = FALSE)
+    file.copy(base.dir, scenA.dir, recursive = TRUE)
+    
+    scenB.dir <- file.path('data', project.name, "scenarioB")
+    dir.create(scenB.dir, recursive = TRUE, showWarnings = FALSE)
+    file.copy(base.dir, scenB.dir, recursive = TRUE)
+    
+    halve_skims <- function(skims.path, Md.subset) {
+      omx <- listOMX(skims.path)
+      mtx.info <- omx$Matrices
+      require(stringr)
+      for (mtx.i in 1:nrow(mtx.info)) {
+        mtx.name <- mtx.info$name[mtx.i]
+        mtx.descr <- mtx.info$description[mtx.i]
+        mtx <- readMatrixOMX(skims.path, mtx.name)
+        if (any(str_detect(mtx.name, Md.subset))) {
+          print(mtx.name)
+          mtx <- mtx / 2
+        }
+        writeMatrixOMX(skims.path, mtx, mtx.name, Description = mtx.descr, Replace = TRUE)
       }
-      writeMatrixOMX(skims.path, mtx, mtx.name, Description = mtx.descr, Replace = TRUE)
     }
+    
+    Md.drive <- c("driveAlone", "drivePass", "pass")
+    Md.transit <- c("busWalk", "parkAndRideBus")
+    # skims.path.scenA <- file.path(scenA.dir, "TDM/travelTimeSkims.omx")
+    skims.path.scenA <- file.path(scenA.dir, "2010/TDM/travelTimeSkims.omx")
+    # skims.path.scenB <- file.path(scenB.dir, "TDM/travelTimeSkims.omx")
+    skims.path.scenB <- file.path(scenB.dir, "2010/TDM/travelTimeSkims.omx")
+    
+    halve_skims(skims.path.scenA, Md.drive)
+    halve_skims(skims.path.scenB, Md.transit)
   }
   
-  Md.drive <- c("driveAlone", "drivePass", "pass")
-  Md.transit <- c("busWalk", "parkAndRideBus")
-  # skims.path.scenA <- file.path(scenA.dir, "TDM/travelTimeSkims.omx")
-  skims.path.scenA <- file.path(scenA.dir, "2010/TDM/travelTimeSkims.omx")
-  # skims.path.scenB <- file.path(scenB.dir, "TDM/travelTimeSkims.omx")
-  skims.path.scenB <- file.path(scenB.dir, "2010/TDM/travelTimeSkims.omx")
+  ## prepare taz.shp for clustering of activity centers
+  SQFT.KM2 <- 0.092903/1000000
   
-  halve_skims(skims.path.scenA, Md.drive)
-  halve_skims(skims.path.scenB, Md.transit)
+  taz.data <- taz@data %>% 
+    dplyr::select_("TAZ", area.sqft=taz.area) %>%
+    mutate(seq=1:n(), area.km2 = area.sqft * SQFT.KM2)
   
-# Unnecessary   
-# ## create data for the CAMPO scenario testing (solution B - subsetting from CALM)
-#   CAMPO.dir <- file.path('data', project.name, scenario.name)
-#   CALM.dir <- file.path('data', "CALM/2010")
-#   
-#   load(file.path(CAMPO.dir, "Zi.RData"))
-#   Zi.CAMPO <- Zi
-#   load(file.path(CALM.dir, "Zi.RData"))
-#   Zi.CALM <- Zi
-#   
-#   load(file.path(CALM.dir, "districts.RData"))
-#   
-#   ## ad hoc processing of TAZ/districts shp file from CALM
-#   library(rgdal)
-#   
-#   TAZ_shp.CALM <-  readOGR(dsn = file.path(CALM.dir, "shp"), layer = "TAZ")
-#   TAZ_shp.CAMPO <- TAZ_shp.CALM[TAZ_shp.CALM$TAZ %in% as.integer(Zi.CAMPO), ]
-#   writeOGR(TAZ_shp.CAMPO, file.path(CAMPO.dir, "shp"), "TAZ", driver="ESRI Shapefile")
-#   
-#   distr.CAMPO <- districts[districts$TAZ %in% as.integer(Zi.CAMPO), ]
-#   districts <- distr.CAMPO
-#   save(districts, file=file.path(CAMPO.dir, 'districts.RData'))
-#   
-#   distr_shp.CALM <-  readOGR(dsn = file.path(CALM.dir, "shp"), layer = "districts")
-#   distr_shp.CAMPO <- distr_shp.CALM[distr_shp.CALM$DISTRICT %in% distr.CAMPO$DISTRICT, ]
-#   writeOGR(distr_shp.CAMPO, file.path(CAMPO.dir, "shp"), "districts", driver="ESRI Shapefile")
-#   
-#   ## ad hoc processing of hhs.ZiIc from CALM
-#   load(file.path(CALM.dir, "hhs.ZiIc.RData"))
-#   hhs.ZiIc.CALM <- hhs.ZiIc
-#   hhs.ZiIc <- hhs.ZiIc.CALM[hhs.ZiIc.CALM$htaz %in% as.integer(Zi.CAMPO), ]
-#   save(hhs.ZiIc, file=file.path(CAMPO.dir, 'hhs.ZiIc.RData'))
-#   
-#   ## ad hoc processing of travelDistanceSkims.omx from CALM
-#   H5close()
-#   file.dist <- file.path(CALM.dir, 'TDM/travelDistanceSkims.omx')
-#   out.file <- file.path(CAMPO.dir, "TDM/travelDistanceSkims.omx")
-#   Zi.n <- length(Zi.CAMPO)
-#   createFileOMX(out.file, Zi.n, Zi.n, Replace = TRUE)
-#   
-#   Zi.in <- which(Zi.CALM %in% Zi.CAMPO)
-#   omx.names <- listOMX(file.dist)
-#   mtx.info <- omx.names$Matrices
-#   for (mtx.i in 1:nrow(mtx.info)) {
-#     mtx.name <- mtx.info$name[mtx.i]
-#     mtx.descr <- mtx.info$description[mtx.i]
-#     mtx <- readMatrixOMX(file.dist, mtx.name)
-#     obj.data <- mtx[Zi.in, Zi.in]
-#     writeMatrixOMX(out.file, obj.data, mtx.name, Description = mtx.descr)
-#   }
+  inputs.path <- file.path(INPUT_DIR, 'inputs')
+  load(file.path(inputs.path, "hhs.RData"))
+  load(file.path(inputs.path, "parkAcres.RData"))
+  load(file.path(inputs.path, "totalEmp.RData"))
+  load(file.path(inputs.path, "afrEmp.RData"))
+  load(file.path(inputs.path, "minEmp.RData"))
+  load(file.path(inputs.path, "conEmp.RData"))
+  load(file.path(inputs.path, "mfgEmp.RData"))
+  load(file.path(inputs.path, "tcpEmp.RData"))
+  load(file.path(inputs.path, "wstEmp.RData"))
+  load(file.path(inputs.path, "retEmp.RData"))
+  load(file.path(inputs.path, "finEmp.RData"))
+  load(file.path(inputs.path, "svcEmp.RData"))
+  load(file.path(inputs.path, "gvtEmp.RData"))
   
+  taz.idx.inc <- 9:length(hhs) #the first 8 TAZs are external ones
+  
+  add.data <- data.frame(hhs=hhs, parkAcres=parkAcres[1, ],
+                         totalEmp=totalEmp,
+                         afrEmp=afrEmp,
+                         minEmp=minEmp,
+                         conEmp=conEmp,
+                         mfgEmp=mfgEmp,
+                         tcpEmp=tcpEmp,
+                         wstEmp=wstEmp,
+                         retEmp=retEmp,
+                         finEmp=finEmp,
+                         svcEmp=svcEmp,
+                         gvtEmp=gvtEmp)
+  
+  add.data <- add.data[taz.idx.inc, ]
+  add.data$TAZ <- as.numeric(Zi)
+  
+  # Merge Area and EmpHHoldParkAcre
+  AllData <- left_join(taz.data, add.data,  by="TAZ")
+  
+  # Calculate densities
+  AllData <- AllData %>% 
+    mutate(
+          st.hbw = totalEmp,
+          st.hbs=0.028 * hhs + retEmp + 0.01 * svcEmp + 0.024 *(totalEmp - retEmp - svcEmp),
+          st.hbr=1.969 * hhs + 5.15 * parkAcres + retEmp,
+          st.hbo=0.413 * hhs + retEmp + 0.739 * svcEmp + 0.868 * gvtEmp + 0.108 * (totalEmp - retEmp - svcEmp - gvtEmp),
+          den.hbw = st.hbw / area.km2,
+          den.hbs = st.hbs / area.km2,
+          den.hbr = st.hbr / area.km2,
+          den.hbo = st.hbo / area.km2)
+  
+  # re-order by the original row order (seq), as shp file depends on the order
+  AllData <- AllData %>%
+    arrange(seq) %>%
+    dplyr::select(TAZ, area.km2, st.hbw, den.hbw, st.hbs, den.hbs, st.hbr, den.hbr, st.hbo, den.hbo)
+  
+  taz@data <- left_join(taz@data, AllData, by="TAZ")
+  # eliminate TAZ with null value (external TAZs)
+  taz <- taz[!is.na(taz@data$den.hbw), ]
+  
+  if (SAVE.INTERMEDIARIES) {
+    out.shp <- "tazden"
+    unlink(file.path(INTERMEDIATE_DIR, paste(out.shp, ".*", sep="")))
+    writeOGR(taz, INTERMEDIATE_DIR, out.shp, driver="ESRI Shapefile")
+  }
+  
+  basket.args$taz <- taz

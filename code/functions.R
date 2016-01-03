@@ -63,6 +63,7 @@ identify_centers <- function(map.df,
   cutoff.val2 <- quantile(data.df[,colname], cutoff.percentile)
   cutoff <- max(cutoff.val, cutoff.val2)
   print(cutoff)
+  
   filter <- data.df[,colname] >= cutoff
   clusters.shp <- identify_clusters(map.df, filter=filter, dist=dist)
   clusters.df <- clusters.shp@data
@@ -78,6 +79,7 @@ identify_centers <- function(map.df,
     sum.cutoff.val2 <- quantile(clusters.df.sum$cluster.sum, sum.cutoff.percentile)
     sum.cutoff <- max(sum.cutoff.val, sum.cutoff.val2)
     print(sum.cutoff)
+    
     valid.clusters <- clusters.df.sum %>%
       filter(cluster.sum >= sum.cutoff) %>%
       dplyr::select(cluster.id)
@@ -274,18 +276,33 @@ plot_map <- function(plot.data=NULL,
                      group=NULL,
                      fill=NULL,
                      unit.name="dollars", 
-                     limits.max=NULL
+                     limits.max=NULL,
+                     filter.col=NULL,
+                     filter.min=3
                      ) {
   default.limits.max <- c(dollars=100, minutes=410)
   limits.max <- ifelse(is.null(limits.max), default.limits.max[[unit.name]], limits.max)
   
   name.label <- paste(name, " (", unit.name, ")", sep="")
   
+  # truncate the plot.data to be within limits.max
+  plot.data_x <- plot.data
+  if (any(is.na(plot.data_x[, fill]))){
+    plot.data_x[is.na(plot.data_x[, fill]), fill] <- -9999
+  }
+  plot.data_x[plot.data_x[, fill] > limits.max, fill] <- limits.max
+  plot.data_x[plot.data_x[, fill] == -9999, fill] <- NA
+  
+  if (!is.null(filter.col)) {
+    plot.data_x[plot.data_x[, filter.col] < filter.min, 'value'] <- NA
+  }
+  
   p <- ggplot() +
-    geom_polygon(data = plot.data, aes_string(x = "long", y = "lat", group = group, fill = fill), 
-                 color = NA, size = 0.1) +
-    scale_fill_distiller(palette = "YlOrRd", breaks = pretty_breaks(n = 10), limits = c(0, limits.max), 
-                         name = name.label, na.value = "grey95") +
+    geom_polygon(data = plot.data_x, aes_string(x = "long", y = "lat", group = group, fill = fill), 
+                 color = "grey50", size = 0.1) +
+    scale_fill_gradient(low="grey80", high="grey10",
+                        breaks = pretty_breaks(n = 7),
+                        name = name.label, na.value = "white") +
     guides(fill = guide_legend(reverse = TRUE)) +
     theme_nothing(legend = TRUE)
   p
