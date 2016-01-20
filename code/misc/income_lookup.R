@@ -7,7 +7,7 @@
 #                      include.lowest=T, right=F)
 # )
 
-# Portland 1994 
+# Portland 1994 income classification
 # lowInc: $0 ~ $24,999; midInc: $25,000 ~ $49,999; highInc: $50,000 ~ or more 
 
 # Value Label
@@ -22,8 +22,8 @@
 # 9 $40,000 ‐ $44,999
 # 10 $45,000 ‐ $49,999
 # 11 $50,000 ‐ $54,999
-# 13 $60,000 or more
 # 12 $55,000 ‐ $59,999
+# 13 $60,000 or more
 # 14 DK/RF
 
 
@@ -33,6 +33,7 @@
 # Income cutoff for OHAS 2011
 # lowInc: $0 ~ 37,724; midInc: $37,725 ~ 75,450; highInc: 75,450 ~ or more 
 
+# OHAS 2011 survey data, income field distionary 
 # INCOME	What is your total household income for 2010?
 # 1	$0 - $14,999
 # 2	$15,000 - $24,999
@@ -44,7 +45,52 @@
 # 8	$150,000 or more
 # 99	REFUSED
 
-# lowInc: $0 ~ $34,999; midInc: $35,000 ~ $74,999; hignInc:75,000 ~ or more
+
+# inflation adjust
+  inflation.df <- data.frame(year=c(1992:2010), inflation=NA)
+  rownames(inflation.df) <- as.character(c(1992:2010)) 
+  
+  # Input inflation ratio
+  # Current use the inflaton one year before the survey data year: 2010 used for 2011 OHAS survey data 
+  inflation.df["1993", "inflation"] <- 0.9709 # For Salt Lake City 1993 survey 
+  inflation.df["1996", "inflation"] <- 1.0858 # For Tampa Bay 1996 survey
+  inflation.df["2009", "inflation"] <- 1.4900 # For NHTS
+  inflation.df["2011", "inflation"] <- 1.5090 # For OHAS
+  
+  # Original cutoff data frame based on Portland 1994 income classificaton 
+  # lowInc: $0 ~ $24,999; midInc: $25,000 ~ $49,999; highInc: $50,000 ~ or more 
+  cutoff.df <- data.frame(ic=c("lowInc", "midInc", "highInc"), low.bound=c(0, 25000, 50000), high.bound=c(24999, 49999, Inf))
+  rownames(cutoff.df) <- c("lowInc", "midInc", "highInc")
+  
+  cutoff.df[, c(2,3)] <- cutoff.df[, c(2,3)]*inflation.df["2011", "inflation"]
+  
+# try lookup table 
+  income.index <- c(1:8, 99)
+  income.low <- c(0, 15000, 25000, 35000, 50000, 75000, 100000, 150000, NA)
+  income.high <- c(14999, 24999, 34999, 49999, 74999, 99999, 149999, Inf, NA)
+  
+  income <- data.frame(income.index, income.low, income.high, year=2011)
+  # Income reclassification 
+  income <- income %>% 
+            mutate(ic = ifelse(income.high <= cutoff.df["lowInc", "high.bound"], "lowInc", NA)) %>%
+            mutate(ic = ifelse(income.low >= cutoff.df["highInc", "low.bound"], "highInc", ic)) %>%
+            mutate(ic = ifelse(income.low >= cutoff.df["midInc", "low.bound"]&income.high <= cutoff.df[2, "high.bound"], "midInc", ic)) %>%
+            mutate(ic = ifelse(income.low <= cutoff.df["midInc", "low.bound"]&(cutoff.df["midInc", "low.bound"]-income.low) <= (income.high-cutoff.df["midInc", "high.bound"]), "midInc", ic))%>%       
+            mutate(ic = ifelse(income.low <= cutoff.df["midInc", "high.bound"]&(cutoff.df["midInc", "high.bound"]-income.low) <= (income.high-cutoff.df["midInc", "high.bound"]), "midInc", ic)) %>%
+            mutate(ic=ifelse((!is.na(income.low))&(is.na(ic)), "midInc", ic)) 
+  
+     
+ 
+
+
+
+
+
+
+
+
+
+
 
 
 
