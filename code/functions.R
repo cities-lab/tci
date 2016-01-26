@@ -3,6 +3,7 @@ require(rgeos)
 require(rgdal)
 require(dplyr)
 require(lazyeval)
+require(ggmap)
 
 # define a functon to identify clusters 
 identify_clusters <- function(map.df, filter=NULL, dist=NULL) {
@@ -25,7 +26,7 @@ identify_clusters <- function(map.df, filter=NULL, dist=NULL) {
         new.cluster.id <- min(data.df[i,'cluster.id'], data.df[j,'cluster.id'])
         idx <- with(data.df, cluster.id %in% c(cluster.id[i], cluster.id[j]))
         data.df$cluster.id[idx] <- new.cluster.id
-      }  
+      }
     }
   }
   map.df@data <- data.df
@@ -212,11 +213,33 @@ plot_density <- function(plot.data=NULL,
   xlim.max <- ifelse(is.null(xlim.max), default.xlim.max[[unit.name]], xlim.max)
   
   xaxis.label <- paste(xlab, " (", unit.name, ")", sep="")
-  p <- ggplot(data=plot.data, aes_string(x = x, colour=group, group=group)) 
-  p + geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max) +
+  p <- ggplot(data=plot.data, aes_string(x = x, colour=group, group=group)) +
+    geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max) +
     scale_colour_grey(name = legend.title) +
     ggtitle(title) +
     theme(plot.title = element_text(face="bold", size=12, vjust=1)) + theme_bw()
+  p
+}
+
+plot_density.linetype <- function(plot.data=NULL, 
+                         x=NULL, xlab="", xlim.max=NULL, 
+                         group=NULL, legend.title="",
+                         unit.name="dollars", 
+                         title="") {
+  
+  default.xlim.max <- c(dollars=150, minutes=450)
+  xlim.max <- ifelse(is.null(xlim.max), default.xlim.max[[unit.name]], xlim.max)
+  
+  xaxis.label <- paste(xlab, " (", unit.name, ")", sep="")
+  
+  p <- ggplot(data=plot.data, aes_string(x = x, group=group, linetype=group)) +
+    geom_density(size=1, color='grey20') + labs(x=xaxis.label) + xlim(0, xlim.max) +
+    scale_linetype(name=legend.title #, values=c("Low Inc"="solid", "Mid Inc"="dashed", "High Inc"="dotted")
+                   ) +
+    ggtitle(title) +
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + theme_bw()
+  
+  p
 }
 
 # Box plots
@@ -255,7 +278,7 @@ plot_line <- function (plot.data=NULL,
   yaxis.label=paste(ylab, " (", unit.name, ")", sep="")
   
   p <- ggplot(data=plot.data, aes_string(x = x, y = y, colour=group, group=group)) +
-    geom_line(fill=NA, size=1) + labs(x=xlab) + labs(y=yaxis.label) + ylim(0, ylim.max) +
+    geom_line(size=1) + labs(x=xlab) + labs(y=yaxis.label) + ylim(0, ylim.max) +
     ggtitle(title) +
     theme(plot.title = element_text(face="bold", size=12, vjust=1)) + scale_color_grey() + theme_bw()
   p
