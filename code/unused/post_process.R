@@ -1,11 +1,18 @@
 #plot results from cluster-based approach
 OUTPUT_DIR <- file.path("tci/output/Portland/2010/cluster/minutes")
 require(reshape2)
-load("output/cluster/aggcostCm/weightedAggCost.ZiIcPr.RData") # This data is calcuated by first version of cluster method
+# load("output/cluster/aggcostCm/weightedAggCost.ZiIcPr.RData") # This data is calcuated by first version of cluster method
 
-dtcost.htaz_tpurp_inc <- melt(weightedAggCost.ZiIcPr, 
-                             varnames = c('htaz', 'inc.level', 'TripPurpose'),
-                             value.name = "tcost")
+load("output/cluster/aggcostCmTp/weightedpeakAggCost.ZiIcPr.RData") # This data is calcuated by first version of cluster method
+
+# dtcost.htaz_tpurp_inc <- melt(weightedAggCost.ZiIcPr, 
+#                              varnames = c('htaz', 'inc.level', 'TripPurpose'),
+#                              value.name = "tcost")
+
+
+dtcost.htaz_tpurp_inc <- melt(weightedpeakAggCost.ZiIcPr, 
+                              varnames = c('htaz', 'inc.level', 'TripPurpose'),
+                              value.name = "tcost")
 
 ## Combine the number of trips produced by income group and purpose into array 
 load("data/Zi.RData")
@@ -70,13 +77,30 @@ pden.inc <- ggplot(dwtcost.htaz_inc, aes(x = tcost.wt, colour=inc.level, group=i
   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 480) +
   scale_colour_grey(name = 'Income Level') + theme_bw()
 pden.inc
+
+# use plot_density.linetype to generate plot
+str(dwtcost.htaz_inc)
+plot_density.linetype(plot.data=dwtcost.htaz_inc, 
+                      x="tcost.wt", xlab="tcost", xlim.max=480, 
+                      group="inc.level", legend.title="Income Level",
+                      unit.name="minutes", 
+                      title="")
+
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_inc.png")
 ggsave(pden.inc, file=output_file, type="cairo-png")
 
 pden.tpurp <- ggplot(dwtcost.htaz_tpurp, aes(x = tcost.wt, colour=TripPurpose, group=TripPurpose)) +
   geom_density(fill=NA, size=1) + labs(x="Travel Costs (minutes)") + xlim(0, 180) +
-  scale_colour_grey(name = 'Income Level') + theme_bw() 
+  scale_colour_grey(name = 'Trip Purpose') + theme_bw() 
 pden.tpurp
+
+str(dwtcost.htaz_tpurp)
+plot_density.linetype(plot.data=dwtcost.htaz_tpurp, 
+                      x="tcost.wt", xlab="tcost", xlim.max=180, 
+                      group="TripPurpose", legend.title="Trip Purpose",
+                      unit.name="minutes", 
+                      title="")
+
 output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_tpurp.png")
 ggsave(pden.tpurp, file=output_file, type="cairo-png")
 
