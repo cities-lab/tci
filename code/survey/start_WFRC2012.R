@@ -75,6 +75,7 @@
   # trip <- read.xls("data/WFRC/HouseholdDiary_TripData_clean.xlsx", sheet=1, header=TRUE)
   trip  <- read.csv(file.path(INPUT_DIR, "HouseholdDiary_TripData_clean.csv"), header=TRUE, sep=",", as.is = TRUE)
   hh <-  read.csv(file.path(INPUT_DIR, "HouseholdDiary_HouseholdData.csv"), header=TRUE, sep=",", as.is = TRUE)
+  per <-  read.csv(file.path(INPUT_DIR, "HouseholdDiary_PersonData.csv"), header=TRUE, sep=",", as.is = TRUE)
  
   # reclassify income categories (low income: $0- $24,999; mid income: $25,000 - $49,999; high income: $50,000 or more; NA: refused)
   # hh_income: Total household income; password: household ID
@@ -107,7 +108,12 @@
             filter(oLoc=="home") %>% 
             group_by(password) %>%
             summarise(HTAZ=first(oTAZ))
+  # whether household has child
+  summary(per$age)
   
+  per.child <- per %>%
+    group_by(password) %>%
+    summarize(has.child=ifelse(sum(age<=3) > 0, T, F))
   
   # Identify trip purpose
   # trip_purpose_num: Trip purpose category, numeric
@@ -143,6 +149,7 @@
   trip <- trip %>% 
           left_join(hh.inc) %>%
           left_join(hhtaz) %>%
+          left_join(per.child) %>%
           mutate(tripdist.miles=trip_distance,
                  tripdur.hours=trip_duration/60,
                  TripPurpose=trip_purpose,
@@ -184,7 +191,7 @@
     ) %>%
     filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
     dplyr::select(SAMPN, PERNO, TRIPNO, HTAZ, INCOME, inc.level, district.id,
-                  HHWGT, HHSIZ, MODE, TripPurpose, tripdur.hours, tripdist.miles)
+                  HHWGT, HHSIZ, MODE, TripPurpose, tripdur.hours, tripdist.miles, has.child)
 
 ## Source scripts
   source(file.path(dirs$this, "compute.R"))
@@ -192,3 +199,5 @@
   
 ##clean up
   if (CLEAN.UP) clean.up(var_list.0)
+
+  
