@@ -1,0 +1,26 @@
+---
+title: "CBD_travel_time difference"
+author: "HuajieYang"
+date: "5/16/2016"
+output: html_document
+---
+
+```{r, results='hide', message=FALSE, warning=FALSE, include=FALSE}
+
+setwd("~/tci")
+source("code/functions.R")
+source("code/misc/portland_travel_time_modes_difference.R")
+
+```
+
+```{r}
+tcost.trip.CBD.both
+
+pbox.tcost.trip.CBD.both.1994
+pbox.tcost.trip.CBD.both.2011
+
+pden.tcost.trip.CBD.both.1994
+pden.tcost.trip.CBD.both.2011
+
+```
+
