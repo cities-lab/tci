@@ -1,6 +1,6 @@
 # check travel time and travel modes difference between 1994 and 2011 
 # Settings 
-require(ggplot2)
+  require(ggplot2)
 
 # Open district shapefile, TAZ shapefile of 1994 and 2011 in QGIS
 # Identify 1:26 TAZs for 2011, 1:16 TAZs for 1994
@@ -34,7 +34,7 @@ require(ggplot2)
   tcost.trip <- linkedTrip %>% 
                 left_join(hh.metro) %>%
                 filter(!is.na(AREA)) %>%
-                filter(AGGACT %in% c("Work", "WorkRelated")) %>%
+                filter(TripPurpose %in% c("HBW")) %>%
                 select(SAMPN, PERNO, PLANO, AREA, ThisMODE, TRPDUR, CMMOTTRPDUR, DistanceRoute, LastXCORD, LastYCORD, ThisXCORD, ThisYCORD) %>%
                 rename(MODE=ThisMODE) %>%
                 arrange(SAMPN, PERNO) %>% 
@@ -75,48 +75,50 @@ require(ggplot2)
   tcost.trip.CBD.both.2011 <- tcost.trip %>% 
                                 filter((LastTAZ %in% c(1:26)|ThisTAZ %in% c(1:26)))
   
-  tcost.trip.CBD.from.2011 <- tcost.trip %>% 
-                                filter(LastTAZ %in% c(1:26))
+  tcost.trip.CBD.both.2011 <- tcost.trip.CBD.both.2011 %>% 
+                                          mutate(MODE=as.character(MODE)) %>%
+                                          mutate(MODE=ifelse(MODE=="PNR", "TRANSIT", MODE)) %>%
+                                          mutate(MODE=ifelse(MODE=="KNR", "TRANSIT", MODE)) %>%
+                                          mutate(MODE=ifelse(MODE=="CAR/VANPOOL", "PASSENGER", MODE)) %>%
+                                          filter(MODE!="TAXI")
   
-  tcost.trip.CBD.to.2011 <- tcost.trip %>% 
-                                filter(ThisTAZ %in% c(1:26))
+  # tcost.trip.CBD.from.2011 <- tcost.trip %>% 
+  #                               filter(LastTAZ %in% c(1:26))
+  # 
+  # tcost.trip.CBD.to.2011 <- tcost.trip %>% 
+  #                               filter(ThisTAZ %in% c(1:26))
   
 # Ues CMMOTTRPDUR for transit (KNR, PNR, TRANSIT), TRPDUR for for non transit modes
   # TRPDUR, CMMOTTRPDUR,
   
   tcost.trip.CBD.both.2011.transit <- tcost.trip.CBD.both.2011 %>% 
-    filter(MODE %in% c("KNR", "PNR", "TRANSIT")) %>%
+    filter(MODE %in% c("TRANSIT")) %>%
     mutate(tripdur.minutes = CMMOTTRPDUR)  %>% 
     select(SAMPN, PERNO, PLANO, MODE, tripdur.minutes)
   
   
   tcost.trip.CBD.both.2011.notransit <- tcost.trip.CBD.both.2011 %>% 
-    filter(!(MODE %in% c("KNR", "PNR", "TRANSIT"))) %>%
+    filter(!(MODE %in% c("TRANSIT"))) %>%
     mutate(tripdur.minutes = TRPDUR) %>%
     select(SAMPN, PERNO, PLANO, MODE, tripdur.minutes)
   
   tcost.trip.CBD.both.2011 <- rbind(tcost.trip.CBD.both.2011.transit, tcost.trip.CBD.both.2011.notransit)
   
+  tcost.trip.CBD.both.2011 <- tcost.trip.CBD.both.2011 %>% 
+    mutate(MODE=as.character(MODE)) %>%
+    mutate(MODE=ifelse(MODE=="PNR", "TRANSIT", MODE)) %>%
+    mutate(MODE=ifelse(MODE=="KNR", "TRANSIT", MODE)) %>%
+    mutate(MODE=ifelse(MODE=="CAR/VANPOOL", "PASSENGER", MODE)) %>%
+    filter(MODE!="TAXI")
   
-  pbox.tcost.trip.CBD.both.2011 <- ggplot(tcost.trip.CBD.both.2011, aes(MODE, tripdur.minutes)) + geom_boxplot() + ylim(0, 75)
-  pbox.tcost.trip.CBD.both.2011
-  output_file = file.path(OUTPUT_DIR, "boxplot_tcost.trip.CBD.both.1994.png")
-  ggsave(pbox.tcost.trip.CBD.both.2011, file=output_file, type="cairo-png")
-  
-  pden.tcost.trip.CBD.both.2011 <- ggplot(tcost.trip.CBD.both.2011, aes(tripdur.minutes, colour=MODE)) + geom_density() + xlim(0,100) + ylim(0, 0.15)
-  pden.tcost.trip.CBD.both.2011
-  output_file = file.path(OUTPUT_DIR, "denplot_tcost.trip.CBD.both.1994.png")
-  ggsave(pbox.tcost.trip.CBD.both.2011, file=output_file, type="cairo-png")
-  
-  
-  tcost.trip.CBD.both.2011.sum <- tcost.trip.CBD.both.2011 %>%
-    group_by(MODE) %>%
-    summarise(freq.2011=n(),
-              ttime.min.2011=min(tripdur.minutes), 
-              ttime.avg.2011=mean(tripdur.minutes),
-              ttime.median.2011=median(tripdur.minutes),
-              ttime.max.2011=max(tripdur.minutes)) %>%
-    mutate(probs.2011=freq.2011/sum(freq.2011))
+  # tcost.trip.CBD.both.2011.sum <- tcost.trip.CBD.both.2011 %>%
+  #   group_by(MODE) %>%
+  #   summarise(freq.2011=n(),
+  #             ttime.min.2011=min(tripdur.minutes), 
+  #             ttime.avg.2011=mean(tripdur.minutes),
+  #             ttime.median.2011=median(tripdur.minutes),
+  #             ttime.max.2011=max(tripdur.minutes)) %>%
+  #   mutate(probs.2011=freq.2011/sum(freq.2011))
   
 
   #   tcost.trip.both <- tcost.trip %>% 
@@ -159,7 +161,7 @@ require(ggplot2)
   
   rm(list= ls()[!(ls() %in% c('tcost.trip.CBD.both.2011','tcost.trip.CBD.from.2011', 
                               'tcost.trip.CBD.to.2011', 'tcost.trip.CBD.both.2011.sum',
-                              'OUTPUT_DIR', "pbox.tcost.trip.CBD.both.2011", "pden.tcost.trip.CBD.both.2011"))])
+                              'OUTPUT_DIR'))])
 # 1994 OHAS 
   # CBD includes TAZ 1:16, these TAZs are within district 1
   # Settings 
@@ -176,13 +178,13 @@ require(ggplot2)
            #TripPurpose=ifelse(TripPurpose=="hbsch", "hbo", TripPurpose),                #HB School trips ==> HBO trips
            #TripPurpose=ifelse(str_detect(TripPurpose, "^hb.*esc$"), "hbo", TripPurpose) #HB Escort trips ==> HBO trips
     ) %>%
-    filter( TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
+    filter( TripPurpose %in% c("hbw")) %>%
     mutate(tripdur.minutes=TRPDUR,
            tripdist.miles=DistanceRoute/5280
     ) %>% 
     filter(!is.na(MODE)) %>% 
     left_join(modes.df)
-  
+   
     
   # mutate(MODE = factor(MODE, levels=c(1:8), 
   #                     labels=c("Other", "Walk", "Bicycle", "School Bus", "Public Bus", "MAX", 
@@ -191,11 +193,11 @@ require(ggplot2)
   tcost.trip.CBD.both.1994 <- tcost.trip %>% 
                               filter((TAZ %in% c(1:16)|LastTAZ %in% c(1:16))) 
   
-  tcost.trip.CBD.to.1994 <- tcost.trip %>%
-                             filter(TAZ %in% c(1:16)) 
-  
-  tcost.trip.CBD.from.1994 <- tcost.trip %>%
-                               filter(LastTAZ %in% c(1:16))
+  # tcost.trip.CBD.to.1994 <- tcost.trip %>%
+  #                            filter(TAZ %in% c(1:16)) 
+  # 
+  # tcost.trip.CBD.from.1994 <- tcost.trip %>%
+  #                              filter(LastTAZ %in% c(1:16))
 
 
 # Comparison 
@@ -229,45 +231,145 @@ tcost.trip.CBD.both.1994 <- tcost.trip.CBD.both.1994 %>%
   mutate(MODE.name=ifelse(MODE.name=="non-personal vehicle", "PASSENGER", MODE.name)) %>%
   mutate(MODE.name=ifelse(MODE.name=="bicycle", "BIKE", MODE.name)) %>%
   mutate(MODE.name=ifelse(MODE.name=="personal vehicle", "DRIVER", MODE.name)) %>%
-  mutate(MODE.name=toupper(MODE.name)) 
+  mutate(MODE.name=toupper(MODE.name))  %>%
+  filter(MODE.name!="OTHER(SPECIFY)") 
   
-table(tcost.trip.CBD.both.1994$MODE.name)
+  # For 2011, TRANSIT includes TRANSIT, KNR, PNR; PASSENGER includes PASSENGER and CAR/VANPOOL
+  tcost.trip.CBD.both.2011 <- tcost.trip.CBD.both.2011 %>% 
+    mutate(YEAR=2011) %>% 
+    select(YEAR, SAMPN, PERNO, MODE, tripdur.minutes) 
+  
+  tcost.trip.CBD.both.1994 <- tcost.trip.CBD.both.1994 %>% 
+    select(SAMPN, PERNO, MODE.name, tripdur.minutes) %>%
+    rename(MODE=MODE.name) %>%
+    mutate(YEAR=1994) %>% 
+    select(YEAR, SAMPN, PERNO, MODE, tripdur.minutes) 
+  
+  
+  
+  tcost.trip.CBD.both.1994.sum <- tcost.trip.CBD.both.1994 %>%
+    group_by(MODE) %>%
+    summarise(freq.1994=n(),
+              ttime.min.1994=min(tripdur.minutes),
+              ttime.avg.1994=mean(tripdur.minutes),
+              ttime.median.1994=median(tripdur.minutes),
+              ttime.max.1994=max(tripdur.minutes)) %>%
+    mutate(probs.1994=freq.1994/sum(freq.1994)) 
+  
 
-pbox.tcost.trip.CBD.both.1994 <- ggplot(tcost.trip.CBD.both.1994, aes(MODE.name, tripdur.minutes)) + geom_boxplot() + ylim(0, 75)
-pbox.tcost.trip.CBD.both.1994
-output_file = file.path(OUTPUT_DIR, "boxplot_tcost.trip.CBD.both.1994.png")
-ggsave(pbox.tcost.trip.CBD.both.1994, file=output_file, type="cairo-png")
-
-pden.tcost.trip.CBD.both.1994 <- ggplot(tcost.trip.CBD.both.1994, aes(tripdur.minutes, colour=MODE.name)) + geom_density() + xlim(0, 100) + ylim(0, 0.15)
-pden.tcost.trip.CBD.both.1994
-output_file = file.path(OUTPUT_DIR, "denplot_tcost.trip.CBD.both.1994.png")
-ggsave(pbox.tcost.trip.CBD.both.1994, file=output_file, type="cairo-png")
-
-
-tcost.trip.CBD.both.1994.sum <- tcost.trip.CBD.both.1994 %>% 
-  group_by(MODE.name) %>%
-  summarise(freq.1994=n(),
-            ttime.min.1994=min(tripdur.minutes), 
-            ttime.avg.1994=mean(tripdur.minutes),
-            ttime.median.1994=median(tripdur.minutes),
-            ttime.max.1994=max(tripdur.minutes)) %>%
-  mutate(probs.1994=freq.1994/sum(freq.1994)) %>%
-  rename(MODE=MODE.name)
-
-head(tcost.trip.CBD.both.1994.sum)
-head(tcost.trip.CBD.both.2011.sum)
-
-tcost.trip.CBD.both <- tcost.trip.CBD.both.2011.sum %>% 
-  left_join(tcost.trip.CBD.both.1994.sum) %>%
-  select(MODE, freq.1994, freq.2011, ttime.min.1994, ttime.min.2011, ttime.avg.1994, ttime.avg.2011, 
-         ttime.max.1994, ttime.max.2011, probs.1994, probs.2011) %>%
-  arrange(freq.1994) %>%
-  as.data.frame()
-
-tcost.trip.CBD.both
-
-output_file = file.path(OUTPUT_DIR, "tcost.trip.CBD.both.RData")
-save(tcost.trip.CBD.both, file=output_file)
+  tcost.trip.CBD.both.2011.sum <- tcost.trip.CBD.both.2011 %>%
+    group_by(MODE) %>%
+    summarise(freq.2011=n(),
+              ttime.min.2011=min(tripdur.minutes),
+              ttime.avg.2011=mean(tripdur.minutes),
+              ttime.median.2011=median(tripdur.minutes),
+              ttime.max.2011=max(tripdur.minutes)) %>%
+    mutate(probs.2011=freq.2011/sum(freq.2011))
+  
+  tcost.trip.CBD.both.sum <- tcost.trip.CBD.both.1994.sum %>%
+                             left_join(tcost.trip.CBD.both.2011.sum) %>% 
+                             select(MODE, freq.1994, freq.2011, ttime.min.1994, ttime.min.2011, ttime.avg.1994, ttime.avg.2011, 
+                                    ttime.median.1994, ttime.median.2011,ttime.max.1994, ttime.max.2011, probs.1994, probs.2011) %>%
+                             arrange(freq.1994) %>%
+                             mutate(probs.1994=round(probs.1994*100, 2), 
+                                    probs.2011=round(probs.2011*100, 2))%>%
+                             as.data.frame()
+                  
+  
+  tcost.trip.CBD.both <- rbind(tcost.trip.CBD.both.2011, tcost.trip.CBD.both.1994) %>%
+                         mutate(YEAR=as.factor(YEAR))
+  
+  tcost.trip.CBD.both.sum.plot.data <- rbind(tcost.trip.CBD.both.2011, tcost.trip.CBD.both.1994) %>% 
+    group_by(YEAR, MODE) %>% 
+    summarise(freq=n(), 
+              ttime.min=min(tripdur.minutes),
+              ttime.avg=mean(tripdur.minutes),
+              ttime.median=median(tripdur.minutes),
+              ttime.max=max(tripdur.minutes)) %>% 
+    group_by(YEAR) %>% 
+    mutate(probs=freq/sum(freq))
+  
+  # Plot
+  pden.tcost.trip.CBD.both.2011 <- ggplot(tcost.trip.CBD.both.2011, aes(tripdur.minutes, colour=MODE)) + geom_density() + xlim(0,100) + ylim(0, 0.15)
+  pden.tcost.trip.CBD.both.2011
+  # output_file = file.path(OUTPUT_DIR, "denplot_tcost.trip.CBD.both.1994.png")
+  # ggsave(pden.tcost.trip.CBD.both.2011, file=output_file, type="cairo-png")
+  
+  pden.tcost.trip.CBD.both.1994 <- ggplot(tcost.trip.CBD.both.1994, aes(tripdur.minutes, colour=MODE)) + geom_density() + xlim(0, 100) + ylim(0, 0.15)
+  pden.tcost.trip.CBD.both.1994
+  # output_file = file.path(OUTPUT_DIR, "denplot_tcost.trip.CBD.both.1994.png")
+  # ggsave(pbox.tcost.trip.CBD.both.1994, file=output_file, type="cairo-png")
+  
+  pbox.ttime <- ggplot(tcost.trip.CBD.both, aes(x=MODE, y=tripdur.minutes, fill=YEAR)) + geom_boxplot() + ylim(0, 75)
+  
+  pbar.freq <- ggplot(tcost.trip.CBD.both.sum.plot.data, aes(factor(MODE), freq, fill = factor(YEAR))) + 
+    geom_bar(stat="identity", position = "dodge") + 
+    scale_fill_brewer(palette = "Set1")
+  pbar.freq
+  
+  pbar.prob <- ggplot(tcost.trip.CBD.both.sum.plot.data, aes(factor(MODE), probs, fill = factor(YEAR))) + 
+    geom_bar(stat="identity", position = "dodge") + 
+    scale_fill_brewer(palette = "Set1")
+  pbar.prob
+  
+  pbar.ttime.avg <-  ggplot(tcost.trip.CBD.both.sum.plot.data, aes(factor(MODE), ttime.avg, fill = factor(YEAR))) + 
+    geom_bar(stat="identity", position = "dodge") + 
+    scale_fill_brewer(palette = "Set1")
+  pbar.ttime.avg 
+  
+  
+  pbar.ttime.median <-  ggplot(tcost.trip.CBD.both.sum.plot.data, aes(factor(MODE), ttime.median, fill = factor(YEAR))) + 
+    geom_bar(stat="identity", position = "dodge") + 
+    scale_fill_brewer(palette = "Set1")
+  pbar.ttime.median   
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+# # Plot     
+# table(tcost.trip.CBD.both.1994$MODE.name)
+# 
+# pbox.tcost.trip.CBD.both.1994 <- ggplot(tcost.trip.CBD.both.1994, aes(MODE.name, tripdur.minutes)) + geom_boxplot() + ylim(0, 75)
+# pbox.tcost.trip.CBD.both.1994
+# output_file = file.path(OUTPUT_DIR, "boxplot_tcost.trip.CBD.both.1994.png")
+# ggsave(pbox.tcost.trip.CBD.both.1994, file=output_file, type="cairo-png")
+# 
+# pden.tcost.trip.CBD.both.1994 <- ggplot(tcost.trip.CBD.both.1994, aes(tripdur.minutes, colour=MODE.name)) + geom_density() + xlim(0, 100) + ylim(0, 0.15)
+# pden.tcost.trip.CBD.both.1994
+# output_file = file.path(OUTPUT_DIR, "denplot_tcost.trip.CBD.both.1994.png")
+# ggsave(pbox.tcost.trip.CBD.both.1994, file=output_file, type="cairo-png")
+# 
+# 
+# tcost.trip.CBD.both.1994.sum <- tcost.trip.CBD.both.1994 %>% 
+#   group_by(MODE.name) %>%
+#   summarise(freq.1994=n(),
+#             ttime.min.1994=min(tripdur.minutes), 
+#             ttime.avg.1994=mean(tripdur.minutes),
+#             ttime.median.1994=median(tripdur.minutes),
+#             ttime.max.1994=max(tripdur.minutes)) %>%
+#   mutate(probs.1994=freq.1994/sum(freq.1994)) %>%
+#   rename(MODE=MODE.name)
+# 
+# head(tcost.trip.CBD.both.1994.sum)
+# head(tcost.trip.CBD.both.2011.sum)
+# 
+# tcost.trip.CBD.both <- tcost.trip.CBD.both.2011.sum %>% 
+#   left_join(tcost.trip.CBD.both.1994.sum) %>%
+#   select(MODE, freq.1994, freq.2011, ttime.min.1994, ttime.min.2011, ttime.avg.1994, ttime.avg.2011, 
+#          ttime.max.1994, ttime.max.2011, probs.1994, probs.2011) %>%
+#   arrange(freq.1994) %>%
+#   as.data.frame()
+# 
+# tcost.trip.CBD.both
+# 
+# output_file = file.path(OUTPUT_DIR, "tcost.trip.CBD.both.RData")
+# save(tcost.trip.CBD.both, file=output_file)
 
 
 
