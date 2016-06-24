@@ -24,7 +24,7 @@
   districts.id_name <- "DISTRICT"
   hh.metro$district.id <- get_xy_polyid(hh.metro, districts.shpfile, districts.id_name)
   
-# Differentiate TRANSIT by bus and rail 
+# Identify transit types  
   # Use type of bus (TBUS) field to differentiate transit 
   place.metro <- place %>%
     filter(SAMPN %in% hh.metro$SAMPN) %>%
@@ -41,12 +41,13 @@
   
   trip.metro <- trip %>% 
     filter(SAMPN %in% hh.metro$SAMPN) %>%
-    select(SAMPN, PERNO, PLANO, MODENAME) %>%
+    select(SAMPN, PERNO, PLANO, MODENAME, TRPDUR, DistanceRoute) %>%
     left_join(place.metro) %>%
     left_join(linkedTrip.metro) %>%
     mutate(MODENAME=as.character(MODENAME),
            MODENAME=ifelse(TBUS %in% c("LOCAL BUS", "BUS RAPID TRANSIT", "OTHER BUS", "EXPRESS BUS")&!is.na(TBUS), "BUS", MODENAME),
            MODENAME=ifelse(TBUS=="LIGHT RAIL"&!is.na(TBUS), "RAIL", MODENAME),
+           ThisMODE=ifelse(ThisMODE %in% c("TRANSIT"), "PARATRANSIT", ThisMODE),
            bus=ifelse(MODENAME=="BUS", 1, 0), 
            rail=ifelse(MODENAME=="RAIL", 1, 0)) 
   
@@ -73,35 +74,60 @@
   # SAMPN, HHWGT, HTAZ, inc.level, TripPurpose, MODE, tripdur.hours, tripdist.miles
   tcost.trip <- linkedTrip %>% 
     filter(SAMPN %in% hh.metro$SAMPN) %>% 
-    select(SAMPN, PERNO, PLANO, HHWGT, TripPurpose, ThisMODE, TRPDUR, CMMOTTRPDUR, DistanceRoute) %>%
+    select(SAMPN, PERNO, PLANO, HHWGT, TripPurpose, ThisMODE) %>%
     mutate(TripPurpose = tolower(TripPurpose),
            TripPurpose=ifelse(TripPurpose=="hbshp", "hbs", TripPurpose),
            TripPurpose=ifelse(TripPurpose=="hbrec", "hbr", TripPurpose)
            #TripPurpose=ifelse(TripPurpose=="hbsch", "hbo", TripPurpose),                #HB School trips ==> HBO trips
            #TripPurpose=ifelse(str_detect(TripPurpose, "^hb.*esc$"), "hbo", TripPurpose) #HB Escort trips ==> HBO trips
     ) %>%
-    filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
-    mutate(tripdist.miles=DistanceRoute/5280)
+    filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>% 
+    mutate(linkedTrip.id=SAMPN*1000 + PERNO*100 + PLANO) 
   
-  
-  tcost.trip.transit <- tcost.trip %>% 
-    filter(ThisMODE %in% c("PNR", "KNR", "TRANSIT")) %>%
-    mutate(linkedTrip.id=SAMPN*1000 + PERNO*100 + PLANO) %>%
+  # Differentiate transit types 
+  tcost.trip <- tcost.trip %>%
     left_join(linkedTrip.bus.rail) %>%
     mutate(ThisMODE=ifelse(linkedTrip.bus=="BUS"&!is.na(linkedTrip.bus), "BUS", ThisMODE),
-           ThisMODE=ifelse(linkedTrip.rail=="RAIL"&!is.na(linkedTrip.bus), "RAIL", ThisMODE),
-           ThisMODE=ifelse(ThisMODE %in% c("PNR", "KNR", "TRANSIT"), "PARATRANSIT", ThisMODE), 
-           tripdur.hours=CMMOTTRPDUR/60) %>% 
-    select(SAMPN, PERNO, PLANO, HHWGT, TripPurpose, ThisMODE, tripdur.hours,tripdist.miles) 
+           ThisMODE=ifelse(linkedTrip.rail=="RAIL"&!is.na(linkedTrip.rail), "RAIL", ThisMODE),
+           ThisMODE=ifelse(ThisMODE %in% c("PNR", "KNR", "TRANSIT"), "PARATRANSIT", ThisMODE)) %>%
+    # filter(ThisMODE!="SCHOOLBUS") %>% 
+    select(-linkedTrip.bus, -linkedTrip.rail) %>%
+    as.data.frame()
   
-  tcost.trip.notransit <- tcost.trip %>% 
-    filter(!(ThisMODE %in% c("PNR", "KNR", "TRANSIT"))) %>%    
-    mutate(tripdur.hours=TRPDUR/60) %>%  
-    select(SAMPN, PERNO, PLANO, HHWGT, TripPurpose, ThisMODE, tripdur.hours,tripdist.miles) 
   
-  tcost.trip <- rbind(tcost.trip.transit, tcost.trip.notransit) %>%
+  # Recalculate travel time and travel route distance for linkedTrips   
+  linkedTrip.id.changemode <- trip.metro %>%
+    group_by(linkedTrip.id) %>%
+    summarise(freq=n()) %>%
+    filter(freq>1)
+  
+  linkedTrip.metro.changeMode <- trip.metro %>%
+    filter(linkedTrip.id %in% linkedTrip.id.changemode$linkedTrip.id) %>%
+    rename(MODE=MODENAME) %>%
+    left_join(unitcosts) %>%  
+    mutate(t.cost=VOT*TRPDUR/60, 
+           m.cost=mcpm*DistanceRoute/5280) %>%
+    group_by(linkedTrip.id) %>%
+    summarise(t.cost=sum(t.cost, na.rm=TRUE),
+              m.cost=sum(m.cost, na.rm=TRUE)) %>%
+    mutate(tcost= constant + t.cost + m.cost) %>%
+    as.data.frame()
+  
+  linkedTrip.metro.nochangeMode <- trip.metro %>%
+    filter(!(linkedTrip.id %in% linkedTrip.id.changemode$linkedTrip.id)) %>%
+    rename(MODE=MODENAME) %>%
+    left_join(unitcosts) %>%  
+    mutate(t.cost=VOT*TRPDUR/60, 
+           m.cost=mcpm*DistanceRoute/5280,
+           tcost= constant + t.cost + m.cost) %>%
+    select(linkedTrip.id, t.cost,  m.cost, tcost)
+  
+  linkedTrip.metro.tripdur.tripdist <- rbind(linkedTrip.metro.changeMode, linkedTrip.metro.nochangeMode)   
+  
+  tcost.trip <- tcost.trip %>%
+    left_join(linkedTrip.metro.tripdur.tripdist) %>%
     rename(MODE=ThisMODE)
-  
+
   per.child <- per %>%
     group_by(SAMPN) %>%
     summarize(has.child=ifelse(sum(AGE<=16) > 0, T, F))

@@ -8,10 +8,10 @@ require(SDMTools)
 
 # compute tcost (travel costs)
   tcost.trip <- tcost.trip %>% 
-    left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)
-    mutate(t.cost=VOT*tripdur.hours,            #time costs
-           m.cost=mcpm*tripdist.miles,          #monetary costs
-           tcost= constant + t.cost + m.cost) %>%        #total costs
+    #left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)
+    #mutate(t.cost=VOT*tripdur.hours,            #time costs
+    #       m.cost=mcpm*tripdist.miles,          #monetary costs
+    #       tcost= constant + t.cost + m.cost) %>%        #total costs
     filter(HHWGT!=0) %>%                        # select HHWGT!= 0
     na.omit()                                   #exclude rows with unknown HTAZ, tpurp, or inc.level
 
@@ -24,7 +24,7 @@ require(SDMTools)
           #   y=first(y),
               HHSIZ=first(HHSIZ),
               inc.level=first(inc.level),
-             has.child=first(has.child),
+              has.child=first(has.child),
               INCOME=first(INCOME),
               HHWGT=first(HHWGT),
               district.id=first(district.id)
