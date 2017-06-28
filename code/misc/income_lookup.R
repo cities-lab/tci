@@ -1,5 +1,16 @@
 # This script sets up lookup table for income
 
+# references
+
+# 1
+  # http://onlinepubs.trb.org/onlinepubs/archive/conferences/nhts/workshop-datafusion.pdf
+  # For example, suppose the 100 NHTS households for the case study
+  # city are to be grouped into five income categories: less than $15,000; $15,000-34,999; $35,000-
+  #  $74,999; and greater than $75,000. 
+
+# 2 
+
+
 # hh.metro <- hh %>% 
 # mutate(inc.level=cut(INCOME,
 #                      breaks=c(1, 6, 11, 13),
@@ -27,8 +38,8 @@
 # 14 DK/RF
 
 
-# http://data.bls.gov/cgi-bin/cpicalc.pl?cost1=100&year1=1993&year2=2010
-# $100 in 1993 has the same buying power as 150.90 in 2010. 
+# http://data.bls.gov/cgi-bin/cpicalc.pl?cost1=100.00&year1=1994&year2=2011
+# $100 in 1994 has the same buying power as 151.78 in 2011. 
 
 # Income cutoff for OHAS 2011
 # lowInc: $0 ~ 37,724; midInc: $37,725 ~ 75,450; highInc: 75,450 ~ or more 
@@ -44,6 +55,9 @@
 # 7	$100,000 - $149,999
 # 8	$150,000 or more
 # 99	REFUSED
+
+
+
 
 
 # inflation adjust
@@ -79,19 +93,44 @@
             mutate(ic = ifelse(income.low <= cutoff.df["midInc", "high.bound"]&(cutoff.df["midInc", "high.bound"]-income.low) <= (income.high-cutoff.df["midInc", "high.bound"]), "midInc", ic)) %>%
             mutate(ic=ifelse((!is.na(income.low))&(is.na(ic)), "midInc", ic)) 
   
-     
- 
+# Add poverty line: http://www.ocpp.org/poverty/2011-poverty-guidelines/ 
+  poverty.line.df <- data.frame(HHSIZ=c(1:8), poverty.line=c(10890, 14710, 18530, 22350, 26170, 29990, 33810, 37630))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+# Add poverty level 
+# Load data 
+  require(dplyr)
+  load("~/tci/data/Portland2011/OHAS_Final.Rdata")
+  
+# 2011 Federal Poverty Guidelines
+  poverty.line.df <- data.frame(HHSIZ=c(1:8), poverty.line=c(10890, 14710, 18530, 22350, 26170, 29990, 33810, 37630))
+  
+# Add income dictionary 
+  # OHAS 2011 survey data, income field distionary 
+  # INCOME	What is your total household income for 2010?
+  # 1	$0 - $14,999
+  # 2	$15,000 - $24,999
+  # 3	$25,000 - $34,999
+  # 4	$35,000 - $49,999
+  # 5	$50,000 - $74,999
+  # 6	$75,000 - $99,999
+  # 7	$100,000 - $149,999
+  # 8	$150,000 or more
+  # 99	REFUSED
+  income.index <- c(1:8, 99)
+  income.low <- c(0, 15000, 25000, 35000, 50000, 75000, 100000, 150000, NA)
+  income.high <- c(14999, 24999, 34999, 49999, 74999, 99999, 149999, Inf, NA)
+  income <- data.frame(income.index, income.low, income.high, year=2011)
+  
+  hh.metro <- hh %>% filter(AREA==11) %>%
+    mutate(inc.level=cut(INCOME,
+                         breaks=c(1, 4, 6, 9),
+                         labels=c("lowInc", "midInc", "highInc"),   #allow alternative household grouping
+                         include.lowest=T, right=F
+    )) %>%
+    dplyr::select(SAMPN, INCOME,inc.level, HHSIZ) %>%
+    left_join(poverty.line.df) %>%
+    left_join(income, by=c("INCOME"="income.index")) %>%
+    mutate(inc.level=as.character(inc.level)) %>%
+    mutate(inc.level=ifelse(income.high<poverty.line, "poverty", inc.level))
+  
