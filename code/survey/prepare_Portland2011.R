@@ -1,9 +1,13 @@
 require(dplyr)
 require(tidyr)
 
+hhwgt <- hh %>% filter(AREA==11) %>%
+	select(SAMPN, HHWGT)
+
 # prepare data -> a data.frame for linked trips with columns
 # SAMPN, HHWGT, HTAZ, inc.level, TripPurpose, MODE, tripdur.hours, tripdist.miles
-tcost.trip <- linkedTrip %>% 
+tcost.trip <- trip %>% 
+  left_join(hhwgt) %>%
   select(SAMPN, PERNO, HHWGT, TripPurpose, MODE, TRPDUR, DistanceRoute) %>%
   mutate(TripPurpose = tolower(TripPurpose),
          TripPurpose=ifelse(TripPurpose=="hbshp", "hbs", TripPurpose),
