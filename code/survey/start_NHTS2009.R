@@ -77,10 +77,10 @@
   # 7160 = Salt Lake City--Ogden, UT
   
   # Calculate three cities 
-  # HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=7160)  
+  HHC_MSAs <- c(Portland=6442, TampaBay=8280, SaltLakeCity=7160)  
 
-  msa.names <- read.table(file.path(INPUT_DIR, "MSA_names.tab"), header=T, sep="\t", stringsAsFactors = F, colClasses="character")
-  HHC_MSAs <- msa.names$FIPS
+  # msa.names <- read.table(file.path(INPUT_DIR, "MSA_names.tab"), header=T, sep="\t", stringsAsFactors = F, colClasses="character")
+  # HHC_MSAs <- msa.names$FIPS
   
   # Load national household survey data 
   day <- read.csv(file.path(INPUT_DIR, "DAYV2PUB.CSV"), header=TRUE, sep=",", stringsAsFactors = F) 
@@ -135,7 +135,12 @@
              #TripPurpose=ifelse(TripPurpose=="hbsch", "hbo", TripPurpose),                #HB School trips ==> HBO trips
              #TripPurpose=ifelse(str_detect(TripPurpose, "^hb.*esc$"), "hbo", TripPurpose) #HB Escort trips ==> HBO trips
       ) %>%
-      filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo"))
+      filter(TripPurpose %in% c("hbw", "hbs", "hbr", "hbo")) %>%
+      left_join(unitcosts) %>%                    #append unit travel cost by mode (and potentially by inc.level)
+      mutate(t.cost=VOT*tripdur.hours,            #time costs
+             m.cost=mcpm*tripdist.miles,          #monetary costs
+             tcost= constant + t.cost + m.cost,
+             has.child="Not availaable")
     
 ## Calculate and plot trip cost
   source(file.path(dirs$this, "compute.R"))

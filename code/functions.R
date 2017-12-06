@@ -207,7 +207,8 @@ plot_density <- function(plot.data=NULL,
                          x=NULL, xlab="", xlim.max=NULL, 
                          group=NULL, legend.title="",
                          unit.name="dollars", 
-                         title="") {
+                         title="",
+                         bw=F) {
   
   default.xlim.max <- c(dollars=150, minutes=450)
   xlim.max <- ifelse(is.null(xlim.max), default.xlim.max[[unit.name]], xlim.max)
@@ -217,7 +218,8 @@ plot_density <- function(plot.data=NULL,
     geom_density(fill=NA, size=1) + labs(x=xaxis.label) + xlim(0, xlim.max) +
     scale_colour_grey(name = legend.title) +
     ggtitle(title) +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + theme_bw()
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) 
+  if (bw) p <- p + theme_bw()
   p
 }
 
@@ -225,7 +227,8 @@ plot_density.linetype <- function(plot.data=NULL,
                          x=NULL, xlab="", xlim.max=NULL, 
                          group=NULL, legend.title="",
                          unit.name="dollars", 
-                         title="") {
+                         title="",
+                         bw=F) {
   
   default.xlim.max <- c(dollars=150, minutes=450)
   xlim.max <- ifelse(is.null(xlim.max), default.xlim.max[[unit.name]], xlim.max)
@@ -237,8 +240,8 @@ plot_density.linetype <- function(plot.data=NULL,
     scale_linetype(name=legend.title #, values=c("Low Inc"="solid", "Mid Inc"="dashed", "High Inc"="dotted")
                    ) +
     ggtitle(title) +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + theme_bw()
-  
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) 
+  if (bw) p <- p + theme_bw()
   p
 }
 
@@ -248,7 +251,8 @@ plot_boxplot <- function(plot.data=NULL,
                          y=NULL, ylab="", ylim.max=NULL,
                          fill=NULL, legend.title="",
                          unit.name="dollars", 
-                         title="") {
+                         title="",
+                         bw=F) {
   
   default.ylim.max <- c(dollars=100, minutes=250)
   ylim.max <- ifelse(is.null(ylim.max), default.ylim.max[[unit.name]], ylim.max)
@@ -259,7 +263,8 @@ plot_boxplot <- function(plot.data=NULL,
     geom_boxplot()  + labs(y=yaxis.label) + xlab(xlab) + 
     ylim(0, ylim.max)  + scale_fill_grey(name = legend.title) + 
     ggtitle(title) +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + theme_bw()
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) 
+  if (bw) p <- p + theme_bw()
   p
 }
 
@@ -270,7 +275,8 @@ plot_line <- function (plot.data=NULL,
                        y=NULL, ylab="", ylim.max=NULL,
                        group=NULL,
                        unit.name="dollars", 
-                       title="") {
+                       title="",
+                       bw=F) {
   
   default.ylim.max <- c(dollars=60, minutes=160)
   ylim.max <- ifelse(is.null(ylim.max), default.ylim.max[[unit.name]], ylim.max)
@@ -280,7 +286,8 @@ plot_line <- function (plot.data=NULL,
   p <- ggplot(data=plot.data, aes_string(x = x, y = y, colour=group, group=group)) +
     geom_line(size=1) + labs(x=xlab) + labs(y=yaxis.label) + ylim(0, ylim.max) +
     ggtitle(title) +
-    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + scale_color_grey() + theme_bw()
+    theme(plot.title = element_text(face="bold", size=12, vjust=1)) + scale_color_grey() 
+  if (bw) p <- p + theme_bw()
   p
 }
 

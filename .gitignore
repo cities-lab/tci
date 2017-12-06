@@ -11,3 +11,5 @@ data
 output
 *.html
 Rplots.pdf
+output_report.v10
+.Rhistory*

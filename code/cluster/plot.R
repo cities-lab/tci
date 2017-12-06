@@ -1,7 +1,7 @@
 #plot results from cluster-based approach
 
 # plot charts
-  pden.htaz.ic <- plot_density(plot.data=tcost.htaz.ic, x="tcost", xlab="Travel Cost", 
+  pden.htaz.ic <- plot_density.linetype(plot.data=tcost.htaz.ic, x="tcost", xlab="Travel Cost", 
                                 group="ic", legend.title="Income Level", 
                                 unit.name=unit.name)
   pden.htaz.ic
@@ -10,7 +10,7 @@
   
   
   ## this is trip level, as there is no way to aggregate trips to households
-  pden.htaz.pr <- plot_density(tcost.htaz.pr, x="tcost", xlab="Travel Cost", 
+  pden.htaz.pr <- plot_density.linetype(tcost.htaz.pr, x="tcost", xlab="Travel Cost", 
                                 group="pr", legend.title="Trip Purpose", 
                                 unit.name=unit.name, xlim.max=180)
   output_file = file.path(OUTPUT_DIR, "density_tcost_by_pr.png")

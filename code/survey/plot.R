@@ -4,28 +4,28 @@ require(ggplot2)
 require(ggmap)
 
 ## density plot
-  pden.ic <- plot_density(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
+  pden.ic <- plot_density.linetype(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
                           group="inc.level", legend.title="Income Level", 
                           unit.name=unit.name)
   #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
   output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_inc.png")
   ggsave(pden.ic, file=output_file, type="cairo-png")
   
-  pden.pp.ic <- plot_density(plot.data=tcost.pp, x="tcost", xlab="Travel Costs", 
+  pden.pp.ic <- plot_density.linetype(plot.data=tcost.pp, x="tcost", xlab="Travel Costs", 
                           group="inc.level", legend.title="Income Level", 
                           unit.name=unit.name)
   #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
   output_file = file.path(OUTPUT_DIR, "density_tcost.pp_by_inc.png")
   ggsave(pden.pp.ic, file=output_file, type="cairo-png")
   
-  pden.hh.child <- plot_density(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
+  pden.hh.child <- plot_density.linetype(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
                           group="has.child", legend.title="Presence of Children", 
                           unit.name=unit.name)
   #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
   output_file = file.path(OUTPUT_DIR, "density_tcost.hh_by_child.png")
   ggsave(pden.hh.child, file=output_file, type="cairo-png")
   
-  pden.pp.child <- plot_density(plot.data=tcost.pp, x="tcost", xlab="Travel Costs", 
+  pden.pp.child <- plot_density.linetype(plot.data=tcost.pp, x="tcost", xlab="Travel Costs", 
                              group="has.child", legend.title="Presence of Children", 
                              unit.name=unit.name)
   #pden.inc <- pden.inc.f(plot.data=tcost.hh, unit.name=unit.name)
@@ -38,7 +38,7 @@ require(ggmap)
                          labels=c("1", "2", "3", "4+"),   #allow alternative household grouping
                          include.lowest=T, right=F))
   
-  pden.hhsize <- plot_density(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
+  pden.hhsize <- plot_density.linetype(plot.data=tcost.hh, x="tcost", xlab="Travel Costs", 
                           group="hhsiz.cat", legend.title="Household Size", 
                           unit.name=unit.name) 
   
